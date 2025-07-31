@@ -7,57 +7,58 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
+import { mockEvents, getCategoryEmoji, formatEventTime } from '../../data/mockEvents';
 
 type TabType = 'private' | 'public' | 'saved';
 
-const EventItem = ({ title, date, location, category }: {
-  title: string;
-  date: string;
-  location: string;
-  category: string;
-}) => (
-  <View style={styles.eventItem}>
-    <View style={styles.eventContent}>
-      <View style={styles.eventHeader}>
-        <View style={[styles.categoryBadge, { backgroundColor: COLORS.LIGHT_PURPLE }]}>
-          <Text style={styles.categoryText}>{category}</Text>
-        </View>
-        <Text style={styles.eventDate}>{date}</Text>
-      </View>
-      <Text style={styles.eventTitle}>{title}</Text>
-      <Text style={styles.eventLocation}>📍 {location}</Text>
-    </View>
-    <View style={styles.eventActions}>
-      <TouchableOpacity style={styles.actionButton}>
-        <Text style={styles.actionButtonText}>View</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
+const EventItem = ({ event }: { event: typeof mockEvents[0] }) => {
+  const priceText = !event.price || event.price.min === 0 
+    ? 'Free' 
+    : event.price.min === event.price.max 
+      ? `$${event.price.min}`
+      : `$${event.price.min} - $${event.price.max}`;
 
-const mockEvents = [
-  { id: '1', title: 'Rooftop Party at 230 Fifth', date: 'Tonight • 9:00 PM', location: 'Midtown Manhattan', category: 'NIGHTLIFE' },
-  { id: '2', title: 'Art Gallery Opening', date: 'Tomorrow • 7:00 PM', location: 'SoHo', category: 'CULTURE' },
-  { id: '3', title: 'Morning Yoga Class', date: 'Saturday • 8:00 AM', location: 'Central Park', category: 'FITNESS' },
-];
+  return (
+    <View style={styles.eventItem}>
+      <View style={styles.eventContent}>
+        <View style={styles.eventHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: COLORS.LIGHT_PURPLE }]}>
+            <Text style={styles.categoryText}>
+              {getCategoryEmoji(event.category)} {event.category.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.eventTitle}>{event.title}</Text>
+        <Text style={styles.eventDate}>{formatEventTime(event.date)}</Text>
+        <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+        <Text style={styles.eventPrice}>{priceText}</Text>
+      </View>
+      <View style={styles.eventActions}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>View</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 export default function CalendarScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('private');
 
+  // Filter events based on active tab (for demo purposes, showing same events)
+  const filteredEvents = mockEvents.slice(0, activeTab === 'private' ? 3 : activeTab === 'public' ? 2 : 4);
+
   const renderEventItem = ({ item }: { item: typeof mockEvents[0] }) => (
-    <EventItem
-      title={item.title}
-      date={item.date}
-      location={item.location}
-      category={item.category}
-    />
+    <EventItem event={item} />
   );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
       <LinearGradient
         colors={[COLORS.GRADIENT_START, COLORS.GRADIENT_END]}
         style={styles.gradientHeader}
@@ -65,7 +66,7 @@ export default function CalendarScreen() {
         <SafeAreaView>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>My Events</Text>
-            <Text style={styles.headerSubtitle}>Your curated event collection</Text>
+            <Text style={styles.headerSubtitle}>Your curated collection</Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -81,7 +82,7 @@ export default function CalendarScreen() {
             onPress={() => setActiveTab('private')}
           >
             <Text style={[styles.tabText, activeTab === 'private' && styles.tabTextActive]}>
-              🔒 Private Calendar
+              🔒 Private
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -89,7 +90,7 @@ export default function CalendarScreen() {
             onPress={() => setActiveTab('public')}
           >
             <Text style={[styles.tabText, activeTab === 'public' && styles.tabTextActive]}>
-              🌍 Public Calendar
+              🌍 Public
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -97,7 +98,7 @@ export default function CalendarScreen() {
             onPress={() => setActiveTab('saved')}
           >
             <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>
-              💾 Saved Later
+              💾 Later
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -105,7 +106,7 @@ export default function CalendarScreen() {
 
       <View style={styles.content}>
         <FlatList
-          data={mockEvents}
+          data={filteredEvents}
           renderItem={renderEventItem}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
@@ -122,20 +123,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BACKGROUND,
   },
   gradientHeader: {
-    paddingBottom: SPACING.LG,
+    paddingBottom: SPACING.MD,
   },
   header: {
     paddingHorizontal: SPACING.LG,
-    paddingTop: SPACING.MD,
+    paddingTop: SPACING.SM,
   },
   headerTitle: {
-    fontSize: FONT_SIZES.XXXL,
+    fontSize: FONT_SIZES.XXL + 4,
     fontWeight: 'bold',
     color: COLORS.WHITE,
     marginBottom: SPACING.XS,
   },
   headerSubtitle: {
-    fontSize: FONT_SIZES.MD,
+    fontSize: FONT_SIZES.SM,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   tabSection: {
@@ -144,11 +145,11 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     paddingHorizontal: SPACING.LG,
-    paddingVertical: SPACING.MD,
+    paddingVertical: SPACING.SM,
   },
   tab: {
-    paddingHorizontal: SPACING.LG,
-    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.SM - 2,
     marginRight: SPACING.SM,
     borderRadius: LAYOUT.BORDER_RADIUS_LARGE,
     backgroundColor: COLORS.OFF_WHITE,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.MEDIUM,
   },
   tabText: {
-    fontSize: FONT_SIZES.SM,
+    fontSize: FONT_SIZES.XS + 1,
     fontWeight: '600',
     color: COLORS.TEXT_MEDIUM,
   },
@@ -168,69 +169,76 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: SPACING.MD,
+    paddingTop: SPACING.SM,
   },
   eventsList: {
-    paddingHorizontal: SPACING.LG,
+    paddingHorizontal: SPACING.MD,
     paddingBottom: SPACING.XL,
   },
   eventItem: {
     backgroundColor: COLORS.CARD_BACKGROUND,
     borderRadius: LAYOUT.BORDER_RADIUS,
-    padding: SPACING.LG,
-    marginBottom: SPACING.MD,
+    padding: SPACING.MD,
+    marginBottom: SPACING.SM,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     ...SHADOWS.CARD,
   },
   eventContent: {
     flex: 1,
   },
   eventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.SM,
+    marginBottom: SPACING.XS,
   },
   categoryBadge: {
-    paddingHorizontal: SPACING.SM,
-    paddingVertical: SPACING.XS,
+    paddingHorizontal: SPACING.SM - 2,
+    paddingVertical: SPACING.XS - 2,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
+    alignSelf: 'flex-start',
+    marginBottom: SPACING.XS,
   },
   categoryText: {
-    fontSize: FONT_SIZES.XS,
+    fontSize: FONT_SIZES.XS - 1,
     fontWeight: 'bold',
     color: COLORS.DARK_PURPLE,
-    letterSpacing: 0.5,
-  },
-  eventDate: {
-    fontSize: FONT_SIZES.SM,
-    color: COLORS.TEXT_LIGHT,
-    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   eventTitle: {
-    fontSize: FONT_SIZES.LG,
+    fontSize: FONT_SIZES.MD,
     fontWeight: 'bold',
     color: COLORS.TEXT_DARK,
-    marginBottom: SPACING.XS,
-    lineHeight: FONT_SIZES.LG * 1.2,
+    marginBottom: SPACING.XS - 2,
+    lineHeight: FONT_SIZES.MD * 1.3,
+  },
+  eventDate: {
+    fontSize: FONT_SIZES.SM - 1,
+    color: COLORS.TEXT_LIGHT,
+    fontWeight: '500',
+    marginBottom: SPACING.XS - 2,
   },
   eventLocation: {
-    fontSize: FONT_SIZES.MD,
+    fontSize: FONT_SIZES.SM - 1,
     color: COLORS.TEXT_LIGHT,
+    marginBottom: SPACING.XS - 2,
+  },
+  eventPrice: {
+    fontSize: FONT_SIZES.SM,
+    fontWeight: '600',
+    color: COLORS.PRIMARY_PURPLE,
   },
   eventActions: {
-    marginLeft: SPACING.MD,
+    marginLeft: SPACING.SM,
+    justifyContent: 'center',
   },
   actionButton: {
     backgroundColor: COLORS.PRIMARY_PURPLE,
-    paddingHorizontal: SPACING.MD,
-    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.SM,
+    paddingVertical: SPACING.XS,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
     ...SHADOWS.SMALL,
   },
   actionButtonText: {
-    fontSize: FONT_SIZES.SM,
+    fontSize: FONT_SIZES.XS + 1,
     fontWeight: '600',
     color: COLORS.WHITE,
   },

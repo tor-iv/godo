@@ -21,6 +21,22 @@ export interface Event {
   };
   capacity?: number;
   attendeeCount?: number;
+  source: EventSource;
+  externalId: string;
+  sourceUrl?: string;
+  lastUpdated: Date;
+  isActive: boolean;
+  tags?: string[];
+  venue?: {
+    id?: string;
+    website?: string;
+    phone?: string;
+    socialMedia?: {
+      instagram?: string;
+      facebook?: string;
+      twitter?: string;
+    };
+  };
 }
 
 export enum EventCategory {
