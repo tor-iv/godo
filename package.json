@@ -1,0 +1,45 @@
+{
+  "name": "godo-workspace",
+  "version": "1.0.0",
+  "description": "Event discovery app workspace with containerized development environment",
+  "scripts": {
+    "setup:local": "./scripts/local-setup.sh",
+    "setup:docker": "./scripts/setup.sh",
+    "start": "cd godo-app && npm start",
+    "ios": "cd godo-app && npm run ios",
+    "android": "cd godo-app && npm run android", 
+    "web": "cd godo-app && npm run web",
+    "typecheck": "cd godo-app && npx tsc --noEmit",
+    "lint": "cd godo-app && npx eslint src/",
+    "lint:fix": "cd godo-app && npx eslint src/ --fix",
+    "format": "cd godo-app && npx prettier --write src/",
+    "test": "cd godo-app && npm test",
+    "dev": "docker-compose up godo-dev",
+    "dev:build": "docker-compose build godo-dev",
+    "dev:clean": "docker-compose down -v && docker-compose build --no-cache godo-dev",
+    "dev:shell": "docker-compose exec godo-dev bash",
+    "dev:logs": "docker-compose logs -f godo-dev",
+    "services:up": "docker-compose up -d supabase-db supabase-api inbucket redis",
+    "services:down": "docker-compose down",
+    "services:logs": "docker-compose logs -f supabase-db supabase-api",
+    "expo:start": "docker-compose exec godo-dev bash -c 'cd godo-app && npx expo start --tunnel'",
+    "expo:install": "docker-compose exec godo-dev bash -c 'cd godo-app && npx expo install'",
+    "expo:typecheck": "docker-compose exec godo-dev bash -c 'cd godo-app && npx tsc --noEmit'",
+    "expo:lint": "docker-compose exec godo-dev bash -c 'cd godo-app && npx eslint src/'",
+    "db:reset": "docker-compose down supabase-db && docker volume rm godo_postgres-data && docker-compose up -d supabase-db",
+    "health": "docker-compose ps && docker-compose exec godo-dev node --version && docker-compose exec godo-dev expo --version"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "typescript",
+    "event-discovery",
+    "docker"
+  ],
+  "author": "Godo Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

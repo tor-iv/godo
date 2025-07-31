@@ -1,0 +1,31 @@
+{
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "emmet.includeLanguages": {
+    "typescript": "javascriptreact",
+    "typescriptreact": "javascriptreact"
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/ios": true,
+    "**/android": true,
+    "**/.expo": true,
+    "**/dist": true,
+    "**/web-build": true
+  },
+  "files.exclude": {
+    "**/.expo": true,
+    "**/ios": true,
+    "**/android": true
+  },
+  "eslint.workingDirectories": ["godo-app"],
+  "typescript.preferences.includePackageJsonAutoImports": "on"
+}

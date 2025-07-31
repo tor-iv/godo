@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Main development environment
+  godo-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godo-development
+    volumes:
+      # Mount source code with cached node_modules for performance
+      - .:/app
+      - /app/node_modules
+      - /app/godo-app/node_modules
+      # Cache npm and Expo data
+      - npm-cache:/home/appuser/.npm
+      - expo-cache:/home/appuser/.expo
+    ports:
+      # Expo dev server
+      - "3000:3000"
+      # Metro bundler  
+      - "8081:8081"
+      # Expo dev tools
+      - "19000:19000"
+      - "19001:19001" 
+      - "19002:19002"
+    environment:
+      - NODE_ENV=development
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - EXPO_USE_FAST_RESOLVER=1
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    networks:
+      - godo-network
+
+  # Supabase local development stack
+  supabase-db:
+    image: supabase/postgres:15.1.0.117
+    container_name: godo-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your-super-secret-and-long-postgres-password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - godo-network
+
+  supabase-api:
+    image: supabase/gotrue:v2.99.0
+    container_name: godo-gotrue
+    depends_on:
+      - supabase-db
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_URL: http://localhost:9999
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:your-super-secret-and-long-postgres-password@supabase-db:5432/postgres?search_path=auth
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: true
+      GOTRUE_MAILER_AUTOCONFIRM: true
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@godo.app
+      GOTRUE_SMTP_HOST: inbucket
+      GOTRUE_SMTP_PORT: 2500
+    networks:
+      - godo-network
+
+  # Email testing service
+  inbucket:
+    image: inbucket/inbucket:3.0.3
+    container_name: godo-inbucket
+    ports:
+      - "9000:9000"  # Web interface
+      - "2500:2500"  # SMTP
+    networks:
+      - godo-network
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: godo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - godo-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  npm-cache:
+  expo-cache:
+
+networks:
+  godo-network:
+    driver: bridge

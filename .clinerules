@@ -1,0 +1,87 @@
+# Cline Rules - Event Discovery App
+
+## Additional Rules Files
+This project uses multiple rules files organized in the `.cline/` directory:
+- **project-rules.md** - Main project guidelines and architecture decisions
+- **frontend-rules.md** - React Native specific coding standards
+- **backend-rules.md** - Python backend development guidelines
+- **api-rules.md** - External API integration patterns
+- **ui-rules.md** - Design system and purple theme specifications
+
+Refer to the project-rules map in `.cline/project-rules.md` for the complete rules hierarchy.
+
+## Project Overview
+- Event discovery app (Tinder-like) for NYC young professionals
+- Frontend: React Native (Expo)
+- Backend: Python
+- Database: Supabase
+- Target: iOS (primary), Android (secondary)
+
+## Code Style & Standards
+- Use 2-space indentation consistently
+- Follow React Native and Python conventions
+- Use camelCase for JavaScript, snake_case for Python
+- Include comments for complex swiping logic and API integrations
+- Keep components small and focused (especially for swipe mechanics)
+
+## File Organization
+- `/src/components/` - React Native components (SwipeCard, Calendar, etc.)
+- `/src/screens/` - Main screens (Discover, MyEvents, Profile)
+- `/src/utils/` - Helper functions for swipe logic and API calls
+- `/src/api/` - Supabase and external API integrations
+- `/backend/` - Python backend code
+- Keep tests alongside source files
+
+## App-Specific Requirements
+- Maintain smooth 60fps swiping animations
+- Handle all 4 swipe directions (right: want to go, left: not interested, up: save later, down: like but can't go)
+- Implement proper state management for calendar privacy settings
+- Ensure real-time sync between Supabase and local state
+- Handle offline capability for saved events
+
+## Development Practices
+- Test swipe mechanics thoroughly on actual devices
+- Validate all user inputs and event data
+- Handle API failures gracefully (Resy, OpenTable, etc.)
+- Use environment variables for API keys and database credentials
+- Implement proper error boundaries for React Native
+
+## Key Features to Focus On
+- Event swiping interface with 4-directional swipes
+- Toggle between "Happening Now" and "Planning Ahead" feeds
+- Personal calendar with privacy controls
+- Social features with friend visibility rules
+- Purple-themed UI with clean, minimal design
+
+## External Integrations
+- Supabase for database operations
+- Resy/OpenTable APIs for restaurant events
+- Maps integration for venue locations
+- Push notifications for event reminders
+- Calendar sync (Google/Apple)
+
+## Privacy & Security
+- Implement calendar privacy settings (Private, Friends only, Public events only)
+- Secure handling of location data (NYC focus)
+- Protect user swipe history and preferences
+- Follow mobile app security best practices
+
+## Git & Documentation
+- Write clear commit messages for feature development
+- Document API integrations and swipe logic
+- Update setup instructions for React Native and Python backend
+- Explain complex event curation and filtering logic
+
+## Restrictions
+- Never commit API keys or database credentials
+- Don't hardcode event data - use dynamic API calls
+- Ask before adding new external dependencies
+- Maintain focus on NYC market initially
+- Keep social features simple for MVP
+
+## Questions & Clarifications
+- Ask about event curation workflow details
+- Clarify friend discovery and connection methods
+- Request feedback on swipe animation performance
+- Explain trade-offs for different privacy implementations
+
