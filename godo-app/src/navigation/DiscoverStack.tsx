@@ -26,8 +26,7 @@ export default function DiscoverStack() {
         name="DiscoverFeed" 
         component={DiscoverScreen}
         options={{ 
-          title: 'Discover',
-          headerRight: () => null,
+          headerShown: false,
         }}
       />
       <Stack.Screen 

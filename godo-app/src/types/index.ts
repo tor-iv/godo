@@ -13,30 +13,36 @@ export interface Event {
   };
   category: EventCategory;
   imageUrl: string;
-  ticketUrl?: string;
-  price?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  capacity?: number;
-  attendeeCount?: number;
+  ticketUrl?: string | undefined;
+  price?:
+    | {
+        min: number;
+        max: number;
+        currency: string;
+      }
+    | undefined;
+  capacity?: number | undefined;
+  attendeeCount?: number | undefined;
   source: EventSource;
   externalId: string;
-  sourceUrl?: string;
+  sourceUrl?: string | undefined;
   lastUpdated: Date;
   isActive: boolean;
-  tags?: string[];
-  venue?: {
-    id?: string;
-    website?: string;
-    phone?: string;
-    socialMedia?: {
-      instagram?: string;
-      facebook?: string;
-      twitter?: string;
-    };
-  };
+  tags?: string[] | undefined;
+  venue?:
+    | {
+        id?: string | undefined;
+        website?: string | undefined;
+        phone?: string | undefined;
+        socialMedia?:
+          | {
+              instagram?: string | undefined;
+              facebook?: string | undefined;
+              twitter?: string | undefined;
+            }
+          | undefined;
+      }
+    | undefined;
 }
 
 export enum EventCategory {
@@ -49,11 +55,23 @@ export enum EventCategory {
   PROFESSIONAL = 'professional',
 }
 
+export enum EventSource {
+  EVENTBRITE = 'eventbrite',
+  RESY = 'resy',
+  OPENTABLE = 'opentable',
+  PARTIFUL = 'partiful',
+  NYC_PARKS = 'nyc_parks',
+  NYC_CULTURAL = 'nyc_cultural',
+  MEETUP = 'meetup',
+  FACEBOOK_EVENTS = 'facebook_events',
+  MANUAL = 'manual',
+}
+
 export enum SwipeDirection {
-  RIGHT = 'private_calendar',
-  LEFT = 'not_interested',
-  UP = 'public_calendar',
-  DOWN = 'save_later',
+  RIGHT = 'RIGHT',
+  LEFT = 'LEFT',
+  UP = 'UP',
+  DOWN = 'DOWN',
 }
 
 export enum FeedMode {
@@ -91,4 +109,43 @@ export interface SwipeAction {
   eventId: string;
   direction: SwipeDirection;
   timestamp: Date;
+}
+
+export interface EventAPIParams {
+  location?: {
+    lat: number;
+    lng: number;
+    radius?: number;
+  };
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  categories?: EventCategory[];
+  limit?: number;
+  offset?: number;
+  search?: string;
+}
+
+export interface EventAPIResponse {
+  events: Event[];
+  totalCount: number;
+  hasMore: boolean;
+  nextCursor?: string | undefined;
+}
+
+export interface EventAPIAdapter {
+  source: EventSource;
+  fetchEvents(params: EventAPIParams): Promise<EventAPIResponse>;
+  transformEvent(externalEvent: any): Event;
+  validateEvent(event: Event): boolean;
+}
+
+export interface EventSyncResult {
+  source: EventSource;
+  totalFetched: number;
+  newEvents: number;
+  updatedEvents: number;
+  errors: string[];
+  lastSync: Date;
 }

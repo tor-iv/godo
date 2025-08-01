@@ -26,7 +26,7 @@ export default function MyEventsStack() {
       <Stack.Screen 
         name="Calendar" 
         component={CalendarScreen}
-        options={{ title: 'My Events' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen 
         name="SavedEvents" 
