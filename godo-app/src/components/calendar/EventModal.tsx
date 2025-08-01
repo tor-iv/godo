@@ -12,7 +12,7 @@ import {
 import { format } from 'date-fns';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
 import { Event, EventCategory } from '../../types';
-import { getCategoryEmoji } from '../../data/mockEvents';
+import { getCategoryIcon } from '../../data/mockEvents';
 
 interface EventModalProps {
   event: Event | null;
@@ -23,7 +23,7 @@ interface EventModalProps {
 const getCategoryColor = (category: EventCategory): string => {
   switch (category) {
     case EventCategory.NETWORKING:
-      return COLORS.PRIMARY_PURPLE;
+      return COLORS.SECONDARY;
     case EventCategory.CULTURE:
       return '#EC4899';
     case EventCategory.FITNESS:
@@ -31,20 +31,20 @@ const getCategoryColor = (category: EventCategory): string => {
     case EventCategory.FOOD:
       return COLORS.WARNING;
     case EventCategory.NIGHTLIFE:
-      return COLORS.DARK_PURPLE;
+      return COLORS.ACCENT;
     case EventCategory.OUTDOOR:
       return '#10B981';
     case EventCategory.PROFESSIONAL:
       return '#3B82F6';
     default:
-      return COLORS.SECONDARY_PURPLE;
+      return COLORS.PRIMARY;
   }
 };
 
 const ActionButton = ({ 
   title, 
   onPress, 
-  color = COLORS.PRIMARY_PURPLE, 
+  color = COLORS.SECONDARY, 
   outline = false 
 }: {
   title: string;
@@ -115,8 +115,8 @@ export default function EventModal({ event, visible, onClose }: EventModalProps)
                 </TouchableOpacity>
                 
                 <View style={styles.headerContent}>
-                  <Text style={styles.categoryEmoji}>
-                    {getCategoryEmoji(event.category)}
+                  <Text style={styles.categoryLabel}>
+                    {event.category.charAt(0).toUpperCase()}
                   </Text>
                   <View style={styles.categoryBadge}>
                     <Text style={styles.categoryText}>
@@ -135,7 +135,7 @@ export default function EventModal({ event, visible, onClose }: EventModalProps)
 
                 <View style={styles.infoSection}>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoIcon}>📅</Text>
+                    <View style={styles.iconContainer}><Text style={styles.infoIconText}>Date</Text></View>
                     <View style={styles.infoContent}>
                       <Text style={styles.infoLabel}>Date & Time</Text>
                       <Text style={styles.infoValue}>
@@ -148,7 +148,7 @@ export default function EventModal({ event, visible, onClose }: EventModalProps)
                   </View>
 
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoIcon}>📍</Text>
+                    <View style={styles.iconContainer}><Text style={styles.infoIconText}>Location</Text></View>
                     <View style={styles.infoContent}>
                       <Text style={styles.infoLabel}>Location</Text>
                       <Text style={styles.infoValue}>{event.location.name}</Text>
@@ -158,7 +158,7 @@ export default function EventModal({ event, visible, onClose }: EventModalProps)
 
                   {event.attendeeCount && (
                     <View style={styles.infoRow}>
-                      <Text style={styles.infoIcon}>👥</Text>
+                      <View style={styles.iconContainer}><Text style={styles.infoIconText}>People</Text></View>
                       <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Attendance</Text>
                         <Text style={styles.infoValue}>
@@ -264,8 +264,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.SM,
   },
-  categoryEmoji: {
-    fontSize: 32,
+  categoryLabel: {
+    fontSize: FONT_SIZES.LG,
+    fontWeight: 'bold',
+    color: COLORS.WHITE,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    textAlign: 'center',
+    lineHeight: 40,
     marginBottom: SPACING.SM,
   },
   categoryBadge: {
@@ -299,7 +307,7 @@ const styles = StyleSheet.create({
   eventPrice: {
     fontSize: FONT_SIZES.LG,
     fontWeight: '600',
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
   },
   infoSection: {
     paddingVertical: SPACING.MD,
@@ -308,6 +316,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: SPACING.MD,
+  },
+  iconContainer: {
+    marginRight: SPACING.SM,
+    marginTop: 2,
+  },
+  infoIconText: {
+    fontSize: FONT_SIZES.XS,
+    color: COLORS.SECONDARY,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   infoIcon: {
     fontSize: FONT_SIZES.LG,
@@ -360,14 +379,14 @@ const styles = StyleSheet.create({
     gap: SPACING.XS,
   },
   tag: {
-    backgroundColor: COLORS.LIGHT_PURPLE,
+    backgroundColor: COLORS.LIGHT_GRAY,
     paddingHorizontal: SPACING.SM,
     paddingVertical: SPACING.XS,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
   },
   tagText: {
     fontSize: FONT_SIZES.XS,
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
     fontWeight: '500',
   },
   actionSection: {

@@ -25,11 +25,11 @@ export default function TabNavigator() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: COLORS.PRIMARY_PURPLE,
+        tabBarActiveTintColor: COLORS.SECONDARY,
         tabBarInactiveTintColor: COLORS.TEXT_LIGHT,
         tabBarStyle: {
           backgroundColor: COLORS.WHITE,
-          borderTopColor: COLORS.LIGHT_PURPLE,
+          borderTopColor: COLORS.LIGHT_GRAY,
           paddingTop: 8,
           paddingBottom: 8,
           height: 60,

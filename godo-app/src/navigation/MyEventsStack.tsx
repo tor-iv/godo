@@ -14,7 +14,7 @@ export default function MyEventsStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: COLORS.PRIMARY_PURPLE,
+          backgroundColor: COLORS.SECONDARY,
         },
         headerTintColor: COLORS.WHITE,
         headerTitleStyle: {

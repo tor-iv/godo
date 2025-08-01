@@ -13,7 +13,7 @@ export default function DiscoverStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: COLORS.PRIMARY_PURPLE,
+          backgroundColor: COLORS.SECONDARY,
         },
         headerTintColor: COLORS.WHITE,
         headerTitleStyle: {

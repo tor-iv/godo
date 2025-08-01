@@ -19,6 +19,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     fontSize: FONT_SIZES.LG,
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
   },
 });

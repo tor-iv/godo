@@ -17,7 +17,7 @@ import {
 } from 'date-fns';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
 import { Event, EventCategory } from '../../types';
-import { getCategoryEmoji } from '../../data/mockEvents';
+import { getCategoryIcon } from '../../data/mockEvents';
 
 interface DayViewProps {
   events: Event[];
@@ -34,7 +34,7 @@ const EVENT_MARGIN = 2;
 const getCategoryColor = (category: EventCategory): string => {
   switch (category) {
     case EventCategory.NETWORKING:
-      return COLORS.PRIMARY_PURPLE;
+      return COLORS.SECONDARY;
     case EventCategory.CULTURE:
       return '#EC4899';
     case EventCategory.FITNESS:
@@ -42,13 +42,13 @@ const getCategoryColor = (category: EventCategory): string => {
     case EventCategory.FOOD:
       return COLORS.WARNING;
     case EventCategory.NIGHTLIFE:
-      return COLORS.DARK_PURPLE;
+      return COLORS.ACCENT;
     case EventCategory.OUTDOOR:
       return '#10B981';
     case EventCategory.PROFESSIONAL:
       return '#3B82F6';
     default:
-      return COLORS.SECONDARY_PURPLE;
+      return COLORS.PRIMARY;
   }
 };
 
@@ -207,8 +207,8 @@ export default function DayView({ events, selectedDate, onEventPress }: DayViewP
               >
                 <View style={styles.eventContent}>
                   <View style={styles.eventHeader}>
-                    <Text style={styles.eventEmoji}>
-                      {getCategoryEmoji(event.category)}
+                    <Text style={styles.categoryLabel}>
+                      {event.category.charAt(0).toUpperCase()}
                     </Text>
                     <Text style={styles.eventTime}>
                       {format(new Date(event.date), 'h:mm a')}
@@ -220,7 +220,7 @@ export default function DayView({ events, selectedDate, onEventPress }: DayViewP
                   </Text>
                   
                   <Text style={styles.eventLocation} numberOfLines={2}>
-                    📍 {event.location.name}
+                    at {event.location.name}
                   </Text>
                   
                   {event.price && (
@@ -274,9 +274,9 @@ const styles = StyleSheet.create({
   },
   todayIndicator: {
     fontSize: FONT_SIZES.SM,
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
     fontWeight: '600',
-    backgroundColor: COLORS.LIGHT_PURPLE,
+    backgroundColor: COLORS.LIGHT_GRAY,
     paddingHorizontal: SPACING.SM,
     paddingVertical: SPACING.XS,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
@@ -354,8 +354,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.XS,
   },
-  eventEmoji: {
-    fontSize: FONT_SIZES.SM,
+  categoryLabel: {
+    fontSize: FONT_SIZES.XS,
+    fontWeight: 'bold',
+    color: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   eventTime: {
     fontSize: FONT_SIZES.XS,

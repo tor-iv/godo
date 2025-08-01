@@ -173,22 +173,22 @@ export const mockEvents: Event[] = [
   },
 ];
 
-export const getCategoryEmoji = (category: EventCategory): string => {
+export const getCategoryIcon = (category: EventCategory): string => {
   switch (category) {
     case EventCategory.NIGHTLIFE:
-      return '🌙';
+      return 'NIGHT';
     case EventCategory.CULTURE:
-      return '🎨';
+      return 'ART';
     case EventCategory.FITNESS:
-      return '💪';
+      return 'FIT';
     case EventCategory.FOOD:
-      return '🍴';
+      return 'FOOD';
     case EventCategory.PROFESSIONAL:
-      return '💼';
+      return 'WORK';
     case EventCategory.OUTDOOR:
-      return '🌲';
+      return 'OUT';
     default:
-      return '🎉';
+      return 'EVENT';
   }
 };
 

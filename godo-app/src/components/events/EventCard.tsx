@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, ImageBackground } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Event, EventCategory } from '../../types';
 import Typography from '../common/Typography';
 import Badge from '../common/Badge';
-import { getCategoryEmoji, formatEventTime } from '../../data/mockEvents';
+import { getCategoryIcon, formatEventTime } from '../../data/mockEvents';
 import {
   getResponsiveDimensions,
   getResponsiveSpacing,
@@ -43,15 +42,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, style }) => {
           style={styles.imageBackground}
           imageStyle={styles.image}
         >
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.7)']}
-            style={styles.gradient}
-          >
+          <View style={styles.overlay}>
             <View style={styles.content}>
               {/* Category badge */}
               <View style={styles.topRow}>
                 <Badge
-                  text={`${getCategoryEmoji(event.category)} ${event.category.toUpperCase()}`}
+                  text={event.category.toUpperCase()}
                   variant="category"
                   backgroundColor="rgba(255,255,255,0.9)"
                   color="#6B46C1"
@@ -122,7 +118,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, style }) => {
                 </View>
               </View>
             </View>
-          </LinearGradient>
+          </View>
         </ImageBackground>
       </View>
     </View>
@@ -155,8 +151,9 @@ const styles = StyleSheet.create({
   image: {
     borderRadius: 16,
   },
-  gradient: {
+  overlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'space-between',
   },
   content: {

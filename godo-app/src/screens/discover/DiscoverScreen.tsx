@@ -30,7 +30,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
 import { SwipeDirection, FeedMode, Event } from '../../types';
-import { getCategoryEmoji, formatEventTime } from '../../data/mockEvents';
+import { getCategoryIcon, formatEventTime } from '../../data/mockEvents';
 import {
   useApp,
   useCurrentEvent,
@@ -198,10 +198,10 @@ const ReanimatedEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }
     if (!swipeDirection) return null;
     
     const overlays = {
-      [SwipeDirection.RIGHT]: { color: 'rgba(139, 92, 246, 0.85)', text: '💜 PRIVATE', icon: '→' },
-      [SwipeDirection.LEFT]: { color: 'rgba(107, 114, 128, 0.85)', text: '👎 PASS', icon: '←' },
-      [SwipeDirection.UP]: { color: 'rgba(34, 197, 94, 0.85)', text: '🌟 PUBLIC', icon: '↑' },
-      [SwipeDirection.DOWN]: { color: 'rgba(249, 115, 22, 0.85)', text: '📌 SAVE', icon: '↓' },
+      [SwipeDirection.RIGHT]: { color: 'rgba(74, 85, 104, 0.85)', text: 'PRIVATE', icon: '→' },
+      [SwipeDirection.LEFT]: { color: 'rgba(113, 128, 150, 0.85)', text: 'PASS', icon: '←' },
+      [SwipeDirection.UP]: { color: 'rgba(72, 187, 120, 0.85)', text: 'PUBLIC', icon: '↑' },
+      [SwipeDirection.DOWN]: { color: 'rgba(237, 137, 54, 0.85)', text: 'SAVE', icon: '↓' },
     };
     
     return overlays[swipeDirection];
@@ -239,7 +239,6 @@ const ReanimatedEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }
             <View style={styles.cardHeader}>
               <View style={styles.categoryBadge}>
                 <Text style={styles.categoryText}>
-                  {getCategoryEmoji(event.category)}{' '}
                   {event.category.toUpperCase()}
                 </Text>
               </View>
@@ -248,7 +247,7 @@ const ReanimatedEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }
             <View style={styles.cardFooter}>
               <Text style={styles.dateText}>{formatEventTime(event.date)}</Text>
               <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+              <Text style={styles.eventLocation}>at {event.location.name}</Text>
               <Text style={styles.eventPrice}>{priceText}</Text>
             </View>
           </View>
@@ -372,10 +371,10 @@ const FallbackEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }) 
     if (!swipeDirection) return null;
     
     const overlays = {
-      [SwipeDirection.RIGHT]: { color: 'rgba(139, 92, 246, 0.85)', text: '💜 PRIVATE', icon: '→' },
-      [SwipeDirection.LEFT]: { color: 'rgba(107, 114, 128, 0.85)', text: '👎 PASS', icon: '←' },
-      [SwipeDirection.UP]: { color: 'rgba(34, 197, 94, 0.85)', text: '🌟 PUBLIC', icon: '↑' },
-      [SwipeDirection.DOWN]: { color: 'rgba(249, 115, 22, 0.85)', text: '📌 SAVE', icon: '↓' },
+      [SwipeDirection.RIGHT]: { color: 'rgba(74, 85, 104, 0.85)', text: 'PRIVATE', icon: '→' },
+      [SwipeDirection.LEFT]: { color: 'rgba(113, 128, 150, 0.85)', text: 'PASS', icon: '←' },
+      [SwipeDirection.UP]: { color: 'rgba(72, 187, 120, 0.85)', text: 'PUBLIC', icon: '↑' },
+      [SwipeDirection.DOWN]: { color: 'rgba(237, 137, 54, 0.85)', text: 'SAVE', icon: '↓' },
     };
     
     return overlays[swipeDirection];
@@ -425,7 +424,6 @@ const FallbackEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }) 
             <View style={styles.cardHeader}>
               <View style={styles.categoryBadge}>
                 <Text style={styles.categoryText}>
-                  {getCategoryEmoji(event.category)}{' '}
                   {event.category.toUpperCase()}
                 </Text>
               </View>
@@ -434,7 +432,7 @@ const FallbackEventCard: React.FC<EventCardProps> = ({ event, onSwipe, style }) 
             <View style={styles.cardFooter}>
               <Text style={styles.dateText}>{formatEventTime(event.date)}</Text>
               <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+              <Text style={styles.eventLocation}>at {event.location.name}</Text>
               <Text style={styles.eventPrice}>{priceText}</Text>
             </View>
           </View>
@@ -513,7 +511,7 @@ export default function DiscoverScreen() {
                       styles.toggleTextActive,
                   ]}
                 >
-                  🔥 Now
+                  Live
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -531,7 +529,7 @@ export default function DiscoverScreen() {
                       styles.toggleTextActive,
                   ]}
                 >
-                  📅 Later
+                  Upcoming
                 </Text>
               </TouchableOpacity>
             </View>
@@ -642,7 +640,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   toggleTextActive: {
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
   },
   content: {
     flex: 1,
@@ -699,7 +697,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: FONT_SIZES.XS,
     fontWeight: 'bold',
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
     letterSpacing: 0.5,
   },
   dateText: {
@@ -740,7 +738,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.XS,
   },
   instruction: {
-    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    backgroundColor: 'rgba(74, 85, 104, 0.9)',
     paddingHorizontal: SPACING.SM,
     paddingVertical: SPACING.XS - 2,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,

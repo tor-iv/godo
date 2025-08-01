@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
-import { getCategoryEmoji, formatEventTime } from '../../data/mockEvents';
+import { getCategoryIcon, formatEventTime } from '../../data/mockEvents';
 import { useEventsByCategory } from '../../context/AppContext';
 import { Event } from '../../types';
 import {
@@ -41,17 +41,17 @@ const EventItem = ({ event }: { event: Event }) => {
           <View
             style={[
               styles.categoryBadge,
-              { backgroundColor: COLORS.LIGHT_PURPLE },
+              { backgroundColor: COLORS.LIGHT_GRAY },
             ]}
           >
             <Text style={styles.categoryText}>
-              {getCategoryEmoji(event.category)} {event.category.toUpperCase()}
+              {event.category.toUpperCase()}
             </Text>
           </View>
         </View>
         <Text style={styles.eventTitle}>{event.title}</Text>
         <Text style={styles.eventDate}>{formatEventTime(event.date)}</Text>
-        <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+        <Text style={styles.eventLocation}>at {event.location.name}</Text>
         <Text style={styles.eventPrice}>{priceText}</Text>
       </View>
       <View style={styles.eventActions}>
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.SMALL,
   },
   tabActive: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
     ...SHADOWS.MEDIUM,
   },
   tabText: {
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: FONT_SIZES.XS - 1,
     fontWeight: 'bold',
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
     letterSpacing: 0.3,
   },
   eventTitle: {
@@ -372,14 +372,14 @@ const styles = StyleSheet.create({
   eventPrice: {
     fontSize: FONT_SIZES.SM,
     fontWeight: '600',
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
   },
   eventActions: {
     marginLeft: SPACING.SM,
     justifyContent: 'center',
   },
   actionButton: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
     paddingHorizontal: SPACING.SM,
     paddingVertical: SPACING.XS,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,

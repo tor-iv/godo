@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 32;
@@ -11,55 +10,20 @@ const LoadingCard: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.card}>
         {/* Image placeholder */}
-        <View style={styles.imagePlaceholder}>
-          <LinearGradient
-            colors={['#F3F4F6', '#E5E7EB', '#F3F4F6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.shimmer}
-          />
-        </View>
+        <View style={styles.imagePlaceholder} />
 
         {/* Content placeholder */}
         <View style={styles.content}>
           {/* Title placeholder */}
-          <View style={styles.titlePlaceholder}>
-            <LinearGradient
-              colors={['#F3F4F6', '#E5E7EB', '#F3F4F6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.shimmer}
-            />
-          </View>
+          <View style={styles.titlePlaceholder} />
 
           {/* Description placeholder */}
-          <View style={styles.descriptionPlaceholder}>
-            <LinearGradient
-              colors={['#F3F4F6', '#E5E7EB', '#F3F4F6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.shimmer}
-            />
-          </View>
+          <View style={styles.descriptionPlaceholder} />
 
           {/* Meta info placeholder */}
           <View style={styles.metaContainer}>
-            <View style={styles.badgePlaceholder}>
-              <LinearGradient
-                colors={['#F3F4F6', '#E5E7EB', '#F3F4F6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.shimmer}
-              />
-            </View>
-            <View style={styles.pricePlaceholder}>
-              <LinearGradient
-                colors={['#F3F4F6', '#E5E7EB', '#F3F4F6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.shimmer}
-              />
-            </View>
+            <View style={styles.badgePlaceholder} />
+            <View style={styles.pricePlaceholder} />
           </View>
         </View>
       </View>
@@ -126,9 +90,6 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#F3F4F6',
     borderRadius: 4,
-  },
-  shimmer: {
-    flex: 1,
   },
 });
 

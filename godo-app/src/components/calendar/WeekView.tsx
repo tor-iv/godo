@@ -20,7 +20,7 @@ import {
 } from 'date-fns';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
 import { Event, EventCategory } from '../../types';
-import { getCategoryEmoji } from '../../data/mockEvents';
+import { getCategoryIcon } from '../../data/mockEvents';
 
 interface WeekViewProps {
   events: Event[];
@@ -37,7 +37,7 @@ const DAY_WIDTH = (screenWidth - 60) / 7; // Account for time column
 const getCategoryColor = (category: EventCategory): string => {
   switch (category) {
     case EventCategory.NETWORKING:
-      return COLORS.PRIMARY_PURPLE;
+      return COLORS.SECONDARY;
     case EventCategory.CULTURE:
       return '#EC4899';
     case EventCategory.FITNESS:
@@ -45,13 +45,13 @@ const getCategoryColor = (category: EventCategory): string => {
     case EventCategory.FOOD:
       return COLORS.WARNING;
     case EventCategory.NIGHTLIFE:
-      return COLORS.DARK_PURPLE;
+      return COLORS.ACCENT;
     case EventCategory.OUTDOOR:
       return '#10B981';
     case EventCategory.PROFESSIONAL:
       return '#3B82F6';
     default:
-      return COLORS.SECONDARY_PURPLE;
+      return COLORS.PRIMARY;
   }
 };
 
@@ -147,7 +147,7 @@ const DayColumn = ({
               onPress={() => onEventPress?.(event)}
             >
               <Text style={styles.eventBlockTitle} numberOfLines={2}>
-                {getCategoryEmoji(event.category)} {event.title}
+                {event.title}
               </Text>
               <Text style={styles.eventBlockTime}>
                 {format(new Date(event.date), 'h:mm a')}
@@ -268,10 +268,10 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
   },
   dayHeaderButtonSelected: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
   },
   dayHeaderButtonToday: {
-    backgroundColor: COLORS.LIGHT_PURPLE,
+    backgroundColor: COLORS.LIGHT_GRAY,
   },
   dayHeaderButtonText: {
     fontSize: FONT_SIZES.XS,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   dayHeaderButtonTextToday: {
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
   },
   dayHeaderButtonNumber: {
     fontSize: FONT_SIZES.SM,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   dayHeaderButtonNumberToday: {
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
   },
   scrollView: {
     flex: 1,
@@ -333,10 +333,10 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.BORDER_LIGHT,
   },
   dayHeaderSelected: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
   },
   dayHeaderToday: {
-    backgroundColor: COLORS.LIGHT_PURPLE,
+    backgroundColor: COLORS.LIGHT_GRAY,
   },
   dayHeaderText: {
     fontSize: FONT_SIZES.XS,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   dayHeaderTextToday: {
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
   },
   dayNumberText: {
     fontSize: FONT_SIZES.SM,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   dayNumberTextToday: {
-    color: COLORS.DARK_PURPLE,
+    color: COLORS.ACCENT,
   },
   dayContent: {
     flex: 1,

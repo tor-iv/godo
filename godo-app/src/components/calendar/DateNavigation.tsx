@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.SM,
   },
   todayButton: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
     paddingHorizontal: SPACING.SM,
     paddingVertical: SPACING.XS,
     borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: FONT_SIZES.LG,
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
     fontWeight: 'bold',
   },
 });

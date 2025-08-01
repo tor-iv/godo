@@ -22,10 +22,10 @@ interface ViewOption {
 }
 
 const viewOptions: ViewOption[] = [
-  { key: 'month', label: 'Month', icon: '📅' },
-  { key: 'week', label: 'Week', icon: '📊' },
-  { key: 'day', label: 'Day', icon: '🗓️' },
-  { key: 'agenda', label: 'List', icon: '📋' },
+  { key: 'month', label: 'Month', icon: 'M' },
+  { key: 'week', label: 'Week', icon: 'W' },
+  { key: 'day', label: 'Day', icon: 'D' },
+  { key: 'agenda', label: 'List', icon: 'L' },
 ];
 
 export default function CalendarViewToggle({ 
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.SMALL,
   },
   viewButtonActive: {
-    backgroundColor: COLORS.PRIMARY_PURPLE,
+    backgroundColor: COLORS.SECONDARY,
     ...SHADOWS.MEDIUM,
   },
   viewIcon: {

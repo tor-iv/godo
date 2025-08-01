@@ -4,7 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
 import { Event, EventCategory } from '../../types';
-import { getCategoryEmoji } from '../../data/mockEvents';
+import { getCategoryIcon } from '../../data/mockEvents';
 
 interface CalendarGridProps {
   events: Event[];
@@ -28,7 +28,7 @@ interface MarkedDate {
 const getCategoryColor = (category: EventCategory): string => {
   switch (category) {
     case EventCategory.NETWORKING:
-      return COLORS.PRIMARY_PURPLE;
+      return COLORS.SECONDARY;
     case EventCategory.CULTURE:
       return '#EC4899';
     case EventCategory.FITNESS:
@@ -36,13 +36,13 @@ const getCategoryColor = (category: EventCategory): string => {
     case EventCategory.FOOD:
       return COLORS.WARNING;
     case EventCategory.NIGHTLIFE:
-      return COLORS.DARK_PURPLE;
+      return COLORS.ACCENT;
     case EventCategory.OUTDOOR:
       return '#10B981';
     case EventCategory.PROFESSIONAL:
       return '#3B82F6';
     default:
-      return COLORS.SECONDARY_PURPLE;
+      return COLORS.PRIMARY;
   }
 };
 
@@ -114,7 +114,7 @@ export default function CalendarGrid({
     markedDates[selectedDate] = {
       ...markedDates[selectedDate],
       selected: true,
-      selectedColor: COLORS.PRIMARY_PURPLE,
+      selectedColor: COLORS.SECONDARY,
     };
   }
 
@@ -131,16 +131,16 @@ export default function CalendarGrid({
           backgroundColor: COLORS.WHITE,
           calendarBackground: COLORS.WHITE,
           textSectionTitleColor: COLORS.TEXT_MEDIUM,
-          selectedDayBackgroundColor: COLORS.PRIMARY_PURPLE,
+          selectedDayBackgroundColor: COLORS.SECONDARY,
           selectedDayTextColor: COLORS.WHITE,
-          todayTextColor: COLORS.PRIMARY_PURPLE,
+          todayTextColor: COLORS.SECONDARY,
           dayTextColor: COLORS.TEXT_DARK,
           textDisabledColor: COLORS.TEXT_MUTED,
-          dotColor: COLORS.PRIMARY_PURPLE,
+          dotColor: COLORS.SECONDARY,
           selectedDotColor: COLORS.WHITE,
-          arrowColor: COLORS.PRIMARY_PURPLE,
+          arrowColor: COLORS.SECONDARY,
           monthTextColor: COLORS.TEXT_DARK,
-          indicatorColor: COLORS.PRIMARY_PURPLE,
+          indicatorColor: COLORS.SECONDARY,
           textDayFontFamily: 'System',
           textMonthFontFamily: 'System',
           textDayHeaderFontFamily: 'System',
@@ -173,8 +173,8 @@ export default function CalendarGrid({
             >
               <View style={styles.eventInfo}>
                 <View style={styles.eventHeader}>
-                  <Text style={styles.eventEmoji}>
-                    {getCategoryEmoji(event.category)}
+                  <Text style={styles.categoryLabel}>
+                    {event.category.charAt(0).toUpperCase()}
                   </Text>
                   <View
                     style={[
@@ -190,7 +190,7 @@ export default function CalendarGrid({
                   {format(new Date(event.date), 'h:mm a')}
                 </Text>
                 <Text style={styles.eventLocation} numberOfLines={1}>
-                  📍 {event.location.name}
+                  at {event.location.name}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -267,8 +267,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.XS,
   },
-  eventEmoji: {
-    fontSize: FONT_SIZES.SM,
+  categoryLabel: {
+    fontSize: FONT_SIZES.XS,
+    fontWeight: 'bold',
+    color: COLORS.WHITE,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    textAlign: 'center',
+    lineHeight: 20,
     marginRight: SPACING.XS,
   },
   categoryDot: {
@@ -284,7 +292,7 @@ const styles = StyleSheet.create({
   },
   eventTime: {
     fontSize: FONT_SIZES.XS,
-    color: COLORS.PRIMARY_PURPLE,
+    color: COLORS.SECONDARY,
     fontWeight: '500',
     marginBottom: 2,
   },

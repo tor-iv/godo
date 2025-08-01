@@ -40,37 +40,37 @@ const SwipeOverlay: React.FC<SwipeOverlayProps> = ({ direction, progress }) => {
     switch (direction) {
       case SwipeDirection.RIGHT:
         return {
-          backgroundColor: 'rgba(107, 70, 193, 0.9)', // Purple
-          icon: 'checkmark-circle' as keyof typeof Ionicons.glyphMap,
-          text: 'GOING!',
+          backgroundColor: 'rgba(74, 85, 104, 0.9)',
+          icon: 'calendar' as keyof typeof Ionicons.glyphMap,
+          text: 'ADDED TO CALENDAR',
           color: '#FFFFFF',
         };
       case SwipeDirection.LEFT:
         return {
-          backgroundColor: 'rgba(107, 114, 128, 0.9)', // Gray
+          backgroundColor: 'rgba(113, 128, 150, 0.9)',
           icon: 'close-circle' as keyof typeof Ionicons.glyphMap,
-          text: 'NOPE',
+          text: 'PASS',
           color: '#FFFFFF',
         };
       case SwipeDirection.UP:
         return {
-          backgroundColor: 'rgba(59, 130, 246, 0.9)', // Blue
-          icon: 'bookmark' as keyof typeof Ionicons.glyphMap,
-          text: 'SAVED',
+          backgroundColor: 'rgba(72, 187, 120, 0.9)',
+          icon: 'people' as keyof typeof Ionicons.glyphMap,
+          text: 'PUBLIC CALENDAR',
           color: '#FFFFFF',
         };
       case SwipeDirection.DOWN:
         return {
-          backgroundColor: 'rgba(239, 68, 68, 0.9)', // Red
-          icon: 'heart' as keyof typeof Ionicons.glyphMap,
-          text: 'LIKED',
+          backgroundColor: 'rgba(237, 137, 54, 0.9)',
+          icon: 'bookmark' as keyof typeof Ionicons.glyphMap,
+          text: 'SAVED FOR LATER',
           color: '#FFFFFF',
         };
       default:
         return {
-          backgroundColor: 'rgba(107, 70, 193, 0.9)',
-          icon: 'checkmark-circle' as keyof typeof Ionicons.glyphMap,
-          text: 'GOING!',
+          backgroundColor: 'rgba(74, 85, 104, 0.9)',
+          icon: 'calendar' as keyof typeof Ionicons.glyphMap,
+          text: 'ADDED TO CALENDAR',
           color: '#FFFFFF',
         };
     }

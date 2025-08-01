@@ -13,7 +13,7 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AppProvider>
           <NavigationContainer>
-            <StatusBar style="light" backgroundColor={COLORS.PRIMARY_PURPLE} />
+            <StatusBar style="light" backgroundColor={COLORS.SECONDARY} />
             <TabNavigator />
           </NavigationContainer>
         </AppProvider>

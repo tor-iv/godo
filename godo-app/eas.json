@@ -5,14 +5,51 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "staging"
+      },
+      "ios": {
+        "bundleIdentifier": "com.godo.app.staging"
+      },
+      "android": {
+        "package": "com.godo.app.staging"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "preview"
+      }
     },
-    "production": {}
+    "production": {
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "ios": {
+        "bundleIdentifier": "com.godo.app"
+      },
+      "android": {
+        "package": "com.godo.app"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "bundleIdentifier": "com.godo.app",
+        "sku": "godo-app-ios"
+      },
+      "android": {
+        "package": "com.godo.app",
+        "track": "production"
+      }
+    }
   }
 }
