@@ -99,11 +99,93 @@ services:
     networks:
       - godo-network
 
+  # Python FastAPI Backend
+  godo-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: godo-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=postgresql://postgres:your-super-secret-and-long-postgres-password@supabase-db:5432/postgres
+      - SUPABASE_URL=http://supabase-api:9999
+      - SUPABASE_KEY=your-supabase-anon-key
+      - SUPABASE_SERVICE_KEY=your-supabase-service-key
+      - JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend-cache:/tmp
+    depends_on:
+      - supabase-db
+      - supabase-api
+      - redis
+    networks:
+      - godo-network
+    restart: unless-stopped
+
+  # Celery Worker for Background Jobs
+  godo-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: godo-worker
+    command: celery -A app.celery.celery_app worker --loglevel=info
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=postgresql://postgres:your-super-secret-and-long-postgres-password@supabase-db:5432/postgres
+      - SUPABASE_URL=http://supabase-api:9999
+      - SUPABASE_KEY=your-supabase-anon-key
+      - SUPABASE_SERVICE_KEY=your-supabase-service-key
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend-cache:/tmp
+    depends_on:
+      - supabase-db
+      - redis
+    networks:
+      - godo-network
+    restart: unless-stopped
+
+  # Celery Beat for Scheduled Tasks
+  godo-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: godo-beat
+    command: celery -A app.celery.celery_app beat --loglevel=info
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=postgresql://postgres:your-super-secret-and-long-postgres-password@supabase-db:5432/postgres
+      - SUPABASE_URL=http://supabase-api:9999
+      - SUPABASE_KEY=your-supabase-anon-key
+      - SUPABASE_SERVICE_KEY=your-supabase-service-key
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend-cache:/tmp
+    depends_on:
+      - supabase-db
+      - redis
+    networks:
+      - godo-network
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:
   npm-cache:
   expo-cache:
+  backend-cache:
 
 networks:
   godo-network:
