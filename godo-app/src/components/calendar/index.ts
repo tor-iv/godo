@@ -1,7 +1,8 @@
-export { default as CalendarGrid } from './CalendarGrid';
-export { default as WeekView } from './WeekView';
-export { default as DayView } from './DayView';
-export { default as EventModal } from './EventModal';
-export { default as CalendarViewToggle } from './CalendarViewToggle';
-export { default as DateNavigation } from './DateNavigation';
-export type { CalendarViewType } from './CalendarViewToggle';
+export { CalendarView } from './CalendarView';
+export { ListView } from './ListView';
+export { WeekView } from './WeekView';
+export { DayView } from './DayView';
+export { AgendaView } from './AgendaView';
+export { ViewToggle, ViewType } from './ViewToggle';
+export { DateNavigation } from './DateNavigation';
+export { EventModal } from './EventModal';

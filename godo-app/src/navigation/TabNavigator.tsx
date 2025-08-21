@@ -1,56 +1,72 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
-import { RootTabParamList } from '../types/navigation';
-import DiscoverStack from './DiscoverStack';
-import MyEventsStack from './MyEventsStack';
+import { Platform } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, layout, spacing, shadows } from '../design';
+import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
+import { MyEventsScreen } from '../screens/calendar/MyEventsScreen';
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+export const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-
+          let iconName: any;
+          
           if (route.name === 'Discover') {
-            iconName = focused ? 'heart' : 'heart-outline';
+            iconName = 'compass';
           } else if (route.name === 'MyEvents') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else {
-            iconName = 'help-outline';
+            iconName = 'calendar';
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          
+          return <Feather name={iconName} size={24} color={color} />;
         },
-        tabBarActiveTintColor: COLORS.SECONDARY,
-        tabBarInactiveTintColor: COLORS.TEXT_LIGHT,
-        tabBarStyle: {
-          backgroundColor: COLORS.WHITE,
-          borderTopColor: COLORS.LIGHT_GRAY,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
-        },
+        tabBarActiveTintColor: colors.primary[500],
+        tabBarInactiveTintColor: colors.neutral[400],
+        headerShown: false,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+          marginTop: spacing[1],
         },
-        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.neutral[0],
+          borderTopWidth: 1,
+          borderTopColor: colors.neutral[100],
+          paddingTop: spacing[2],
+          paddingBottom: insets.bottom,
+          height: layout.tabBarHeight + insets.bottom,
+          ...Platform.select({
+            ios: shadows.medium,
+            android: {
+              elevation: 8,
+              shadowColor: colors.neutral[900],
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+            },
+          }),
+        },
+        tabBarItemStyle: {
+          paddingVertical: spacing[2],
+        },
       })}
     >
       <Tab.Screen 
         name="Discover" 
-        component={DiscoverStack}
+        component={DiscoverScreen} 
         options={{ tabBarLabel: 'Discover' }}
       />
       <Tab.Screen 
         name="MyEvents" 
-        component={MyEventsStack}
+        component={MyEventsScreen} 
         options={{ tabBarLabel: 'My Events' }}
       />
     </Tab.Navigator>
   );
-}
+};

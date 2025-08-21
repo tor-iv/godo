@@ -1,4 +1,4 @@
-export { default as EventCard } from './EventCard';
-export { default as SwipeCard } from './SwipeCard';
-export { default as SwipeOverlay } from './SwipeOverlay';
-export { default as SwipeStack } from './SwipeStack';
+export { EventCard } from './EventCard';
+export { SwipeCard } from './SwipeCard';
+export { SwipeOverlay } from './SwipeOverlay';
+export { SwipeStack } from './SwipeStack';

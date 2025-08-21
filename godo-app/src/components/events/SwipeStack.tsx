@@ -1,118 +1,86 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Event, SwipeDirection } from '../../types';
-import SwipeCard from './SwipeCard';
-import LoadingCard from '../common/LoadingCard';
-import Typography from '../common/Typography';
+import { SwipeCard } from './SwipeCard';
+import { EventService } from '../../services';
 
-const { width } = Dimensions.get('window');
-const VISIBLE_CARDS = 3;
+const { height: screenHeight } = Dimensions.get('window');
 
 interface SwipeStackProps {
   events: Event[];
-  onSwipe: (direction: SwipeDirection, event: Event) => void;
-  onLoadMore?: () => void;
-  loading?: boolean;
-  hasMore?: boolean;
+  onSwipe: (event: Event, direction: SwipeDirection) => void;
+  onEventPress?: (event: Event) => void;
+  onStackEmpty?: () => void;
+  maxVisibleCards?: number;
 }
 
-const SwipeStack: React.FC<SwipeStackProps> = ({
+export const SwipeStack: React.FC<SwipeStackProps> = ({
   events,
   onSwipe,
-  onLoadMore,
-  loading = false,
-  hasMore = true,
+  onEventPress,
+  onStackEmpty,
+  maxVisibleCards = 3,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  const handleSwipe = useCallback(
-    (direction: SwipeDirection, event: Event) => {
-      onSwipe(direction, event);
-      setCurrentIndex((prev) => prev + 1);
-    },
-    [onSwipe]
-  );
-
-  // Load more events when approaching the end
+  const [visibleEvents, setVisibleEvents] = useState<Event[]>([]);
+  
+  // Update visible events when events prop changes or index changes
   useEffect(() => {
-    if (
-      onLoadMore &&
-      hasMore &&
-      !loading &&
-      events.length - currentIndex <= 2
-    ) {
-      onLoadMore();
+    const startIndex = currentIndex;
+    const endIndex = Math.min(currentIndex + maxVisibleCards, events.length);
+    const newVisibleEvents = events.slice(startIndex, endIndex);
+    setVisibleEvents(newVisibleEvents);
+  }, [events, currentIndex, maxVisibleCards]);
+  
+  // Check if stack is empty
+  useEffect(() => {
+    if (currentIndex >= events.length && onStackEmpty) {
+      onStackEmpty();
     }
-  }, [currentIndex, events.length, onLoadMore, hasMore, loading]);
-
-  const getVisibleEvents = () => {
-    return events.slice(currentIndex, currentIndex + VISIBLE_CARDS);
-  };
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Typography variant="h2" color="#6B46C1" style={styles.emptyTitle}>
-        No more events!
-      </Typography>
-      <Typography variant="body" color="#6B7280" style={styles.emptySubtitle}>
-        Check back later for new events or adjust your preferences.
-      </Typography>
-    </View>
-  );
-
-  const renderLoadingCards = () => (
-    <>
-      {Array.from({ length: VISIBLE_CARDS }).map((_, index) => (
-        <View
-          key={`loading-${index}`}
-          style={[
-            styles.cardContainer,
-            {
-              zIndex: VISIBLE_CARDS - index,
-              transform: [
-                { scale: 1 - index * 0.05 },
-                { translateY: -index * 10 },
-              ],
-            },
-          ]}
-        >
-          <LoadingCard />
-        </View>
-      ))}
-    </>
-  );
-
-  if (loading && events.length === 0) {
-    return <View style={styles.container}>{renderLoadingCards()}</View>;
+  }, [currentIndex, events.length, onStackEmpty]);
+  
+  const handleSwipe = useCallback((direction: SwipeDirection) => {
+    const currentEvent = events[currentIndex];
+    if (!currentEvent) return;
+    
+    // Record the swipe in EventService
+    const eventService = EventService.getInstance();
+    eventService.swipeEvent(currentEvent.id, direction);
+    
+    // Call the onSwipe callback
+    onSwipe(currentEvent, direction);
+    
+    // Move to next card
+    setCurrentIndex(prev => prev + 1);
+  }, [currentIndex, events, onSwipe]);
+  
+  const handleEventPress = useCallback((event: Event) => {
+    if (onEventPress) {
+      onEventPress(event);
+    }
+  }, [onEventPress]);
+  
+  // If no events or all events have been swiped
+  if (visibleEvents.length === 0) {
+    return <View style={styles.emptyContainer} />;
   }
-
-  const visibleEvents = getVisibleEvents();
-
-  if (visibleEvents.length === 0 && !loading) {
-    return <View style={styles.container}>{renderEmptyState()}</View>;
-  }
-
+  
   return (
     <View style={styles.container}>
-      {visibleEvents.map((event, index) => (
-        <View key={event.id} style={styles.cardContainer}>
+      {visibleEvents.map((event, index) => {
+        const globalIndex = currentIndex + index;
+        
+        return (
           <SwipeCard
+            key={`${event.id}-${globalIndex}`}
             event={event}
             onSwipe={handleSwipe}
+            onPress={() => handleEventPress(event)}
             index={index}
             totalCards={visibleEvents.length}
           />
-        </View>
-      ))}
-
-      {/* Show loading indicator when loading more */}
-      {loading && visibleEvents.length > 0 && (
-        <View style={styles.loadingIndicator}>
-          <Typography variant="caption" color="#6B7280">
-            Loading more events...
-          </Typography>
-        </View>
-      )}
+        );
+      })}
     </View>
   );
 };
@@ -122,44 +90,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  cardContainer: {
-    position: 'absolute',
-    width: width - 32,
+    paddingVertical: 20,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    textAlign: 'center',
-    marginBottom: 12,
-    fontWeight: '700',
-  },
-  emptySubtitle: {
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  loadingIndicator: {
-    position: 'absolute',
-    bottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    flex: 1,
   },
 });
-
-export default SwipeStack;

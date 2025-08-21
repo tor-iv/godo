@@ -1,225 +1,325 @@
 import React from 'react';
-import { View, StyleSheet, ImageBackground } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Event, EventCategory } from '../../types';
-import Typography from '../common/Typography';
-import Badge from '../common/Badge';
-import { getCategoryIcon, formatEventTime } from '../../data/mockEvents';
 import {
-  getResponsiveDimensions,
-  getResponsiveSpacing,
-} from '../../utils/responsive';
-
-const { cardWidth: CARD_WIDTH, cardHeight: CARD_HEIGHT } =
-  getResponsiveDimensions();
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
+import { Event } from '../../types';
+import { colors, typography, spacing, layout, shadows } from '../../design';
+import { formatEventDate, formatPrice, formatFriendsAttending } from '../../utils';
 
 interface EventCardProps {
   event: Event;
+  onPress?: () => void;
   style?: any;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, style }) => {
-  const formatPrice = () => {
-    if (!event.price || (event.price.min === 0 && event.price.max === 0)) {
-      return 'Free';
-    }
-    if (event.price.min === event.price.max) {
-      return `$${event.price.min}`;
-    }
-    return `$${event.price.min}-${event.price.max}`;
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = screenWidth - (layout.screenPadding * 2);
+
+export const EventCard: React.FC<EventCardProps> = ({ 
+  event, 
+  onPress,
+  style 
+}) => {
+  const getCategoryIcon = (category: string): string => {
+    const iconMap: Record<string, string> = {
+      'NETWORKING': 'users',
+      'CULTURE': 'camera',
+      'FITNESS': 'activity',
+      'FOOD': 'coffee',
+      'NIGHTLIFE': 'music',
+      'OUTDOOR': 'sun',
+      'PROFESSIONAL': 'briefcase',
+    };
+    return iconMap[category] || 'calendar';
   };
 
-  const getAttendeeText = () => {
-    if (!event.attendeeCount) return '';
-    return `${event.attendeeCount} going`;
+  const formatCapacity = (current?: number, capacity?: number) => {
+    if (!current) return '';
+    if (!capacity) return `${current} attending`;
+    return `${current}/${capacity} attending`;
   };
 
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.card}>
-        <ImageBackground
-          source={{ uri: event.imageUrl }}
-          style={styles.imageBackground}
-          imageStyle={styles.image}
-        >
-          <View style={styles.overlay}>
-            <View style={styles.content}>
-              {/* Category badge */}
-              <View style={styles.topRow}>
-                <Badge
-                  text={event.category.toUpperCase()}
-                  variant="category"
-                  backgroundColor="rgba(255,255,255,0.9)"
-                  color="#6B46C1"
-                />
-                {event.attendeeCount && (
-                  <View style={styles.attendeeContainer}>
-                    <Ionicons name="people" size={14} color="#FFFFFF" />
-                    <Typography
-                      variant="caption"
-                      color="#FFFFFF"
-                      style={styles.attendeeText}
-                    >
-                      {getAttendeeText()}
-                    </Typography>
-                  </View>
-                )}
-              </View>
-
-              {/* Event details */}
-              <View style={styles.bottomContent}>
-                <Typography
-                  variant="h3"
-                  color="#FFFFFF"
-                  numberOfLines={2}
-                  style={styles.title}
-                >
-                  {event.title}
-                </Typography>
-
-                <Typography
-                  variant="body"
-                  color="#E5E7EB"
-                  numberOfLines={2}
-                  style={styles.description}
-                >
-                  {event.description}
-                </Typography>
-
-                <View style={styles.metaRow}>
-                  <View style={styles.locationContainer}>
-                    <Ionicons name="location" size={16} color="#E5E7EB" />
-                    <Typography
-                      variant="caption"
-                      color="#E5E7EB"
-                      numberOfLines={1}
-                      style={styles.locationText}
-                    >
-                      {event.location.name}
-                    </Typography>
-                  </View>
-
-                  <View style={styles.timeContainer}>
-                    <Ionicons name="time" size={16} color="#E5E7EB" />
-                    <Typography
-                      variant="caption"
-                      color="#E5E7EB"
-                      style={styles.timeText}
-                    >
-                      {formatEventTime(event.date)}
-                    </Typography>
-                  </View>
-                </View>
-
-                <View style={styles.priceRow}>
-                  <Typography variant="h3" color="#FFFFFF" style={styles.price}>
-                    {formatPrice()}
-                  </Typography>
-                </View>
+    <TouchableOpacity
+      activeOpacity={0.95}
+      onPress={onPress}
+      style={[styles.container, style]}
+    >
+      {/* Hero Image Container */}
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: event.imageUrl }} 
+          style={styles.image}
+          resizeMode="cover"
+        />
+        
+        {/* Gradient Overlay */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.7)']}
+          locations={[0.4, 1]}
+          style={styles.imageGradient}
+        />
+        
+        {/* Category Badge */}
+        <View style={[styles.categoryBadge, { backgroundColor: colors.primary[500] }]}>
+          <Feather 
+            name={getCategoryIcon(event.category) as any} 
+            size={12} 
+            color={colors.neutral[0]} 
+            style={styles.categoryIcon}
+          />
+          <Text style={styles.categoryText}>
+            {event.category.replace('_', ' ')}
+          </Text>
+        </View>
+        
+        {/* Price Badge (if paid event) */}
+        {(event.priceMin ?? 0) > 0 && (
+          <View style={styles.priceBadge}>
+            <Text style={styles.priceText}>
+              {formatPrice(event.priceMin, event.priceMax)}
+            </Text>
+          </View>
+        )}
+        
+        {/* Featured Badge */}
+        {event.isFeatured && (
+          <View style={styles.featuredBadge}>
+            <Feather name="star" size={16} color={colors.warning[500]} />
+          </View>
+        )}
+      </View>
+      
+      {/* Content Container */}
+      <View style={styles.content}>
+        {/* Event Title */}
+        <Text style={styles.title} numberOfLines={2}>
+          {event.title}
+        </Text>
+        
+        {/* Event Metadata */}
+        <View style={styles.metadata}>
+          {/* Date & Time */}
+          <View style={styles.metadataRow}>
+            <Feather 
+              name="calendar" 
+              size={16} 
+              color={colors.neutral[400]} 
+              style={styles.metadataIcon}
+            />
+            <Text style={styles.metadataText}>
+              {formatEventDate(event.date)}
+            </Text>
+          </View>
+          
+          {/* Location */}
+          <View style={styles.metadataRow}>
+            <Feather 
+              name="map-pin" 
+              size={16} 
+              color={colors.neutral[400]}
+              style={styles.metadataIcon}
+            />
+            <Text style={styles.metadataText} numberOfLines={1}>
+              {`${event.venue.name}${event.venue.neighborhood ? ` • ${event.venue.neighborhood}` : ''}`}
+            </Text>
+          </View>
+          
+          {/* Attendees (if available) */}
+          {event.currentAttendees && event.currentAttendees > 0 && (
+            <View style={styles.metadataRow}>
+              <Feather 
+                name="users" 
+                size={16} 
+                color={colors.neutral[400]}
+                style={styles.metadataIcon}
+              />
+              <Text style={styles.metadataText}>
+                {formatCapacity(event.currentAttendees, event.capacity)}
+              </Text>
+            </View>
+          )}
+        </View>
+        
+        {/* Social Proof */}
+        {event.friendsAttending && event.friendsAttending > 0 && (
+          <View style={styles.socialProof}>
+            <View style={styles.friendIndicator}>
+              <View style={styles.friendAvatar}>
+                <Text style={styles.friendAvatarText}>+{event.friendsAttending}</Text>
               </View>
             </View>
+            <Text style={styles.socialText}>
+              {formatFriendsAttending(event.friendsAttending)}
+            </Text>
           </View>
-        </ImageBackground>
+        )}
+        
+        {/* Description Preview */}
+        {event.description && (
+          <Text style={styles.description} numberOfLines={3}>
+            {event.description}
+          </Text>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    marginVertical: 8,
+    flex: 1,
+    backgroundColor: colors.neutral[0],
+    ...shadows.large,
   },
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: 'hidden',
+  
+  imageContainer: {
+    height: 220,
+    position: 'relative',
+    backgroundColor: colors.neutral[100],
   },
-  imageBackground: {
+  
+  image: {
     width: '100%',
     height: '100%',
   },
-  image: {
-    borderRadius: 16,
+  
+  imageGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'space-between',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  attendeeContainer: {
+  
+  categoryBadge: {
+    position: 'absolute',
+    top: spacing[3],
+    left: spacing[3],
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
     borderRadius: 12,
   },
-  attendeeText: {
-    marginLeft: 4,
-    fontSize: 12,
+  
+  categoryIcon: {
+    marginRight: spacing[1],
   },
-  bottomContent: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  
+  categoryText: {
+    ...typography.caption,
+    color: colors.neutral[0],
+    fontWeight: '700',
+    fontSize: 10,
   },
-  title: {
-    marginBottom: 8,
+  
+  priceBadge: {
+    position: 'absolute',
+    top: spacing[3],
+    right: spacing[3],
+    backgroundColor: colors.neutral[0],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 12,
+    ...shadows.small,
+  },
+  
+  priceText: {
+    ...typography.caption,
+    color: colors.neutral[800],
     fontWeight: '700',
   },
+  
+  featuredBadge: {
+    position: 'absolute',
+    bottom: spacing[3],
+    right: spacing[3],
+    width: 32,
+    height: 32,
+    backgroundColor: colors.neutral[0],
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.small,
+  },
+  
+  content: {
+    padding: spacing[6],
+  },
+  
+  title: {
+    ...typography.h2,
+    color: colors.neutral[800],
+    marginBottom: spacing[3],
+    lineHeight: 26,
+  },
+  
+  metadata: {
+    marginBottom: spacing[4],
+  },
+  
+  metadataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing[2],
+  },
+  
+  metadataIcon: {
+    marginRight: spacing[2],
+  },
+  
+  metadataText: {
+    ...typography.body2,
+    color: colors.neutral[500],
+    flex: 1,
+  },
+  
+  socialProof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing[3],
+    paddingTop: spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[100],
+  },
+  
+  friendIndicator: {
+    marginRight: spacing[2],
+  },
+  
+  friendAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  friendAvatarText: {
+    ...typography.caption,
+    color: colors.neutral[0],
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  
+  socialText: {
+    ...typography.body2,
+    color: colors.primary[600],
+    fontWeight: '600',
+  },
+  
   description: {
-    marginBottom: 12,
+    ...typography.body2,
+    color: colors.neutral[500],
     lineHeight: 20,
   },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 16,
-  },
-  locationText: {
-    marginLeft: 4,
-    flex: 1,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    marginLeft: 4,
-  },
-  priceRow: {
-    alignItems: 'flex-start',
-  },
-  price: {
-    fontWeight: '700',
-    fontSize: 24,
-  },
 });
-
-export default EventCard;

@@ -1,101 +1,104 @@
 import React from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
+  View,
   Modal,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
+  Pressable,
   ScrollView,
+  Image,
+  Alert,
   Linking,
 } from 'react-native';
+// import { BlurView } from 'expo-blur'; // Commented out - may not be available
 import { format } from 'date-fns';
-import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
-import { Event, EventCategory } from '../../types';
-import { getCategoryIcon } from '../../data/mockEvents';
+import { Feather } from '@expo/vector-icons';
+import { Event, SwipeDirection } from '../../types';
+import { colors, spacing, layout, shadows, typography } from '../../design';
+import { Body, Caption, Heading2, Heading3, Button } from '../../components/base';
+import { getCategoryColor, getCategoryDisplayName, formatPrice, formatEventDate } from '../../utils';
+import { EventService } from '../../services';
 
 interface EventModalProps {
   event: Event | null;
   visible: boolean;
   onClose: () => void;
+  onRemoveFromCalendar?: (event: Event) => void;
 }
 
-const getCategoryColor = (category: EventCategory): string => {
-  switch (category) {
-    case EventCategory.NETWORKING:
-      return COLORS.SECONDARY;
-    case EventCategory.CULTURE:
-      return '#EC4899';
-    case EventCategory.FITNESS:
-      return COLORS.SUCCESS;
-    case EventCategory.FOOD:
-      return COLORS.WARNING;
-    case EventCategory.NIGHTLIFE:
-      return COLORS.ACCENT;
-    case EventCategory.OUTDOOR:
-      return '#10B981';
-    case EventCategory.PROFESSIONAL:
-      return '#3B82F6';
-    default:
-      return COLORS.PRIMARY;
-  }
-};
-
-const ActionButton = ({ 
-  title, 
-  onPress, 
-  color = COLORS.SECONDARY, 
-  outline = false 
-}: {
-  title: string;
-  onPress: () => void;
-  color?: string;
-  outline?: boolean;
-}) => (
-  <TouchableOpacity
-    style={[
-      styles.actionButton,
-      outline 
-        ? { borderColor: color, borderWidth: 2, backgroundColor: 'transparent' }
-        : { backgroundColor: color }
-    ]}
-    onPress={onPress}
-  >
-    <Text style={[
-      styles.actionButtonText,
-      outline ? { color } : { color: COLORS.WHITE }
-    ]}>
-      {title}
-    </Text>
-  </TouchableOpacity>
-);
-
-export default function EventModal({ event, visible, onClose }: EventModalProps) {
+export const EventModal: React.FC<EventModalProps> = ({
+  event,
+  visible,
+  onClose,
+  onRemoveFromCalendar,
+}) => {
   if (!event) return null;
 
-  const categoryColor = getCategoryColor(event.category);
-  const priceText = !event.price || event.price.min === 0
-    ? 'Free'
-    : event.price.min === event.price.max
-      ? `$${event.price.min}`
-      : `$${event.price.min} - $${event.price.max}`;
+  const eventService = EventService.getInstance();
+  const swipeDirection = eventService.getSwipeDirection(event.id);
 
-  const handleGetTickets = () => {
-    if (event.ticketUrl) {
-      Linking.openURL(event.ticketUrl);
+  const getCategoryIcon = (category: string): string => {
+    const iconMap: Record<string, string> = {
+      'NETWORKING': 'users',
+      'CULTURE': 'camera',
+      'FITNESS': 'activity',
+      'FOOD': 'coffee',
+      'NIGHTLIFE': 'music',
+      'OUTDOOR': 'sun',
+      'PROFESSIONAL': 'briefcase',
+    };
+    return iconMap[category] || 'calendar';
+  };
+
+  const getSwipeActionText = (direction: SwipeDirection | null) => {
+    switch (direction) {
+      case SwipeDirection.UP:
+        return { text: 'Added to Public Calendar', color: colors.success[600], icon: 'calendar' };
+      case SwipeDirection.RIGHT:
+        return { text: 'Added to Private Calendar', color: colors.info[600], icon: 'calendar' };
+      case SwipeDirection.DOWN:
+        return { text: 'Saved for Later', color: colors.warning[600], icon: 'bookmark' };
+      default:
+        return null;
     }
   };
 
-  const handleGetDirections = () => {
-    const { lat, lng } = event.location.coordinates;
-    const url = `https://maps.apple.com/?q=${lat},${lng}`;
-    Linking.openURL(url);
+  const handleRemoveFromCalendar = () => {
+    Alert.alert(
+      'Remove Event',
+      'Are you sure you want to remove this event from your calendar?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            eventService.removeSwipe(event.id);
+            onRemoveFromCalendar?.(event);
+            onClose();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleOpenMap = () => {
+    if (event.location?.coordinates) {
+      const { lat, lng } = event.location.coordinates;
+      const url = `https://maps.apple.com/?q=${lat},${lng}`;
+      Linking.openURL(url);
+    } else if (event.venue?.name) {
+      const query = encodeURIComponent(`${event.venue.name} ${event.venue.neighborhood || ''}`);
+      const url = `https://maps.apple.com/?q=${query}`;
+      Linking.openURL(url);
+    }
   };
 
   const handleShare = () => {
-    // In a real app, you'd implement native sharing
-    console.log('Share event:', event.title);
+    // This would integrate with React Native's share functionality
+    Alert.alert('Share Event', 'Share functionality would be implemented here');
   };
+
+  const swipeAction = getSwipeActionText(swipeDirection);
 
   return (
     <Modal
@@ -104,312 +107,365 @@ export default function EventModal({ event, visible, onClose }: EventModalProps)
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              {/* Header */}
-              <View style={[styles.header, { backgroundColor: categoryColor }]}>
-                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <Text style={styles.closeButtonText}>✕</Text>
-                </TouchableOpacity>
-                
-                <View style={styles.headerContent}>
-                  <Text style={styles.categoryLabel}>
-                    {event.category.charAt(0).toUpperCase()}
-                  </Text>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>
-                      {event.category.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Feather name="x" size={24} color={colors.neutral[600]} />
+          </TouchableOpacity>
+          
+          <Heading3 style={styles.headerTitle}>Event Details</Heading3>
+          
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+            <Feather name="share" size={20} color={colors.neutral[600]} />
+          </TouchableOpacity>
+        </View>
 
-              {/* Content */}
-              <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={styles.titleSection}>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  <Text style={styles.eventPrice}>{priceText}</Text>
-                </View>
-
-                <View style={styles.infoSection}>
-                  <View style={styles.infoRow}>
-                    <View style={styles.iconContainer}><Text style={styles.infoIconText}>Date</Text></View>
-                    <View style={styles.infoContent}>
-                      <Text style={styles.infoLabel}>Date & Time</Text>
-                      <Text style={styles.infoValue}>
-                        {format(new Date(event.date), 'EEEE, MMMM d, yyyy')}
-                      </Text>
-                      <Text style={styles.infoValue}>
-                        {format(new Date(event.date), 'h:mm a')}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.infoRow}>
-                    <View style={styles.iconContainer}><Text style={styles.infoIconText}>Location</Text></View>
-                    <View style={styles.infoContent}>
-                      <Text style={styles.infoLabel}>Location</Text>
-                      <Text style={styles.infoValue}>{event.location.name}</Text>
-                      <Text style={styles.infoAddress}>{event.location.address}</Text>
-                    </View>
-                  </View>
-
-                  {event.attendeeCount && (
-                    <View style={styles.infoRow}>
-                      <View style={styles.iconContainer}><Text style={styles.infoIconText}>People</Text></View>
-                      <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Attendance</Text>
-                        <Text style={styles.infoValue}>
-                          {event.attendeeCount} attending
-                          {event.capacity && ` • ${event.capacity} capacity`}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-
-                {event.description && (
-                  <View style={styles.descriptionSection}>
-                    <Text style={styles.sectionTitle}>About</Text>
-                    <Text style={styles.description}>{event.description}</Text>
-                  </View>
-                )}
-
-                {event.tags && event.tags.length > 0 && (
-                  <View style={styles.tagsSection}>
-                    <Text style={styles.sectionTitle}>Tags</Text>
-                    <View style={styles.tagsContainer}>
-                      {event.tags.map((tag, index) => (
-                        <View key={index} style={styles.tag}>
-                          <Text style={styles.tagText}>#{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </ScrollView>
-
-              {/* Action Buttons */}
-              <View style={styles.actionSection}>
-                <View style={styles.actionRow}>
-                  <ActionButton
-                    title="Directions"
-                    onPress={handleGetDirections}
-                    outline
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Event Image */}
+          <View style={styles.imageContainer}>
+            <Image 
+              source={{ uri: event.imageUrl }} 
+              style={styles.eventImage}
+              resizeMode="cover"
+            />
+            
+            {/* Overlay content */}
+            <View style={styles.imageOverlay}>
+              <View style={styles.imageContent}>
+                {/* Category Badge */}
+                <View 
+                  style={[
+                    styles.categoryBadge, 
+                    { backgroundColor: getCategoryColor(event.category) }
+                  ]}
+                >
+                  <Feather 
+                    name={getCategoryIcon(event.category) as any} 
+                    size={16} 
+                    color={colors.neutral[0]} 
                   />
-                  <ActionButton
-                    title="Share"
-                    onPress={handleShare}
-                    outline
-                  />
+                  <Caption style={styles.categoryText}>
+                    {getCategoryDisplayName(event.category)}
+                  </Caption>
                 </View>
-                
-                {event.ticketUrl && (
-                  <ActionButton
-                    title="Get Tickets"
-                    onPress={handleGetTickets}
-                    color={categoryColor}
-                  />
+
+                {/* Price */}
+                {(event.priceMin ?? 0) > 0 && (
+                  <View style={styles.priceBadge}>
+                    <Caption style={styles.priceText}>
+                      {formatPrice(event.priceMin, event.priceMax)}
+                    </Caption>
+                  </View>
                 )}
               </View>
             </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+
+          {/* Event Info */}
+          <View style={styles.infoContainer}>
+            {/* Title */}
+            <Heading2 style={styles.eventTitle}>{event.title}</Heading2>
+
+            {/* Status Badge */}
+            {swipeAction && (
+              <View style={[styles.statusBadge, { backgroundColor: swipeAction.color }]}>
+                <Feather name={swipeAction.icon as any} size={14} color={colors.neutral[0]} />
+                <Caption style={styles.statusText}>{swipeAction.text}</Caption>
+              </View>
+            )}
+
+            {/* Date & Time */}
+            <View style={styles.detailSection}>
+              <View style={styles.detailRow}>
+                <Feather name="calendar" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                <View style={styles.detailContent}>
+                  <Body style={styles.detailTitle}>Date & Time</Body>
+                  <Caption color={colors.neutral[500]}>
+                    {formatEventDate(event.date)}
+                  </Caption>
+                </View>
+              </View>
+            </View>
+
+            {/* Location */}
+            <View style={styles.detailSection}>
+              <Pressable style={styles.detailRow} onPress={handleOpenMap}>
+                <Feather name="map-pin" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                <View style={styles.detailContent}>
+                  <Body style={styles.detailTitle}>Location</Body>
+                  <Caption color={colors.neutral[500]}>{event.venue.name}</Caption>
+                  {event.venue.neighborhood && (
+                    <Caption color={colors.neutral[400]}>{event.venue.neighborhood}</Caption>
+                  )}
+                  {event.location?.address && (
+                    <Caption color={colors.neutral[400]}>{event.location.address}</Caption>
+                  )}
+                </View>
+                <Feather name="external-link" size={16} color={colors.neutral[400]} />
+              </Pressable>
+            </View>
+
+            {/* Attendees */}
+            {event.currentAttendees && event.currentAttendees > 0 && (
+              <View style={styles.detailSection}>
+                <View style={styles.detailRow}>
+                  <Feather name="users" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                  <View style={styles.detailContent}>
+                    <Body style={styles.detailTitle}>Attendees</Body>
+                    <Caption color={colors.neutral[500]}>
+                      {event.currentAttendees} attending
+                    </Caption>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Friends Attending */}
+            {event.friendsAttending && event.friendsAttending > 0 && (
+              <View style={styles.socialSection}>
+                <View style={styles.friendsRow}>
+                  <View style={styles.friendIndicator}>
+                    <Caption style={styles.friendCount}>+{event.friendsAttending}</Caption>
+                  </View>
+                  <Body style={styles.friendsText}>
+                    {event.friendsAttending} {event.friendsAttending === 1 ? 'friend' : 'friends'} interested
+                  </Body>
+                </View>
+              </View>
+            )}
+
+            {/* Description */}
+            {event.description && (
+              <View style={styles.descriptionSection}>
+                <Body style={styles.sectionTitle}>About</Body>
+                <Body color={colors.neutral[600]} style={styles.description}>
+                  {event.description}
+                </Body>
+              </View>
+            )}
+
+            {/* Tags */}
+            {event.tags && event.tags.length > 0 && (
+              <View style={styles.tagsSection}>
+                <Body style={styles.sectionTitle}>Tags</Body>
+                <View style={styles.tagsContainer}>
+                  {event.tags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Caption style={styles.tagText}>{tag}</Caption>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Actions */}
+        {swipeDirection && (
+          <View style={styles.actions}>
+            <Button
+              title="Remove from Calendar"
+              onPress={handleRemoveFromCalendar}
+              variant="ghost"
+              style={styles.actionButton}
+            />
+          </View>
+        )}
+      </View>
     </Modal>
   );
-}
+};
+
+const TouchableOpacity = Pressable;
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: COLORS.OVERLAY,
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS_LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS_LARGE,
-    maxHeight: '90%',
-    ...SHADOWS.LARGE,
+    backgroundColor: colors.neutral[0],
   },
   header: {
-    paddingTop: SPACING.LG,
-    paddingBottom: SPACING.MD,
-    paddingHorizontal: SPACING.MD,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS_LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS_LARGE,
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
   closeButton: {
-    position: 'absolute',
-    top: SPACING.MD,
-    right: SPACING.MD,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  closeButtonText: {
-    color: COLORS.WHITE,
-    fontSize: FONT_SIZES.MD,
-    fontWeight: 'bold',
-  },
-  headerContent: {
-    alignItems: 'center',
-    marginTop: SPACING.SM,
-  },
-  categoryLabel: {
-    fontSize: FONT_SIZES.LG,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
     width: 40,
     height: 40,
-    textAlign: 'center',
-    lineHeight: 40,
-    marginBottom: SPACING.SM,
+    borderRadius: 20,
+    backgroundColor: colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  categoryBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: SPACING.SM,
-    paddingVertical: SPACING.XS,
-    borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
+  headerTitle: {
+    fontWeight: '600',
   },
-  categoryText: {
-    color: COLORS.WHITE,
-    fontSize: FONT_SIZES.XS,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
-    paddingHorizontal: SPACING.MD,
   },
-  titleSection: {
-    paddingVertical: SPACING.MD,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER_LIGHT,
+  imageContainer: {
+    height: 240,
+    position: 'relative',
+    backgroundColor: colors.neutral[100],
+  },
+  eventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[4],
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  imageContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: 20,
+  },
+  categoryText: {
+    color: colors.neutral[0],
+    fontWeight: '600',
+    marginLeft: spacing[2],
+  },
+  priceBadge: {
+    backgroundColor: colors.neutral[0],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: 16,
+    ...shadows.small,
+  },
+  priceText: {
+    fontWeight: '700',
+    color: colors.neutral[800],
+  },
+  infoContainer: {
+    padding: spacing[6],
   },
   eventTitle: {
-    fontSize: FONT_SIZES.XXL,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_DARK,
-    marginBottom: SPACING.XS,
-    lineHeight: FONT_SIZES.XXL * 1.2,
+    marginBottom: spacing[4],
+    lineHeight: 28,
   },
-  eventPrice: {
-    fontSize: FONT_SIZES.LG,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: 16,
+    marginBottom: spacing[6],
+  },
+  statusText: {
+    color: colors.neutral[0],
     fontWeight: '600',
-    color: COLORS.SECONDARY,
+    marginLeft: spacing[2],
   },
-  infoSection: {
-    paddingVertical: SPACING.MD,
+  detailSection: {
+    marginBottom: spacing[5],
   },
-  infoRow: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: SPACING.MD,
   },
-  iconContainer: {
-    marginRight: SPACING.SM,
+  detailIcon: {
+    marginRight: spacing[4],
     marginTop: 2,
   },
-  infoIconText: {
-    fontSize: FONT_SIZES.XS,
-    color: COLORS.SECONDARY,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  infoIcon: {
-    fontSize: FONT_SIZES.LG,
-    marginRight: SPACING.SM,
-    marginTop: 2,
-  },
-  infoContent: {
+  detailContent: {
     flex: 1,
   },
-  infoLabel: {
-    fontSize: FONT_SIZES.SM,
-    color: COLORS.TEXT_LIGHT,
-    fontWeight: '500',
-    marginBottom: SPACING.XS,
+  detailTitle: {
+    fontWeight: '600',
+    marginBottom: spacing[1],
   },
-  infoValue: {
-    fontSize: FONT_SIZES.MD,
-    color: COLORS.TEXT_DARK,
-    fontWeight: '500',
+  socialSection: {
+    marginBottom: spacing[6],
+    paddingTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[100],
   },
-  infoAddress: {
-    fontSize: FONT_SIZES.SM,
-    color: COLORS.TEXT_LIGHT,
-    marginTop: 2,
+  friendsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  friendCount: {
+    color: colors.neutral[0],
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  friendsText: {
+    color: colors.primary[600],
+    fontWeight: '500',
   },
   descriptionSection: {
-    paddingVertical: SPACING.MD,
+    marginBottom: spacing[6],
+    paddingTop: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER_LIGHT,
+    borderTopColor: colors.neutral[100],
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.LG,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_DARK,
-    marginBottom: SPACING.SM,
+    fontWeight: '700',
+    marginBottom: spacing[3],
   },
   description: {
-    fontSize: FONT_SIZES.MD,
-    color: COLORS.TEXT_MEDIUM,
-    lineHeight: FONT_SIZES.MD * 1.5,
+    lineHeight: 22,
   },
   tagsSection: {
-    paddingVertical: SPACING.MD,
+    paddingTop: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER_LIGHT,
+    borderTopColor: colors.neutral[100],
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.XS,
+    gap: spacing[2],
   },
   tag: {
-    backgroundColor: COLORS.LIGHT_GRAY,
-    paddingHorizontal: SPACING.SM,
-    paddingVertical: SPACING.XS,
-    borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
+    backgroundColor: colors.neutral[100],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: 16,
   },
   tagText: {
-    fontSize: FONT_SIZES.XS,
-    color: COLORS.ACCENT,
     fontWeight: '500',
   },
-  actionSection: {
-    padding: SPACING.MD,
+  actions: {
+    padding: spacing[6],
     borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER_LIGHT,
-    backgroundColor: COLORS.OFF_WHITE,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: SPACING.SM,
-    marginBottom: SPACING.SM,
+    borderTopColor: colors.neutral[100],
   },
   actionButton: {
-    flex: 1,
-    paddingVertical: SPACING.MD,
-    borderRadius: LAYOUT.BORDER_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.SMALL,
-  },
-  actionButtonText: {
-    fontSize: FONT_SIZES.MD,
-    fontWeight: '600',
+    width: '100%',
   },
 });

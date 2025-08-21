@@ -1,214 +1,171 @@
-import React, { useCallback } from 'react';
-import { Dimensions } from 'react-native';
+import React from 'react';
+import { Dimensions, StyleSheet, View } from 'react-native';
+import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedGestureHandler,
-  runOnJS,
   withSpring,
+  runOnJS,
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import {
-  PanGestureHandler,
-  PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
-import * as Haptics from 'expo-haptics';
 import { Event, SwipeDirection } from '../../types';
-import EventCard from './EventCard';
-import SwipeOverlay from './SwipeOverlay';
+import { EventCard } from './EventCard';
+import { SwipeOverlay } from './SwipeOverlay';
+import { layout, spacing } from '../../design';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 100;
-const ROTATION_FACTOR = 0.1;
+const cardWidth = screenWidth - (layout.screenPadding * 2);
 
 interface SwipeCardProps {
   event: Event;
-  onSwipe: (direction: SwipeDirection, event: Event) => void;
+  onSwipe: (direction: SwipeDirection) => void;
+  onPress?: () => void;
   index: number;
   totalCards: number;
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({
+const SWIPE_THRESHOLD = 120;
+const ROTATION_FACTOR = 20;
+const SCALE_FACTOR = 0.05;
+
+export const SwipeCard: React.FC<SwipeCardProps> = ({
   event,
   onSwipe,
+  onPress,
   index,
   totalCards,
 }) => {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
-  const rotate = useSharedValue(0);
-  const overlayOpacity = useSharedValue(0);
-  const currentDirection = useSharedValue<SwipeDirection | null>(null);
-
-  const triggerHaptic = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, []);
-
-  const resetCard = useCallback(() => {
-    'worklet';
-    translateX.value = withSpring(0);
-    translateY.value = withSpring(0);
-    rotate.value = withSpring(0);
-    scale.value = withSpring(1);
-    overlayOpacity.value = withSpring(0);
-    currentDirection.value = null;
-  }, []);
-
-  const dismissCard = useCallback(
-    (direction: SwipeDirection) => {
+  const opacity = useSharedValue(1);
+  
+  const gestureHandler = useAnimatedGestureHandler<PanGestureHandlerGestureEvent>({
+    onStart: () => {
       'worklet';
-      const exitX =
-        direction === SwipeDirection.LEFT
-          ? -screenWidth
-          : direction === SwipeDirection.RIGHT
-            ? screenWidth
-            : 0;
-      const exitY =
-        direction === SwipeDirection.UP
-          ? -screenHeight
-          : direction === SwipeDirection.DOWN
-            ? screenHeight
-            : 0;
-
-      translateX.value = withSpring(exitX, { damping: 15 });
-      translateY.value = withSpring(exitY, { damping: 15 });
-      scale.value = withSpring(0.8);
-
-      runOnJS(triggerHaptic)();
-      runOnJS(onSwipe)(direction, event);
+      scale.value = withSpring(1.02);
     },
-    [event, onSwipe, triggerHaptic]
-  );
-
-  const getSwipeDirection = useCallback(
-    (x: number, y: number): SwipeDirection | null => {
+    onActive: (event) => {
       'worklet';
-      const absX = Math.abs(x);
-      const absY = Math.abs(y);
-
-      if (absX < SWIPE_THRESHOLD && absY < SWIPE_THRESHOLD) {
-        return null;
-      }
-
-      if (absX > absY) {
-        return x > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
-      } else {
-        return y > 0 ? SwipeDirection.DOWN : SwipeDirection.UP;
-      }
-    },
-    []
-  );
-
-  const gestureHandler = useAnimatedGestureHandler<
-    PanGestureHandlerGestureEvent,
-    { startX: number; startY: number }
-  >({
-    onStart: (_, context) => {
-      context.startX = translateX.value;
-      context.startY = translateY.value;
-      scale.value = withSpring(1.05);
-    },
-    onActive: (event, context) => {
-      translateX.value = context.startX + event.translationX;
-      translateY.value = context.startY + event.translationY;
-
-      const rotation = interpolate(
-        event.translationX,
-        [-screenWidth / 2, screenWidth / 2],
-        [-30, 30],
-        Extrapolate.CLAMP
-      );
-      rotate.value = rotation * ROTATION_FACTOR;
-
-      const direction = getSwipeDirection(
-        event.translationX,
-        event.translationY
-      );
-      currentDirection.value = direction;
-
-      if (direction) {
-        const progress = Math.max(
-          Math.abs(event.translationX) / SWIPE_THRESHOLD,
-          Math.abs(event.translationY) / SWIPE_THRESHOLD
-        );
-        overlayOpacity.value = Math.min(progress, 1);
-      } else {
-        overlayOpacity.value = 0;
-      }
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
     },
     onEnd: (event) => {
-      const direction = getSwipeDirection(
-        event.translationX,
-        event.translationY
-      );
-
-      if (direction) {
-        const velocity = Math.sqrt(
-          event.velocityX * event.velocityX + event.velocityY * event.velocityY
-        );
-
-        if (velocity > 1000 || overlayOpacity.value >= 0.7) {
-          dismissCard(direction);
-          return;
+      'worklet';
+      const { translationX, translationY, velocityX, velocityY } = event;
+      
+      // Determine swipe direction based on translation and velocity
+      const absX = Math.abs(translationX);
+      const absY = Math.abs(translationY);
+      
+      let direction: SwipeDirection | null = null;
+      
+      // Check if swipe is strong enough
+      const isSwipeStrong = absX > SWIPE_THRESHOLD || absY > SWIPE_THRESHOLD ||
+                           Math.abs(velocityX) > 500 || Math.abs(velocityY) > 500;
+      
+      if (isSwipeStrong) {
+        // Determine primary direction
+        if (absX > absY) {
+          // Horizontal swipe
+          direction = translationX > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
+        } else {
+          // Vertical swipe
+          direction = translationY > 0 ? SwipeDirection.DOWN : SwipeDirection.UP;
         }
       }
-
-      resetCard();
+      
+      if (direction) {
+        // Animate card off screen
+        const targetX = direction === SwipeDirection.LEFT ? -screenWidth * 1.5 :
+                       direction === SwipeDirection.RIGHT ? screenWidth * 1.5 : translationX;
+        const targetY = direction === SwipeDirection.UP ? -screenHeight * 1.5 :
+                       direction === SwipeDirection.DOWN ? screenHeight * 1.5 : translationY;
+        
+        translateX.value = withSpring(targetX, { damping: 20, stiffness: 200 });
+        translateY.value = withSpring(targetY, { damping: 20, stiffness: 200 });
+        opacity.value = withSpring(0, { damping: 20, stiffness: 200 });
+        
+        // Call onSwipe after animation starts
+        runOnJS(onSwipe)(direction);
+      } else {
+        // Spring back to center
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        scale.value = withSpring(1);
+      }
     },
   });
-
-  const cardStyle = useAnimatedStyle(() => {
-    const stackScale = interpolate(
-      index,
-      [0, 1, 2],
-      [1, 0.95, 0.9],
+  
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(
+      translateX.value,
+      [-screenWidth / 2, 0, screenWidth / 2],
+      [-ROTATION_FACTOR, 0, ROTATION_FACTOR],
       Extrapolate.CLAMP
     );
-
-    const stackTranslateY = interpolate(
-      index,
-      [0, 1, 2],
-      [0, -10, -20],
-      Extrapolate.CLAMP
-    );
-
+    
+    // Calculate scale based on index (cards behind get smaller)
+    const baseScale = 1 - (index * SCALE_FACTOR);
+    const currentScale = scale.value * baseScale;
+    
+    // Calculate offset for stacked cards
+    const stackOffset = index * 8;
+    
     return {
       transform: [
         { translateX: translateX.value },
-        { translateY: translateY.value + stackTranslateY },
-        { rotate: `${rotate.value}deg` },
-        { scale: scale.value * stackScale },
+        { translateY: translateY.value + stackOffset },
+        { rotate: `${rotate}deg` },
+        { scale: currentScale },
       ],
+      opacity: opacity.value,
       zIndex: totalCards - index,
     };
   });
-
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
-
+  
+  // Only show overlays for the top card
+  const showOverlays = index === 0;
+  
   return (
     <PanGestureHandler onGestureEvent={gestureHandler}>
-      <Animated.View style={[cardStyle]}>
-        <EventCard event={event} />
-        {currentDirection.value && (
-          <Animated.View
-            style={[
-              overlayStyle,
-              { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-            ]}
-          >
-            <SwipeOverlay
-              direction={currentDirection.value}
-              progress={overlayOpacity}
+      <Animated.View style={[styles.container, cardAnimatedStyle]}>
+        {/* Card wrapper with proper dimensions and rounded corners */}
+        <View style={styles.cardWrapper}>
+          <EventCard
+            event={event}
+            onPress={onPress}
+            style={styles.card}
+          />
+          
+          {/* Swipe Overlay - only for top card and active direction */}
+          {showOverlays && (
+            <SwipeOverlay 
+              translateX={translateX} 
+              translateY={translateY} 
             />
-          </Animated.View>
-        )}
+          )}
+        </View>
       </Animated.View>
     </PanGestureHandler>
   );
 };
 
-export default SwipeCard;
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    width: '100%',
+    alignItems: 'center',
+  },
+  cardWrapper: {
+    width: cardWidth,
+    borderRadius: layout.cardBorderRadius,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  card: {
+    // EventCard styles are handled in the EventCard component
+  },
+});

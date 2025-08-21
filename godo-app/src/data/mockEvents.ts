@@ -3,218 +3,343 @@ import { Event, EventCategory, EventSource } from '../types';
 export const mockEvents: Event[] = [
   {
     id: '1',
-    title: 'Rooftop Party at 230 Fifth',
-    description:
-      "Dance under the stars at NYC's most iconic rooftop bar with panoramic city views",
-    date: new Date('2025-08-01T21:00:00'),
+    title: 'Rooftop Networking at WeWork',
+    description: 'Connect with fellow professionals in tech, finance, and startups. Enjoy craft cocktails and stunning Manhattan views while building meaningful connections.',
+    date: new Date('2024-08-22T18:30:00'),
+    datetime: '2024-08-22T18:30:00.000Z',
     location: {
-      name: '230 Fifth Rooftop Bar',
-      address: '230 5th Ave, New York, NY 10001',
-      coordinates: { lat: 40.7448, lng: -73.9876 },
+      name: 'WeWork Dumbo Heights',
+      address: '81 Prospect St, Brooklyn, NY 11201',
+      coordinates: { lat: 40.7033, lng: -73.9987 }
     },
-    category: EventCategory.NIGHTLIFE,
-    imageUrl:
-      'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800',
-    ticketUrl: 'https://example.com/rooftop-party',
-    price: { min: 25, max: 45, currency: 'USD' },
-    capacity: 200,
-    attendeeCount: 87,
-    source: EventSource.MANUAL,
-    externalId: 'mock_1',
-    lastUpdated: new Date(),
-    isActive: true,
+    venue: {
+      name: 'WeWork Dumbo Heights',
+      neighborhood: 'Dumbo'
+    },
+    category: EventCategory.NETWORKING,
+    source: EventSource.EVENTBRITE,
+    imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=600&fit=crop',
+    priceMin: 25,
+    priceMax: 25,
+    capacity: 80,
+    currentAttendees: 47,
+    isFeatured: true,
+    friendsAttending: 3,
+    tags: ['networking', 'tech', 'professionals', 'rooftop']
   },
   {
     id: '2',
-    title: 'SoHo Art Gallery Opening',
-    description:
-      'Discover cutting-edge contemporary art from emerging NYC artists',
-    date: new Date('2025-08-02T19:00:00'),
+    title: 'MoMA After Dark: Contemporary Art',
+    description: 'Explore the museum after hours with exclusive access to new exhibitions, live music, and artisanal cocktails.',
+    date: new Date('2024-08-23T19:00:00'),
+    datetime: '2024-08-23T19:00:00.000Z',
     location: {
-      name: 'Gallery Luna',
-      address: '123 Spring St, New York, NY 10012',
-      coordinates: { lat: 40.7242, lng: -74.0024 },
+      name: 'Museum of Modern Art',
+      address: '11 W 53rd St, New York, NY 10019',
+      coordinates: { lat: 40.7614, lng: -73.9776 }
+    },
+    venue: {
+      name: 'MoMA',
+      neighborhood: 'Midtown'
     },
     category: EventCategory.CULTURE,
-    imageUrl:
-      'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800',
-    price: { min: 0, max: 0, currency: 'USD' },
+    source: EventSource.MET_MUSEUM,
+    imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
+    priceMin: 35,
+    priceMax: 35,
     capacity: 150,
-    attendeeCount: 42,
-    source: EventSource.MANUAL,
-    externalId: 'mock_2',
-    lastUpdated: new Date(),
-    isActive: true,
+    currentAttendees: 92,
+    isFeatured: false,
+    friendsAttending: 1,
+    tags: ['art', 'culture', 'museum', 'after hours']
   },
   {
     id: '3',
     title: 'Morning Yoga in Central Park',
-    description: 'Start your day with mindful movement surrounded by nature',
-    date: new Date('2025-08-03T08:00:00'),
+    description: 'Start your day with energizing vinyasa flow in the heart of Manhattan. All levels welcome.',
+    date: new Date('2024-08-24T07:00:00'),
+    datetime: '2024-08-24T07:00:00.000Z',
     location: {
-      name: 'Sheep Meadow',
+      name: 'Sheep Meadow, Central Park',
       address: 'Central Park, New York, NY 10024',
-      coordinates: { lat: 40.7794, lng: -73.9755 },
+      coordinates: { lat: 40.7749, lng: -73.9759 }
+    },
+    venue: {
+      name: 'Central Park',
+      neighborhood: 'Upper West Side'
     },
     category: EventCategory.FITNESS,
-    imageUrl:
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-    price: { min: 15, max: 15, currency: 'USD' },
-    capacity: 50,
-    attendeeCount: 23,
-    source: EventSource.MANUAL,
-    externalId: 'mock_3',
-    lastUpdated: new Date(),
-    isActive: true,
+    source: EventSource.NYC_PARKS,
+    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=600&fit=crop',
+    priceMin: 0,
+    capacity: 30,
+    currentAttendees: 18,
+    isFeatured: false,
+    friendsAttending: 0,
+    tags: ['yoga', 'fitness', 'outdoor', 'morning']
   },
   {
     id: '4',
-    title: 'Food Truck Festival',
-    description: 'Taste the best street food NYC has to offer from 20+ vendors',
-    date: new Date('2025-08-03T12:00:00'),
+    title: 'Chef\'s Table at Le Bernardin',
+    description: 'Exclusive 7-course tasting menu with wine pairings. Experience world-class French cuisine in an intimate setting.',
+    date: new Date('2024-08-25T20:00:00'),
+    datetime: '2024-08-25T20:00:00.000Z',
     location: {
-      name: 'Brooklyn Bridge Park',
-      address: 'Brooklyn Bridge Park, Brooklyn, NY 11201',
-      coordinates: { lat: 40.7023, lng: -73.9958 },
+      name: 'Le Bernardin',
+      address: '155 W 51st St, New York, NY 10019',
+      coordinates: { lat: 40.7614, lng: -73.9845 }
+    },
+    venue: {
+      name: 'Le Bernardin',
+      neighborhood: 'Midtown'
     },
     category: EventCategory.FOOD,
-    imageUrl:
-      'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=800',
-    price: { min: 0, max: 30, currency: 'USD' },
-    capacity: 500,
-    attendeeCount: 234,
-    source: EventSource.MANUAL,
-    externalId: 'mock_4',
-    lastUpdated: new Date(),
-    isActive: true,
+    source: EventSource.RESY,
+    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop',
+    priceMin: 295,
+    priceMax: 395,
+    capacity: 12,
+    currentAttendees: 9,
+    isFeatured: true,
+    friendsAttending: 2,
+    tags: ['fine dining', 'french cuisine', 'chef\'s table', 'wine pairing']
   },
   {
     id: '5',
-    title: 'Networking Happy Hour',
-    description: 'Connect with fellow young professionals in tech and startups',
-    date: new Date('2025-08-04T18:30:00'),
+    title: 'Rooftop Cinema: Casablanca',
+    description: 'Classic film screening under the stars with city skyline views. Blankets and popcorn provided.',
+    date: new Date('2024-08-26T20:30:00'),
+    datetime: '2024-08-26T20:30:00.000Z',
     location: {
-      name: 'The Press Lounge',
-      address: '653 11th Ave, New York, NY 10019',
-      coordinates: { lat: 40.7614, lng: -73.9956 },
+      name: 'Rooftop Films at Industry City',
+      address: '220 36th St, Brooklyn, NY 11232',
+      coordinates: { lat: 40.6572, lng: -74.0089 }
     },
-    category: EventCategory.PROFESSIONAL,
-    imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800',
-    price: { min: 20, max: 35, currency: 'USD' },
-    capacity: 100,
-    attendeeCount: 67,
-    source: EventSource.MANUAL,
-    externalId: 'mock_5',
-    lastUpdated: new Date(),
-    isActive: true,
+    venue: {
+      name: 'Industry City',
+      neighborhood: 'Sunset Park'
+    },
+    category: EventCategory.CULTURE,
+    source: EventSource.EVENTBRITE,
+    imageUrl: 'https://images.unsplash.com/photo-1489599317324-6c059b1c3ae0?w=800&h=600&fit=crop',
+    priceMin: 18,
+    priceMax: 25,
+    capacity: 200,
+    currentAttendees: 134,
+    isFeatured: false,
+    friendsAttending: 4,
+    tags: ['movie', 'rooftop', 'outdoor', 'classic film']
   },
   {
     id: '6',
-    title: 'Sunset Kayaking Adventure',
-    description:
-      'Paddle through Manhattan waters as the sun sets over the skyline',
-    date: new Date('2025-08-05T17:30:00'),
+    title: 'Brooklyn Bridge Sunrise Run',
+    description: 'Join fellow runners for a scenic 5K across the iconic Brooklyn Bridge at golden hour.',
+    date: new Date('2024-08-27T06:00:00'),
+    datetime: '2024-08-27T06:00:00.000Z',
     location: {
-      name: 'Manhattan Kayak Company',
-      address: 'Pier 84, New York, NY 10019',
-      coordinates: { lat: 40.7681, lng: -73.9928 },
+      name: 'Brooklyn Bridge Park',
+      address: '334 Furman St, Brooklyn, NY 11201',
+      coordinates: { lat: 40.7023, lng: -73.9964 }
     },
-    category: EventCategory.OUTDOOR,
-    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
-    price: { min: 45, max: 65, currency: 'USD' },
-    capacity: 30,
-    attendeeCount: 18,
-    source: EventSource.MANUAL,
-    externalId: 'mock_6',
-    lastUpdated: new Date(),
-    isActive: true,
+    venue: {
+      name: 'Brooklyn Bridge Park',
+      neighborhood: 'Dumbo'
+    },
+    category: EventCategory.FITNESS,
+    source: EventSource.NYC_PARKS,
+    imageUrl: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&h=600&fit=crop',
+    priceMin: 0,
+    capacity: 50,
+    currentAttendees: 23,
+    isFeatured: false,
+    friendsAttending: 1,
+    tags: ['running', 'sunrise', 'brooklyn bridge', 'fitness']
   },
   {
     id: '7',
-    title: 'Underground Jazz Night',
-    description: 'Intimate jazz performance in a hidden speakeasy-style venue',
-    date: new Date('2025-08-06T20:00:00'),
+    title: 'Jazz at Lincoln Center: Late Night',
+    description: 'Intimate late-night jazz performance featuring emerging artists and established masters.',
+    date: new Date('2024-08-28T22:30:00'),
+    datetime: '2024-08-28T22:30:00.000Z',
     location: {
-      name: 'The Django',
-      address: '2 6th Ave, New York, NY 10013',
-      coordinates: { lat: 40.7209, lng: -74.0007 },
+      name: 'Dizzy\'s Club',
+      address: '10 Columbus Cir, New York, NY 10019',
+      coordinates: { lat: 40.7677, lng: -73.9826 }
     },
-    category: EventCategory.CULTURE,
-    imageUrl:
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
-    price: { min: 30, max: 50, currency: 'USD' },
-    capacity: 80,
-    attendeeCount: 45,
-    source: EventSource.MANUAL,
-    externalId: 'mock_7',
-    lastUpdated: new Date(),
-    isActive: true,
+    venue: {
+      name: 'Jazz at Lincoln Center',
+      neighborhood: 'Upper West Side'
+    },
+    category: EventCategory.NIGHTLIFE,
+    source: EventSource.TICKETMASTER,
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
+    priceMin: 45,
+    priceMax: 85,
+    capacity: 120,
+    currentAttendees: 87,
+    isFeatured: true,
+    friendsAttending: 2,
+    tags: ['jazz', 'music', 'late night', 'lincoln center']
   },
   {
     id: '8',
-    title: 'Rooftop Brunch & Bottomless Mimosas',
-    description: 'Weekend vibes with unlimited mimosas and Manhattan views',
-    date: new Date('2025-08-07T11:00:00'),
+    title: 'High Line Urban Garden Workshop',
+    description: 'Learn sustainable gardening techniques in an urban environment. Take home your own planted container.',
+    date: new Date('2024-08-29T14:00:00'),
+    datetime: '2024-08-29T14:00:00.000Z',
     location: {
-      name: 'Westlight',
-      address: '111 N 12th St, Brooklyn, NY 11249',
-      coordinates: { lat: 40.7281, lng: -73.9571 },
+      name: 'High Line Park',
+      address: 'Gansevoort St & Washington St, New York, NY 10014',
+      coordinates: { lat: 40.7411, lng: -74.0086 }
+    },
+    venue: {
+      name: 'The High Line',
+      neighborhood: 'Meatpacking District'
+    },
+    category: EventCategory.OUTDOOR,
+    source: EventSource.NYC_PARKS,
+    imageUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=600&fit=crop',
+    priceMin: 35,
+    priceMax: 35,
+    capacity: 25,
+    currentAttendees: 12,
+    isFeatured: false,
+    friendsAttending: 0,
+    tags: ['gardening', 'workshop', 'high line', 'urban']
+  },
+  {
+    id: '9',
+    title: 'Tech Startup Pitch Competition',
+    description: 'Watch innovative startups present their ideas to investors and industry experts. Network with entrepreneurs and VCs.',
+    date: new Date('2024-08-30T18:00:00'),
+    datetime: '2024-08-30T18:00:00.000Z',
+    location: {
+      name: 'NYU Stern School of Business',
+      address: '44 W 4th St, New York, NY 10012',
+      coordinates: { lat: 40.7295, lng: -73.9965 }
+    },
+    venue: {
+      name: 'NYU Stern',
+      neighborhood: 'Greenwich Village'
+    },
+    category: EventCategory.PROFESSIONAL,
+    source: EventSource.EVENTBRITE,
+    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
+    priceMin: 15,
+    priceMax: 25,
+    capacity: 200,
+    currentAttendees: 156,
+    isFeatured: false,
+    friendsAttending: 5,
+    tags: ['startups', 'pitch', 'networking', 'tech']
+  },
+  {
+    id: '10',
+    title: 'Williamsburg Food Truck Festival',
+    description: 'Taste the best street food from across the five boroughs. Live music and craft beer available.',
+    date: new Date('2024-08-31T12:00:00'),
+    datetime: '2024-08-31T12:00:00.000Z',
+    location: {
+      name: 'East River State Park',
+      address: '90 Kent Ave, Brooklyn, NY 11249',
+      coordinates: { lat: 40.7209, lng: -73.9573 }
+    },
+    venue: {
+      name: 'East River State Park',
+      neighborhood: 'Williamsburg'
     },
     category: EventCategory.FOOD,
-    imageUrl:
-      'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800',
-    price: { min: 55, max: 75, currency: 'USD' },
-    capacity: 120,
-    attendeeCount: 89,
-    source: EventSource.MANUAL,
-    externalId: 'mock_8',
-    lastUpdated: new Date(),
-    isActive: true,
+    source: EventSource.NYC_OPEN_DATA,
+    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop',
+    priceMin: 0,
+    capacity: 500,
+    currentAttendees: 284,
+    isFeatured: true,
+    friendsAttending: 6,
+    tags: ['food trucks', 'festival', 'street food', 'williamsburg']
   },
+  {
+    id: '11',
+    title: 'Cocktail Making Masterclass',
+    description: 'Learn from award-winning mixologists. Create three signature cocktails and enjoy light appetizers.',
+    date: new Date('2024-09-01T16:00:00'),
+    datetime: '2024-09-01T16:00:00.000Z',
+    location: {
+      name: 'PDT (Please Don\'t Tell)',
+      address: '113 St Marks Pl, New York, NY 10009',
+      coordinates: { lat: 40.7289, lng: -73.9862 }
+    },
+    venue: {
+      name: 'PDT',
+      neighborhood: 'East Village'
+    },
+    category: EventCategory.NIGHTLIFE,
+    source: EventSource.EVENTBRITE,
+    imageUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&h=600&fit=crop',
+    priceMin: 65,
+    priceMax: 85,
+    capacity: 16,
+    currentAttendees: 11,
+    isFeatured: false,
+    friendsAttending: 1,
+    tags: ['cocktails', 'mixology', 'masterclass', 'speakeasy']
+  },
+  {
+    id: '12',
+    title: 'Central Park Conservancy Concert',
+    description: 'Free outdoor concert featuring the New York Philharmonic. Bring a blanket and enjoy classical music under the stars.',
+    date: new Date('2024-09-02T19:30:00'),
+    datetime: '2024-09-02T19:30:00.000Z',
+    location: {
+      name: 'Great Lawn, Central Park',
+      address: 'Central Park, New York, NY 10024',
+      coordinates: { lat: 40.7829, lng: -73.9654 }
+    },
+    venue: {
+      name: 'Central Park',
+      neighborhood: 'Upper East Side'
+    },
+    category: EventCategory.CULTURE,
+    source: EventSource.NYC_PARKS,
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
+    priceMin: 0,
+    capacity: 1000,
+    currentAttendees: 432,
+    isFeatured: true,
+    friendsAttending: 8,
+    tags: ['classical music', 'outdoor', 'free', 'philharmonic']
+  }
 ];
 
-export const getCategoryIcon = (category: EventCategory): string => {
-  switch (category) {
-    case EventCategory.NIGHTLIFE:
-      return 'NIGHT';
-    case EventCategory.CULTURE:
-      return 'ART';
-    case EventCategory.FITNESS:
-      return 'FIT';
-    case EventCategory.FOOD:
-      return 'FOOD';
-    case EventCategory.PROFESSIONAL:
-      return 'WORK';
-    case EventCategory.OUTDOOR:
-      return 'OUT';
-    default:
-      return 'EVENT';
-  }
+// Utility functions for working with mock data
+export const getEventsByCategory = (category: EventCategory): Event[] => {
+  return mockEvents.filter(event => event.category === category);
 };
 
-export const formatEventTime = (date: Date): string => {
-  const now = new Date();
-  const eventDate = new Date(date);
-  const diffInHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+export const getFeaturedEvents = (): Event[] => {
+  return mockEvents.filter(event => event.isFeatured);
+};
 
-  if (diffInHours < 24 && diffInHours > 0) {
-    return `Tonight • ${eventDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })}`;
-  } else if (diffInHours < 48 && diffInHours > 0) {
-    return `Tomorrow • ${eventDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })}`;
-  } else {
-    return eventDate.toLocaleDateString('en-US', {
-      weekday: 'long',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }
+export const getEventsWithFriends = (): Event[] => {
+  return mockEvents.filter(event => event.friendsAttending && event.friendsAttending > 0);
+};
+
+export const getFreeEvents = (): Event[] => {
+  return mockEvents.filter(event => !event.priceMin || event.priceMin === 0);
+};
+
+export const getEventsByNeighborhood = (neighborhood: string): Event[] => {
+  return mockEvents.filter(event => 
+    event.venue.neighborhood?.toLowerCase().includes(neighborhood.toLowerCase())
+  );
+};
+
+export const getUpcomingEvents = (days: number = 7): Event[] => {
+  const now = new Date();
+  const futureDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+  
+  return mockEvents.filter(event => {
+    const eventDate = new Date(event.datetime);
+    return eventDate >= now && eventDate <= futureDate;
+  }).sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
 };

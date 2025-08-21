@@ -1,392 +1,316 @@
-import React, { useState, useRef } from 'react';
+import React, { useMemo } from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
   ScrollView,
+  View,
   TouchableOpacity,
-  Dimensions,
+  Text,
 } from 'react-native';
 import {
   format,
-  addDays,
   startOfWeek,
   endOfWeek,
+  eachDayOfInterval,
+  addDays,
+  isToday,
   isSameDay,
+  startOfDay,
   addHours,
-  isWithinInterval,
-  getHours,
-  getMinutes,
+  isSameHour,
 } from 'date-fns';
-import { COLORS, SPACING, FONT_SIZES, LAYOUT, SHADOWS } from '../../constants';
-import { Event, EventCategory } from '../../types';
-import { getCategoryIcon } from '../../data/mockEvents';
+import { Event } from '../../types';
+import { colors, typography, spacing, layout } from '../../design';
+import { Body, Caption } from '../../components/base';
+import { getCategoryColor } from '../../utils';
 
 interface WeekViewProps {
   events: Event[];
-  selectedDate: Date;
-  onDateSelect: (date: Date) => void;
+  selectedDate: string;
+  onDateSelect?: (date: string) => void;
   onEventPress?: (event: Event) => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-const HOUR_HEIGHT = 60;
-const HOURS_IN_DAY = 24;
-const DAY_WIDTH = (screenWidth - 60) / 7; // Account for time column
-
-const getCategoryColor = (category: EventCategory): string => {
-  switch (category) {
-    case EventCategory.NETWORKING:
-      return COLORS.SECONDARY;
-    case EventCategory.CULTURE:
-      return '#EC4899';
-    case EventCategory.FITNESS:
-      return COLORS.SUCCESS;
-    case EventCategory.FOOD:
-      return COLORS.WARNING;
-    case EventCategory.NIGHTLIFE:
-      return COLORS.ACCENT;
-    case EventCategory.OUTDOOR:
-      return '#10B981';
-    case EventCategory.PROFESSIONAL:
-      return '#3B82F6';
-    default:
-      return COLORS.PRIMARY;
-  }
-};
-
-const TimeColumn = () => {
-  const hours = Array.from({ length: HOURS_IN_DAY }, (_, i) => i);
-  
-  return (
-    <View style={styles.timeColumn}>
-      {hours.map((hour) => (
-        <View key={hour} style={styles.timeSlot}>
-          <Text style={styles.timeText}>
-            {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-const DayColumn = ({ 
-  date, 
-  events, 
-  isSelected, 
-  onPress, 
-  onEventPress 
-}: {
-  date: Date;
-  events: Event[];
-  isSelected: boolean;
-  onPress: () => void;
-  onEventPress?: (event: Event) => void;
+export const WeekView: React.FC<WeekViewProps> = ({
+  events,
+  selectedDate,
+  onDateSelect,
+  onEventPress,
 }) => {
-  const dayEvents = events.filter(event => isSameDay(new Date(event.date), date));
-  const isToday = isSameDay(date, new Date());
+  const selectedDateObj = new Date(selectedDate);
+  
+  // Get week days starting from Monday
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(selectedDateObj, { weekStartsOn: 1 });
+    const end = endOfWeek(selectedDateObj, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [selectedDateObj]);
 
-  const getEventPosition = (event: Event) => {
-    const eventDate = new Date(event.date);
-    const hours = getHours(eventDate);
-    const minutes = getMinutes(eventDate);
-    const topPosition = (hours * HOUR_HEIGHT) + (minutes * HOUR_HEIGHT / 60);
+  // Generate time slots (6 AM to 11 PM)
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 6; hour <= 23; hour++) {
+      slots.push(hour);
+    }
+    return slots;
+  }, []);
+
+  // Group events by day and time
+  const eventsByDay = useMemo(() => {
+    const grouped: { [key: string]: Event[] } = {};
     
-    return {
-      top: topPosition,
-      height: HOUR_HEIGHT * 1.5, // Default 1.5 hour duration
-    };
+    weekDays.forEach(day => {
+      const dayKey = format(day, 'yyyy-MM-dd');
+      grouped[dayKey] = events.filter(event => {
+        const eventDate = format(new Date(event.datetime), 'yyyy-MM-dd');
+        return eventDate === dayKey;
+      }).sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+    });
+    
+    return grouped;
+  }, [events, weekDays]);
+
+  const getEventPosition = (event: Event): { top: number; height: number } => {
+    const eventDate = new Date(event.datetime);
+    const hour = eventDate.getHours();
+    const minutes = eventDate.getMinutes();
+    
+    // Calculate position relative to 6 AM start
+    const startHour = 6;
+    const relativeHour = hour - startHour;
+    const slotHeight = 60; // Height per hour slot
+    
+    const top = (relativeHour * slotHeight) + (minutes / 60 * slotHeight);
+    const height = 50; // Default event height (could be calculated from duration)
+    
+    return { top: Math.max(0, top), height };
+  };
+
+  const formatTimeSlot = (hour: number) => {
+    if (hour === 0) return '12 AM';
+    if (hour === 12) return '12 PM';
+    if (hour < 12) return `${hour} AM`;
+    return `${hour - 12} PM`;
+  };
+
+  const handleDatePress = (day: Date) => {
+    const dateString = format(day, 'yyyy-MM-dd');
+    onDateSelect?.(dateString);
   };
 
   return (
-    <TouchableOpacity style={styles.dayColumn} onPress={onPress}>
-      <View style={[
-        styles.dayHeader,
-        isSelected && styles.dayHeaderSelected,
-        isToday && styles.dayHeaderToday,
-      ]}>
-        <Text style={[
-          styles.dayHeaderText,
-          isSelected && styles.dayHeaderTextSelected,
-          isToday && styles.dayHeaderTextToday,
-        ]}>
-          {format(date, 'EEE')}
-        </Text>
-        <Text style={[
-          styles.dayNumberText,
-          isSelected && styles.dayNumberTextSelected,
-          isToday && styles.dayNumberTextToday,
-        ]}>
-          {format(date, 'd')}
-        </Text>
-      </View>
-      
-      <View style={styles.dayContent}>
-        {/* Hour grid lines */}
-        {Array.from({ length: HOURS_IN_DAY }, (_, hour) => (
-          <View key={hour} style={[styles.hourLine, { top: hour * HOUR_HEIGHT }]} />
-        ))}
-        
-        {/* Events */}
-        {dayEvents.map((event, index) => {
-          const position = getEventPosition(event);
+    <View style={styles.container}>
+      {/* Header with days */}
+      <View style={styles.header}>
+        <View style={styles.timeHeaderSpace} />
+        {weekDays.map((day) => {
+          const dayString = format(day, 'yyyy-MM-dd');
+          const isSelected = dayString === selectedDate;
+          const isDayToday = isToday(day);
+          
           return (
             <TouchableOpacity
-              key={event.id}
+              key={dayString}
               style={[
-                styles.eventBlock,
-                {
-                  top: position.top,
-                  height: position.height,
-                  backgroundColor: getCategoryColor(event.category),
-                  left: index * 2, // Slight offset for overlapping events
-                  right: index * 2,
-                }
+                styles.dayHeader,
+                isSelected && styles.selectedDayHeader,
+                isDayToday && styles.todayHeader,
               ]}
-              onPress={() => onEventPress?.(event)}
+              onPress={() => handleDatePress(day)}
             >
-              <Text style={styles.eventBlockTitle} numberOfLines={2}>
-                {event.title}
-              </Text>
-              <Text style={styles.eventBlockTime}>
-                {format(new Date(event.date), 'h:mm a')}
-              </Text>
+              <Caption 
+                style={[
+                  styles.dayOfWeek,
+                  isSelected && styles.selectedDayText,
+                  isDayToday && styles.todayText,
+                ]}
+              >
+                {format(day, 'EEE')}
+              </Caption>
+              <Body 
+                style={[
+                  styles.dayNumber,
+                  isSelected && styles.selectedDayText,
+                  isDayToday && styles.todayText,
+                ]}
+              >
+                {format(day, 'd')}
+              </Body>
             </TouchableOpacity>
           );
         })}
       </View>
-    </TouchableOpacity>
-  );
-};
 
-export default function WeekView({ 
-  events, 
-  selectedDate, 
-  onDateSelect, 
-  onEventPress 
-}: WeekViewProps) {
-  const scrollViewRef = useRef<ScrollView>(null);
-  
-  // Get the week days starting from Sunday
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  // Scroll to current time on mount
-  React.useEffect(() => {
-    const currentHour = new Date().getHours();
-    const scrollToPosition = Math.max(0, (currentHour - 2) * HOUR_HEIGHT);
-    
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: scrollToPosition, animated: false });
-    }, 100);
-  }, []);
-
-  return (
-    <View style={styles.container}>
-      {/* Week header */}
-      <View style={styles.weekHeader}>
-        <View style={styles.timeColumnHeader} />
-        {weekDays.map((day) => (
-          <View key={day.toISOString()} style={styles.dayHeaderContainer}>
-            <TouchableOpacity
-              style={[
-                styles.dayHeaderButton,
-                isSameDay(day, selectedDate) && styles.dayHeaderButtonSelected,
-                isSameDay(day, new Date()) && styles.dayHeaderButtonToday,
-              ]}
-              onPress={() => onDateSelect(day)}
-            >
-              <Text style={[
-                styles.dayHeaderButtonText,
-                isSameDay(day, selectedDate) && styles.dayHeaderButtonTextSelected,
-                isSameDay(day, new Date()) && styles.dayHeaderButtonTextToday,
-              ]}>
-                {format(day, 'EEE')}
-              </Text>
-              <Text style={[
-                styles.dayHeaderButtonNumber,
-                isSameDay(day, selectedDate) && styles.dayHeaderButtonNumberSelected,
-                isSameDay(day, new Date()) && styles.dayHeaderButtonNumberToday,
-              ]}>
-                {format(day, 'd')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-
-      {/* Scrollable content */}
-      <ScrollView
-        ref={scrollViewRef}
+      {/* Scrollable time grid */}
+      <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ height: HOURS_IN_DAY * HOUR_HEIGHT }}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.weekContent}>
-          <TimeColumn />
-          {weekDays.map((day) => (
-            <DayColumn
-              key={day.toISOString()}
-              date={day}
-              events={events}
-              isSelected={isSameDay(day, selectedDate)}
-              onPress={() => onDateSelect(day)}
-              {...(onEventPress && { onEventPress })}
-            />
+        <View style={styles.timeGrid}>
+          {timeSlots.map((hour) => (
+            <View key={hour} style={styles.timeRow}>
+              {/* Time label */}
+              <View style={styles.timeLabel}>
+                <Caption color={colors.neutral[500]} style={styles.timeLabelText}>
+                  {formatTimeSlot(hour)}
+                </Caption>
+              </View>
+
+              {/* Day columns */}
+              {weekDays.map((day) => {
+                const dayString = format(day, 'yyyy-MM-dd');
+                const dayEvents = eventsByDay[dayString] || [];
+                
+                return (
+                  <View 
+                    key={`${dayString}-${hour}`} 
+                    style={[
+                      styles.dayColumn,
+                      hour === timeSlots[timeSlots.length - 1] && styles.lastRow,
+                    ]}
+                  >
+                    {/* Events for this hour */}
+                    {dayEvents
+                      .filter(event => {
+                        const eventHour = new Date(event.datetime).getHours();
+                        return eventHour === hour;
+                      })
+                      .map((event, index) => {
+                        const position = getEventPosition(event);
+                        return (
+                          <TouchableOpacity
+                            key={event.id}
+                            style={[
+                              styles.eventBlock,
+                              {
+                                backgroundColor: getCategoryColor(event.category),
+                                height: position.height,
+                                zIndex: 10 + index,
+                              },
+                            ]}
+                            onPress={() => onEventPress?.(event)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.eventTitle} numberOfLines={2}>
+                              {event.title}
+                            </Text>
+                            <Text style={styles.eventTime}>
+                              {format(new Date(event.datetime), 'h:mm a')}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })
+                    }
+                  </View>
+                );
+              })}
+            </View>
           ))}
         </View>
       </ScrollView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: colors.neutral[0],
   },
-  weekHeader: {
+  header: {
     flexDirection: 'row',
-    backgroundColor: COLORS.WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER_LIGHT,
-    paddingVertical: SPACING.SM,
-    ...SHADOWS.SMALL,
+    borderBottomColor: colors.neutral[100],
+    backgroundColor: colors.neutral[0],
   },
-  timeColumnHeader: {
-    width: 50,
+  timeHeaderSpace: {
+    width: 60,
+    borderRightWidth: 1,
+    borderRightColor: colors.neutral[100],
   },
-  dayHeaderContainer: {
+  dayHeader: {
     flex: 1,
+    paddingVertical: spacing[3],
     alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: colors.neutral[100],
   },
-  dayHeaderButton: {
-    alignItems: 'center',
-    paddingVertical: SPACING.XS,
-    paddingHorizontal: SPACING.SM,
-    borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
+  selectedDayHeader: {
+    backgroundColor: colors.primary[50],
   },
-  dayHeaderButtonSelected: {
-    backgroundColor: COLORS.SECONDARY,
+  todayHeader: {
+    backgroundColor: colors.primary[500],
   },
-  dayHeaderButtonToday: {
-    backgroundColor: COLORS.LIGHT_GRAY,
+  dayOfWeek: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: spacing[1],
   },
-  dayHeaderButtonText: {
-    fontSize: FONT_SIZES.XS,
-    color: COLORS.TEXT_MEDIUM,
-    fontWeight: '500',
-    marginBottom: 2,
+  dayNumber: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  dayHeaderButtonTextSelected: {
-    color: COLORS.WHITE,
+  selectedDayText: {
+    color: colors.primary[600],
   },
-  dayHeaderButtonTextToday: {
-    color: COLORS.ACCENT,
-  },
-  dayHeaderButtonNumber: {
-    fontSize: FONT_SIZES.SM,
-    color: COLORS.TEXT_DARK,
-    fontWeight: 'bold',
-  },
-  dayHeaderButtonNumberSelected: {
-    color: COLORS.WHITE,
-  },
-  dayHeaderButtonNumberToday: {
-    color: COLORS.ACCENT,
+  todayText: {
+    color: colors.neutral[0],
   },
   scrollView: {
     flex: 1,
   },
-  weekContent: {
+  scrollContent: {
+    paddingBottom: spacing[4],
+  },
+  timeGrid: {
+    flex: 1,
+  },
+  timeRow: {
     flexDirection: 'row',
-    position: 'relative',
+    height: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
-  timeColumn: {
-    width: 50,
-    backgroundColor: COLORS.WHITE,
-    borderRightWidth: 1,
-    borderRightColor: COLORS.BORDER_LIGHT,
+  lastRow: {
+    borderBottomWidth: 0,
   },
-  timeSlot: {
-    height: HOUR_HEIGHT,
+  timeLabel: {
+    width: 60,
     justifyContent: 'flex-start',
-    paddingTop: SPACING.XS,
-    paddingRight: SPACING.XS,
+    alignItems: 'center',
+    paddingTop: spacing[1],
+    borderRightWidth: 1,
+    borderRightColor: colors.neutral[100],
   },
-  timeText: {
-    fontSize: FONT_SIZES.XS,
-    color: COLORS.TEXT_LIGHT,
-    textAlign: 'right',
+  timeLabelText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   dayColumn: {
     flex: 1,
-    backgroundColor: COLORS.WHITE,
     borderRightWidth: 1,
-    borderRightColor: COLORS.BORDER_LIGHT,
-  },
-  dayHeader: {
-    alignItems: 'center',
-    paddingVertical: SPACING.SM,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER_LIGHT,
-  },
-  dayHeaderSelected: {
-    backgroundColor: COLORS.SECONDARY,
-  },
-  dayHeaderToday: {
-    backgroundColor: COLORS.LIGHT_GRAY,
-  },
-  dayHeaderText: {
-    fontSize: FONT_SIZES.XS,
-    color: COLORS.TEXT_MEDIUM,
-    fontWeight: '500',
-  },
-  dayHeaderTextSelected: {
-    color: COLORS.WHITE,
-  },
-  dayHeaderTextToday: {
-    color: COLORS.ACCENT,
-  },
-  dayNumberText: {
-    fontSize: FONT_SIZES.SM,
-    color: COLORS.TEXT_DARK,
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-  dayNumberTextSelected: {
-    color: COLORS.WHITE,
-  },
-  dayNumberTextToday: {
-    color: COLORS.ACCENT,
-  },
-  dayContent: {
-    flex: 1,
+    borderRightColor: colors.neutral[100],
     position: 'relative',
-  },
-  hourLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: COLORS.BORDER_LIGHT,
   },
   eventBlock: {
     position: 'absolute',
-    borderRadius: LAYOUT.BORDER_RADIUS_SMALL,
-    padding: SPACING.XS,
-    margin: 1,
-    ...SHADOWS.SMALL,
+    left: 2,
+    right: 2,
+    borderRadius: 4,
+    padding: spacing[1],
+    marginVertical: 1,
   },
-  eventBlockTitle: {
-    fontSize: FONT_SIZES.XS - 1,
-    color: COLORS.WHITE,
+  eventTitle: {
+    color: colors.neutral[0],
+    fontSize: 11,
     fontWeight: '600',
-    marginBottom: 2,
+    lineHeight: 14,
   },
-  eventBlockTime: {
-    fontSize: FONT_SIZES.XS - 2,
-    color: 'rgba(255, 255, 255, 0.9)',
+  eventTime: {
+    color: colors.neutral[0],
+    fontSize: 9,
+    fontWeight: '500',
+    opacity: 0.9,
+    marginTop: 2,
   },
 });

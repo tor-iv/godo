@@ -1,3 +1,1 @@
-export * from './api';
-export * from './storage';
-export * from './sync';
+export { EventService } from './EventService';

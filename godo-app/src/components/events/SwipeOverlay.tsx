@@ -1,145 +1,251 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { SwipeDirection } from '../../types';
-import Typography from '../common/Typography';
+import { colors, typography, spacing } from '../../design';
+
+const { width, height } = Dimensions.get('window');
 
 interface SwipeOverlayProps {
-  direction: SwipeDirection;
-  progress: Animated.SharedValue<number>;
+  translateX: Animated.SharedValue<number>;
+  translateY: Animated.SharedValue<number>;
 }
 
-const SwipeOverlay: React.FC<SwipeOverlayProps> = ({ direction, progress }) => {
+const OVERLAY_CONFIG = {
+  [SwipeDirection.RIGHT]: {
+    colors: ['rgba(59, 130, 246, 0.3)', 'rgba(59, 130, 246, 0.6)'] as const,
+    textColor: colors.info[600],
+    icon: 'calendar-plus',
+    title: 'GOING',
+    subtitle: 'Added to private calendar',
+    position: 'right' as const,
+  },
+  [SwipeDirection.UP]: {
+    colors: ['rgba(16, 185, 129, 0.3)', 'rgba(16, 185, 129, 0.6)'] as const,
+    textColor: colors.success[600],
+    icon: 'users',
+    title: 'SHARING',
+    subtitle: 'Added to public calendar',
+    position: 'top' as const,
+  },
+  [SwipeDirection.DOWN]: {
+    colors: ['rgba(245, 158, 11, 0.3)', 'rgba(245, 158, 11, 0.6)'] as const,
+    textColor: colors.warning[600],
+    icon: 'bookmark',
+    title: 'SAVED',
+    subtitle: 'Saved for later',
+    position: 'bottom' as const,
+  },
+  [SwipeDirection.LEFT]: {
+    colors: ['rgba(239, 68, 68, 0.3)', 'rgba(239, 68, 68, 0.6)'] as const,
+    textColor: colors.error[600],
+    icon: 'x',
+    title: 'PASS',
+    subtitle: 'Not interested',
+    position: 'left' as const,
+  },
+};
+
+// Individual overlay component to avoid hooks-in-loop issue
+interface DirectionalOverlayProps {
+  direction: SwipeDirection;
+  translateX: Animated.SharedValue<number>;
+  translateY: Animated.SharedValue<number>;
+}
+
+const DirectionalOverlay: React.FC<DirectionalOverlayProps> = ({ 
+  direction, 
+  translateX, 
+  translateY 
+}) => {
+  const config = OVERLAY_CONFIG[direction];
+  
   const animatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      progress.value,
-      [0, 0.3, 1],
-      [0, 0.8, 1],
-      Extrapolate.CLAMP
-    );
+    const absX = Math.abs(translateX.value);
+    const absY = Math.abs(translateY.value);
+    
+    let currentDirection: SwipeDirection | null = null;
+    let opacity = 0;
+    
+    if (absX > 20 || absY > 20) {
+      if (absX > absY) {
+        currentDirection = translateX.value > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
+      } else {
+        currentDirection = translateY.value > 0 ? SwipeDirection.DOWN : SwipeDirection.UP;
+      }
+      
+      if (currentDirection === direction) {
+        const threshold = (direction === SwipeDirection.LEFT || direction === SwipeDirection.RIGHT) ? absX : absY;
+        opacity = interpolate(
+          threshold,
+          [20, 100],
+          [0, 1],
+          Extrapolate.CLAMP
+        );
+      }
+    }
+    
+    return { opacity };
+  }, [translateX, translateY]);
 
-    const scale = interpolate(
-      progress.value,
-      [0, 0.5, 1],
-      [0.8, 1.1, 1],
-      Extrapolate.CLAMP
-    );
-
-    return {
-      opacity,
-      transform: [{ scale }],
-    };
-  });
-
-  const getOverlayConfig = () => {
-    switch (direction) {
-      case SwipeDirection.RIGHT:
-        return {
-          backgroundColor: 'rgba(74, 85, 104, 0.9)',
-          icon: 'calendar' as keyof typeof Ionicons.glyphMap,
-          text: 'ADDED TO CALENDAR',
-          color: '#FFFFFF',
-        };
-      case SwipeDirection.LEFT:
-        return {
-          backgroundColor: 'rgba(113, 128, 150, 0.9)',
-          icon: 'close-circle' as keyof typeof Ionicons.glyphMap,
-          text: 'PASS',
-          color: '#FFFFFF',
-        };
-      case SwipeDirection.UP:
-        return {
-          backgroundColor: 'rgba(72, 187, 120, 0.9)',
-          icon: 'people' as keyof typeof Ionicons.glyphMap,
-          text: 'PUBLIC CALENDAR',
-          color: '#FFFFFF',
-        };
-      case SwipeDirection.DOWN:
-        return {
-          backgroundColor: 'rgba(237, 137, 54, 0.9)',
-          icon: 'bookmark' as keyof typeof Ionicons.glyphMap,
-          text: 'SAVED FOR LATER',
-          color: '#FFFFFF',
-        };
+  const getOverlayStyle = () => {
+    switch (config.position) {
+      case 'left':
+        return styles.overlayLeft;
+      case 'right':
+        return styles.overlayRight;
+      case 'top':
+        return styles.overlayTop;
+      case 'bottom':
+        return styles.overlayBottom;
       default:
-        return {
-          backgroundColor: 'rgba(74, 85, 104, 0.9)',
-          icon: 'calendar' as keyof typeof Ionicons.glyphMap,
-          text: 'ADDED TO CALENDAR',
-          color: '#FFFFFF',
-        };
+        return styles.overlayRight;
     }
   };
 
-  const config = getOverlayConfig();
-
   return (
-    <Animated.View
-      style={[
-        styles.overlay,
-        { backgroundColor: config.backgroundColor },
-        animatedStyle,
-      ]}
+    <Animated.View 
+      style={[styles.overlay, getOverlayStyle(), animatedStyle]}
     >
-      <View style={styles.content}>
-        <Ionicons
-          name={config.icon}
-          size={80}
-          color={config.color}
-          style={styles.icon}
-        />
-        <Typography variant="h2" color={config.color} style={styles.text}>
-          {config.text}
-        </Typography>
-      </View>
+      <LinearGradient
+        colors={config.colors}
+        style={styles.overlayGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.overlayContent}>
+          <View style={[styles.iconContainer, { backgroundColor: config.textColor }]}>
+            <Feather 
+              name={config.icon as any} 
+              size={28} 
+              color={colors.neutral[0]} 
+            />
+          </View>
+          
+          <Text style={[styles.overlayTitle, { color: config.textColor }]}>
+            {config.title}
+          </Text>
+          
+          <Text style={styles.overlaySubtitle}>
+            {config.subtitle}
+          </Text>
+        </View>
+      </LinearGradient>
     </Animated.View>
+  );
+};
+
+export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({ 
+  translateX, 
+  translateY 
+}) => {
+  return (
+    <>
+      <DirectionalOverlay 
+        direction={SwipeDirection.LEFT} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.RIGHT} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.UP} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.DOWN} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 16,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: {
-    alignItems: 'center',
+  
+  overlayLeft: {
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  icon: {
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+  
+  overlayRight: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  overlayTop: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  overlayBottom: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  overlayGradient: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  overlayContent: {
+    alignItems: 'center',
+  },
+  
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing[3],
+    shadowColor: colors.neutral[900],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     elevation: 4,
   },
-  text: {
-    fontWeight: '800',
-    letterSpacing: 2,
+  
+  overlayTitle: {
+    ...typography.h3,
+    fontWeight: '700',
+    marginBottom: spacing[1],
     textAlign: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  
+  overlaySubtitle: {
+    ...typography.body2,
+    color: colors.neutral[0],
+    textAlign: 'center',
+    fontWeight: '500',
+    maxWidth: 150,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
-
-export default SwipeOverlay;

@@ -4,92 +4,129 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is "godo" - an event discovery app for young professionals in NYC that helps users get off their phones and discover local events. The app uses a Tinder-like swipe interface to browse curated events and build personalized calendars with social features.
+"godo" is an event discovery app for young professionals in NYC that helps users get off their phones and discover local events. The app uses a Tinder-like swipe interface to browse curated events and build personalized calendars with social features. The main goal is to sync with calendar for follow-through on attending events.
 
 ## Technology Stack
 
-- **Frontend**: React Native with Expo
-- **Language**: TypeScript
-- **Backend**: Python (to be implemented)
-- **Database**: Supabase
+- **Frontend**: React Native with Expo SDK 53
+- **Language**: TypeScript with strict mode
 - **Navigation**: React Navigation 6 (Bottom Tabs + Stack)
-- **State Management**: TanStack Query (React Query)
+- **State Management**: TanStack Query (React Query) v5
 - **Animations**: React Native Reanimated 3
 - **Gestures**: React Native Gesture Handler
-
-## Project Structure
-
-The app follows a feature-based directory structure:
-
-```
-src/
-├── components/           # Reusable UI components
-│   ├── common/          # Generic components
-│   └── events/          # Event-specific components
-├── screens/             # Screen components
-│   ├── auth/            # Authentication screens
-│   ├── discover/        # Main discovery feed
-│   └── calendar/        # Calendar and saved events
-├── navigation/          # Navigation configuration
-├── services/            # API and external service integration
-├── types/               # TypeScript type definitions
-├── utils/               # Utility functions
-└── constants/           # App constants (colors, fonts, etc.)
-```
+- **Calendar**: react-native-calendars
+- **Date Handling**: date-fns v4
+- **Storage**: AsyncStorage
+- **Icons**: Expo Vector Icons
 
 ## Development Commands
 
-Since this is an Expo React Native project, use these commands:
+**Core Commands:**
+- `npm start` or `npx expo start` - Start development server
+- `npm run android` - Run on Android device/emulator
+- `npm run ios` - Run on iOS simulator
+- `npm run web` - Run on web
+- `npm run clear` - Clear Metro cache
+- `npm run tunnel` - Start with tunnel for external device access
 
-- **Start development server**: `npx expo start`
-- **Run on iOS simulator**: `npx expo start` then press `i`
-- **Run on Android**: `npx expo start` then press `a`
-- **Clear Metro cache**: `npx expo start --clear`
-- **Type checking**: `npx tsc --noEmit`
-- **Linting**: `npx eslint src/`
-- **Install dependencies**: `npm install` or `npx expo install [package]`
+**Code Quality:**
+- `npm run typecheck` - Run TypeScript type checking (`tsc --noEmit`)
+- `npm run lint` - Run ESLint on src/ directory
+- `npm run lint:fix` - Run ESLint with auto-fix
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
 
-## Core App Features
+**Dependencies:**
+- `npm install` - Install dependencies
+- `npx expo install [package]` - Install Expo-compatible package
 
-### Swipe Mechanics
-- **Right Swipe**: "Private Calendar" - adds event to private calendar
-- **Left Swipe**: "Not interested" - removes from feed
-- **Up Swipe**: "Public Calendar" - adds event to public calendar
-- **Down Swipe**: "Save for later" - saves for later viewing
+## Core Architecture
 
-### Feed Modes
-- **Happening Now**: Current and today's events
-- **Planning Ahead**: Future events for planning
+### Event Data System
+The app is built around a comprehensive event aggregation system that pulls from multiple NYC data sources:
 
-### Navigation Structure
-- **Tab 1 "Discover"**: Main event feed with swipe interface
-- **Tab 2 "My Events"**: Personal calendar and saved collections
+**Event Adapters Pattern:**
+- `BaseEventAdapter` - Abstract class defining the adapter interface
+- `EventAggregatorService` - Orchestrates multiple adapters and aggregates results
+- Individual adapters: `EventbriteAdapter`, `TicketmasterAdapter`, `NYCParksAdapter`, `MetMuseumAdapter`, `NYCOpenDataAdapter`
 
-## Key Design Principles
+**Event Type System:**
+```typescript
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  date: Date;
+  datetime: string; // ISO string for compatibility
+  location: { name: string; address: string; coordinates: {lat, lng} };
+  venue: { name: string; neighborhood?: string };
+  category: EventCategory; // NETWORKING, CULTURE, FITNESS, FOOD, NIGHTLIFE, OUTDOOR, PROFESSIONAL
+  source: EventSource; // EVENTBRITE, RESY, NYC_PARKS, etc.
+  // ... additional metadata
+}
+```
 
-### Color Scheme
-- Primary: Purple (#8B5CF6)
-- Secondary: Light Purple (#A78BFA)
-- Background: White/Off-white
-- Text: Dark purple on white backgrounds
+### Design System Architecture
+The app uses a dual design system for backwards compatibility during migration:
 
-### TypeScript Configuration
-- Strict mode enabled with comprehensive type checking
-- Path mapping configured for clean imports (@/components/*, @/screens/*, etc.)
-- All new code should use proper TypeScript types
+**New Design System (Preferred):**
+- `src/design/tokens.ts` - Core design tokens (colors, spacing, typography)
+- `src/design/types.ts` - TypeScript interfaces for design system
+- Access via: `import { typography, colors, spacing } from '../../design'`
 
-### Performance Requirements
-- 60fps animations for card swiping
-- Optimized image loading and caching
-- Smooth transitions between feed modes
+**Legacy System (Deprecated):**
+- `src/constants/index.ts` - Legacy constants
+- Use new system for all new components
 
-## Development Setup Status
+**Responsive Utilities:**
+- `src/utils/responsive.ts` - Screen size detection and responsive scaling
+- Functions always return numbers (never undefined) for type safety
 
-Based on the setup guide, the project structure includes:
-1. Expo TypeScript configuration
-2. Navigation setup (Tab + Stack navigators)
-3. Core type definitions for events, users, and swipe actions
-4. Basic screen components with purple theme
-5. Constants for colors, fonts, spacing, and animations
+### Swipe Interface System
+**Core Swipe Actions:**
+- **Up Swipe**: Add to public calendar (green flash #10B981)
+- **Down Swipe**: Add to private calendar (blue flash #3B82F6) 
+- **Right Swipe**: Save for later (gray flash #9CA3AF)
+- **Left Swipe**: Not interested (red flash #FCA5A5)
 
-The project is currently in initial setup phase with placeholder screens and basic navigation structure in place.
+**Components:**
+- `SwipeCard` - Individual event card with gesture handling
+- `SwipeStack` - Stack of cards with physics and animations
+- `SwipeOverlay` - Visual feedback during swipe gestures
+
+### Navigation Architecture
+Two-tab structure with nested stacks:
+- **Discover Tab**: Main event feed (`DiscoverScreen` with swipe interface)
+- **My Events Tab**: Calendar views (`CalendarScreen` with multiple view modes)
+
+## Event Category System
+Events are categorized into:
+- `NETWORKING` - Professional networking events
+- `CULTURE` - Museums, art, performances
+- `FITNESS` - Sports, yoga, outdoor activities  
+- `FOOD` - Restaurants, food events
+- `NIGHTLIFE` - Bars, clubs, social events
+- `OUTDOOR` - Parks, outdoor activities
+- `PROFESSIONAL` - Business, conferences
+
+## Important Implementation Notes
+
+**Type Safety:**
+- All responsive utility functions return concrete values, never undefined
+- Event adapters must implement full Event interface with required datetime and venue fields
+- SwipeDirection enum is exported from types/index.ts
+
+**Performance:**
+- Animations target 60fps using Reanimated 3
+- Card stack optimized with lazy loading
+- Image caching implemented for event photos
+
+**API Integration:**
+- All external APIs go through adapter pattern
+- EventAggregatorService handles multiple simultaneous API calls
+- Built-in validation ensures data consistency across sources
+
+**ESLint Configuration:**
+- Uses ESLint v9 with flat config format (`eslint.config.js`)
+- TypeScript and Prettier integration configured
+- Warns on unused variables and missing types
