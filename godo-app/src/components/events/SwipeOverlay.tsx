@@ -18,14 +18,13 @@ import { colors, typography, spacing } from '../../design';
 const { width, height } = Dimensions.get('window');
 
 interface SwipeOverlayProps {
-  direction: SwipeDirection;
   translateX: Animated.SharedValue<number>;
   translateY: Animated.SharedValue<number>;
 }
 
 const OVERLAY_CONFIG = {
   [SwipeDirection.RIGHT]: {
-    colors: ['rgba(59, 130, 246, 0.1)', 'rgba(59, 130, 246, 0.3)'] as const,
+    colors: ['rgba(59, 130, 246, 0.3)', 'rgba(59, 130, 246, 0.6)'] as const,
     textColor: colors.info[600],
     icon: 'calendar-plus',
     title: 'GOING',
@@ -33,7 +32,7 @@ const OVERLAY_CONFIG = {
     position: 'right' as const,
   },
   [SwipeDirection.UP]: {
-    colors: ['rgba(16, 185, 129, 0.1)', 'rgba(16, 185, 129, 0.3)'] as const,
+    colors: ['rgba(16, 185, 129, 0.3)', 'rgba(16, 185, 129, 0.6)'] as const,
     textColor: colors.success[600],
     icon: 'users',
     title: 'SHARING',
@@ -41,7 +40,7 @@ const OVERLAY_CONFIG = {
     position: 'top' as const,
   },
   [SwipeDirection.DOWN]: {
-    colors: ['rgba(245, 158, 11, 0.1)', 'rgba(245, 158, 11, 0.3)'] as const,
+    colors: ['rgba(245, 158, 11, 0.3)', 'rgba(245, 158, 11, 0.6)'] as const,
     textColor: colors.warning[600],
     icon: 'bookmark',
     title: 'SAVED',
@@ -49,7 +48,7 @@ const OVERLAY_CONFIG = {
     position: 'bottom' as const,
   },
   [SwipeDirection.LEFT]: {
-    colors: ['rgba(239, 68, 68, 0.1)', 'rgba(239, 68, 68, 0.3)'] as const,
+    colors: ['rgba(239, 68, 68, 0.3)', 'rgba(239, 68, 68, 0.6)'] as const,
     textColor: colors.error[600],
     icon: 'x',
     title: 'PASS',
@@ -58,7 +57,14 @@ const OVERLAY_CONFIG = {
   },
 };
 
-export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({ 
+// Individual overlay component to avoid hooks-in-loop issue
+interface DirectionalOverlayProps {
+  direction: SwipeDirection;
+  translateX: Animated.SharedValue<number>;
+  translateY: Animated.SharedValue<number>;
+}
+
+const DirectionalOverlay: React.FC<DirectionalOverlayProps> = ({ 
   direction, 
   translateX, 
   translateY 
@@ -66,29 +72,33 @@ export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({
   const config = OVERLAY_CONFIG[direction];
   
   const animatedStyle = useAnimatedStyle(() => {
+    const absX = Math.abs(translateX.value);
+    const absY = Math.abs(translateY.value);
+    
+    let currentDirection: SwipeDirection | null = null;
     let opacity = 0;
     
-    if (direction === SwipeDirection.LEFT || direction === SwipeDirection.RIGHT) {
-      opacity = interpolate(
-        Math.abs(translateX.value),
-        [60, 150],
-        [0, 1],
-        Extrapolate.CLAMP
-      );
-    } else {
-      opacity = interpolate(
-        Math.abs(translateY.value),
-        [60, 150],
-        [0, 1],
-        Extrapolate.CLAMP
-      );
+    if (absX > 20 || absY > 20) {
+      if (absX > absY) {
+        currentDirection = translateX.value > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
+      } else {
+        currentDirection = translateY.value > 0 ? SwipeDirection.DOWN : SwipeDirection.UP;
+      }
+      
+      if (currentDirection === direction) {
+        const threshold = (direction === SwipeDirection.LEFT || direction === SwipeDirection.RIGHT) ? absX : absY;
+        opacity = interpolate(
+          threshold,
+          [20, 100],
+          [0, 1],
+          Extrapolate.CLAMP
+        );
+      }
     }
     
-    return {
-      opacity,
-    };
-  });
-  
+    return { opacity };
+  }, [translateX, translateY]);
+
   const getOverlayStyle = () => {
     switch (config.position) {
       case 'left':
@@ -103,9 +113,11 @@ export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({
         return styles.overlayRight;
     }
   };
-  
+
   return (
-    <Animated.View style={[styles.overlay, getOverlayStyle(), animatedStyle]}>
+    <Animated.View 
+      style={[styles.overlay, getOverlayStyle(), animatedStyle]}
+    >
       <LinearGradient
         colors={config.colors}
         style={styles.overlayGradient}
@@ -134,50 +146,62 @@ export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({
   );
 };
 
+export const SwipeOverlay: React.FC<SwipeOverlayProps> = ({ 
+  translateX, 
+  translateY 
+}) => {
+  return (
+    <>
+      <DirectionalOverlay 
+        direction={SwipeDirection.LEFT} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.RIGHT} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.UP} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+      <DirectionalOverlay 
+        direction={SwipeDirection.DOWN} 
+        translateX={translateX} 
+        translateY={translateY} 
+      />
+    </>
+  );
+};
+
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
+    ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
   overlayLeft: {
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: width / 2,
     justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: spacing[8],
+    alignItems: 'center',
   },
   
   overlayRight: {
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: width / 2,
     justifyContent: 'center',
-    alignItems: 'flex-start',
-    paddingLeft: spacing[8],
+    alignItems: 'center',
   },
   
   overlayTop: {
-    top: 0,
-    left: 0,
-    right: 0,
-    height: height / 2,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: spacing[8],
   },
   
   overlayBottom: {
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: height / 2,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing[8],
   },
   
   overlayGradient: {
@@ -209,13 +233,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: spacing[1],
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   
   overlaySubtitle: {
     ...typography.body2,
-    color: colors.neutral[500],
+    color: colors.neutral[0],
     textAlign: 'center',
     fontWeight: '500',
     maxWidth: 150,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

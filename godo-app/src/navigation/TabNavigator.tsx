@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, layout, spacing, shadows } from '../design';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { MyEventsScreen } from '../screens/calendar/MyEventsScreen';
@@ -9,6 +10,8 @@ import { MyEventsScreen } from '../screens/calendar/MyEventsScreen';
 const Tab = createBottomTabNavigator();
 
 export const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -36,7 +39,8 @@ export const TabNavigator = () => {
           borderTopWidth: 1,
           borderTopColor: colors.neutral[100],
           paddingTop: spacing[2],
-          height: layout.tabBarHeight,
+          paddingBottom: insets.bottom,
+          height: layout.tabBarHeight + insets.bottom,
           ...Platform.select({
             ios: shadows.medium,
             android: {

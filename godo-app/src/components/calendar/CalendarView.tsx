@@ -32,7 +32,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return categoryColors[category] || colors.neutral[400];
   };
 
-  // Convert events to calendar format
+  // Convert events to calendar format with better indicators
   const markedDates = useMemo(() => {
     const marked: any = {};
     
@@ -44,13 +44,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           dots: [],
           selected: dateString === selectedDate,
           selectedColor: colors.primary[500],
+          eventCount: 0,
         };
       }
       
-      // Add dot for event (color-coded by category)
-      marked[dateString].dots.push({
-        color: getCategoryColor(event.category),
-      });
+      marked[dateString].eventCount = (marked[dateString].eventCount || 0) + 1;
+      
+      // Add up to 3 dots for events (color-coded by category)
+      if (marked[dateString].dots.length < 3) {
+        marked[dateString].dots.push({
+          color: getCategoryColor(event.category),
+        });
+      }
     });
     
     // Ensure selected date is marked even if no events
@@ -59,11 +64,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         selected: true,
         selectedColor: colors.primary[500],
         dots: [],
+        eventCount: 0,
       };
     }
     
     return marked;
-  }, [events, selectedDate, getCategoryColor]);
+  }, [events, selectedDate]);
   
   // Get events for selected date
   const selectedDateEvents = useMemo(() => {
@@ -123,40 +129,71 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Event List for Selected Date */}
       {selectedDate && (
         <View style={styles.eventList}>
-          <Body style={styles.eventListTitle}>
-            Events for {format(new Date(selectedDate), 'MMMM d, yyyy')}
-          </Body>
+          <View style={styles.eventListHeader}>
+            <Body style={styles.eventListTitle}>
+              {format(new Date(selectedDate), 'MMMM d, yyyy')}
+            </Body>
+            {selectedDateEvents.length > 0 && (
+              <Caption style={styles.eventCount}>
+                {selectedDateEvents.length} {selectedDateEvents.length === 1 ? 'event' : 'events'}
+              </Caption>
+            )}
+          </View>
           
           {selectedDateEvents.length === 0 ? (
-            <Caption style={styles.noEvents}>No events on this date</Caption>
+            <View style={styles.emptyEventsContainer}>
+              <Caption style={styles.noEvents}>No events on this date</Caption>
+            </View>
           ) : (
-            selectedDateEvents.map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                style={styles.eventItem}
-                onPress={() => onEventPress?.(event)}
-              >
-                <View style={styles.eventTime}>
-                  <Caption color={colors.neutral[500]}>
-                    {formatEventTime(event.datetime)}
-                  </Caption>
-                </View>
-                <View style={styles.eventDetails}>
-                  <Body style={styles.eventTitle} numberOfLines={1}>
-                    {event.title}
-                  </Body>
-                  <Caption color={colors.neutral[500]} numberOfLines={1}>
-                    {event.venue.name}, {event.venue.neighborhood}
-                  </Caption>
-                </View>
-                <View 
-                  style={[
-                    styles.categoryDot, 
-                    { backgroundColor: getCategoryColor(event.category) }
-                  ]} 
-                />
-              </TouchableOpacity>
-            ))
+            <View style={styles.eventsContainer}>
+              {selectedDateEvents.map((event) => (
+                <TouchableOpacity
+                  key={event.id}
+                  style={styles.eventItem}
+                  onPress={() => onEventPress?.(event)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.eventTimeContainer}>
+                    <Caption style={styles.eventTime}>
+                      {formatEventTime(event.datetime)}
+                    </Caption>
+                  </View>
+                  
+                  <View style={styles.eventDetails}>
+                    <Body style={styles.eventTitle} numberOfLines={2}>
+                      {event.title}
+                    </Body>
+                    <Caption color={colors.neutral[500]} numberOfLines={1} style={styles.eventVenue}>
+                      {event.venue.name}
+                      {event.venue.neighborhood && `, ${event.venue.neighborhood}`}
+                    </Caption>
+                    
+                    {/* Event metadata */}
+                    <View style={styles.eventMetadata}>
+                      {event.currentAttendees && event.currentAttendees > 0 && (
+                        <Caption color={colors.neutral[400]} style={styles.metadata}>
+                          {event.currentAttendees} attending
+                        </Caption>
+                      )}
+                      {event.friendsAttending && event.friendsAttending > 0 && (
+                        <Caption color={colors.primary[600]} style={styles.friendsMetadata}>
+                          +{event.friendsAttending} friends
+                        </Caption>
+                      )}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.eventActions}>
+                    <View 
+                      style={[
+                        styles.categoryDot, 
+                        { backgroundColor: getCategoryColor(event.category) }
+                      ]} 
+                    />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </View>
       )}
@@ -174,40 +211,98 @@ const styles = StyleSheet.create({
   },
   eventList: {
     flex: 1,
+    backgroundColor: colors.neutral[0],
+  },
+  eventListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[4],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
+    backgroundColor: colors.neutral[50],
   },
   eventListTitle: {
-    marginBottom: spacing[4],
     fontWeight: '600',
+    fontSize: 16,
+  },
+  eventCount: {
+    backgroundColor: colors.primary[100],
+    color: colors.primary[700],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 12,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  emptyEventsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing[8],
   },
   noEvents: {
     textAlign: 'center',
-    marginTop: spacing[8],
     fontStyle: 'italic',
+    color: colors.neutral[400],
+  },
+  eventsContainer: {
+    flex: 1,
   },
   eventItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing[3],
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[4],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[100],
   },
+  eventTimeContainer: {
+    width: 70,
+    alignItems: 'center',
+    paddingTop: spacing[1],
+  },
   eventTime: {
-    width: 60,
-    marginRight: spacing[3],
+    backgroundColor: colors.neutral[100],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   eventDetails: {
     flex: 1,
-    marginRight: spacing[3],
+    marginHorizontal: spacing[3],
   },
   eventTitle: {
     marginBottom: spacing[1],
-    fontWeight: '500',
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  eventVenue: {
+    marginBottom: spacing[2],
+    lineHeight: 16,
+  },
+  eventMetadata: {
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+  metadata: {
+    fontSize: 11,
+  },
+  friendsMetadata: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  eventActions: {
+    alignItems: 'center',
+    paddingTop: spacing[1],
   },
   categoryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });

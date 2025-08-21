@@ -3,7 +3,17 @@ import { StyleSheet, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Container, Heading2, Body, Button } from '../../components/base';
-import { CalendarView, ListView, ViewToggle, ViewType } from '../../components/calendar';
+import { 
+  CalendarView, 
+  ListView, 
+  WeekView,
+  DayView,
+  AgendaView,
+  ViewToggle, 
+  ViewType,
+  DateNavigation,
+  EventModal,
+} from '../../components/calendar';
 import { spacing, colors } from '../../design';
 import { EventService } from '../../services';
 import { Event, SwipeDirection } from '../../types';
@@ -13,8 +23,10 @@ export const MyEventsScreen = () => {
   const [calendarEvents, setCalendarEvents] = useState<Event[]>([]);
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
   const [currentTab, setCurrentTab] = useState<'calendar' | 'saved'>('calendar');
-  const [viewType, setViewType] = useState<ViewType>('calendar');
+  const [viewType, setViewType] = useState<ViewType>('month');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
   const insets = useSafeAreaInsets();
 
   const loadEvents = useCallback(() => {
@@ -41,15 +53,23 @@ export const MyEventsScreen = () => {
   );
 
   const handleEventPress = useCallback((event: Event) => {
-    Alert.alert(
-      event.title,
-      `${event.description}\n\nVenue: ${event.venue.name}\nNeighborhood: ${event.venue.neighborhood}`,
-      [{ text: 'OK' }]
-    );
+    setSelectedEvent(event);
+    setShowEventModal(true);
   }, []);
 
   const handleDateSelect = useCallback((date: string) => {
     setSelectedDate(date);
+  }, []);
+
+  const handleRemoveFromCalendar = useCallback(() => {
+    loadEvents(); // Reload events after removal
+    setShowEventModal(false);
+    setSelectedEvent(null);
+  }, [loadEvents]);
+
+  const handleCloseModal = useCallback(() => {
+    setShowEventModal(false);
+    setSelectedEvent(null);
   }, []);
 
   const getStatsText = () => {
@@ -59,7 +79,7 @@ export const MyEventsScreen = () => {
     return `${stats.interested} going • ${stats.publicEvents} public • ${stats.saved} saved`;
   };
 
-  const renderCalendarTab = () => {
+  const renderCalendarContent = () => {
     if (calendarEvents.length === 0) {
       return (
         <Container variant="screenCentered">
@@ -73,22 +93,65 @@ export const MyEventsScreen = () => {
       );
     }
 
-    return (
-      <View style={styles.contentContainer}>
-        {viewType === 'calendar' ? (
+    switch (viewType) {
+      case 'month':
+        return (
           <CalendarView
             events={calendarEvents}
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
             onEventPress={handleEventPress}
           />
-        ) : (
+        );
+      case 'week':
+        return (
+          <WeekView
+            events={calendarEvents}
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            onEventPress={handleEventPress}
+          />
+        );
+      case 'day':
+        return (
+          <DayView
+            events={calendarEvents}
+            selectedDate={selectedDate}
+            onEventPress={handleEventPress}
+          />
+        );
+      case 'agenda':
+        return (
+          <AgendaView
+            events={calendarEvents}
+            onEventPress={handleEventPress}
+          />
+        );
+      default:
+        return (
           <ListView
             events={calendarEvents}
             onEventPress={handleEventPress}
             emptyMessage="No events in your calendar"
           />
+        );
+    }
+  };
+
+  const renderCalendarTab = () => {
+    return (
+      <View style={styles.contentContainer}>
+        {/* Date Navigation */}
+        {viewType !== 'agenda' && (
+          <DateNavigation
+            selectedDate={selectedDate}
+            viewType={viewType}
+            onDateChange={handleDateSelect}
+          />
         )}
+        
+        {/* Calendar Content */}
+        {renderCalendarContent()}
       </View>
     );
   };
@@ -109,32 +172,39 @@ export const MyEventsScreen = () => {
     <Container style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Heading2 style={styles.title}>My Events</Heading2>
-        <Body color={colors.neutral[500]} style={styles.subtitle}>
-          {getStatsText()}
-        </Body>
-        
-        {/* Tab Toggle */}
-        <View style={styles.tabContainer}>
-          <Button
-            title="Calendar"
-            onPress={() => setCurrentTab('calendar')}
-            variant={currentTab === 'calendar' ? 'primary' : 'ghost'}
-            size="small"
-            style={styles.tabButton}
-          />
-          <Button
-            title="Saved"
-            onPress={() => setCurrentTab('saved')}
-            variant={currentTab === 'saved' ? 'primary' : 'ghost'}
-            size="small"
-            style={styles.tabButton}
-          />
+        {/* Title and Stats Row */}
+        <View style={styles.titleRow}>
+          <View style={styles.titleContainer}>
+            <Heading2 style={styles.title}>My Events</Heading2>
+            <Body color={colors.neutral[500]} style={styles.subtitle}>
+              {getStatsText()}
+            </Body>
+          </View>
         </View>
         
-        {/* View Toggle (only for calendar tab) */}
+        {/* Tabs Row */}
+        <View style={styles.tabsRow}>
+          <View style={styles.tabContainer}>
+            <Button
+              title="Calendar"
+              onPress={() => setCurrentTab('calendar')}
+              variant={currentTab === 'calendar' ? 'primary' : 'ghost'}
+              size="small"
+              style={styles.tabButton}
+            />
+            <Button
+              title="Saved"
+              onPress={() => setCurrentTab('saved')}
+              variant={currentTab === 'saved' ? 'primary' : 'ghost'}
+              size="small"
+              style={styles.tabButton}
+            />
+          </View>
+        </View>
+        
+        {/* View Toggle Row (only for calendar tab) */}
         {currentTab === 'calendar' && calendarEvents.length > 0 && (
-          <View style={styles.viewToggleContainer}>
+          <View style={styles.viewToggleRow}>
             <ViewToggle
               currentView={viewType}
               onViewChange={setViewType}
@@ -145,6 +215,14 @@ export const MyEventsScreen = () => {
 
       {/* Content */}
       {currentTab === 'calendar' ? renderCalendarTab() : renderSavedTab()}
+
+      {/* Event Modal */}
+      <EventModal
+        event={selectedEvent}
+        visible={showEventModal}
+        onClose={handleCloseModal}
+        onRemoveFromCalendar={handleRemoveFromCalendar}
+      />
     </Container>
   );
 };
@@ -155,29 +233,39 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
   },
   header: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[4],
+    backgroundColor: colors.neutral[0],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[100],
+  },
+  titleRow: {
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+  },
+  titleContainer: {
+    alignItems: 'flex-start',
   },
   title: {
     marginBottom: spacing[1],
   },
   subtitle: {
     fontSize: 14,
-    marginBottom: spacing[4],
+  },
+  tabsRow: {
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[3],
   },
   tabContainer: {
     flexDirection: 'row',
-    marginBottom: spacing[4],
+    gap: spacing[2],
   },
   tabButton: {
     flex: 1,
-    marginHorizontal: spacing[1],
   },
-  viewToggleContainer: {
+  viewToggleRow: {
     alignItems: 'center',
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[4],
   },
   contentContainer: {
     flex: 1,

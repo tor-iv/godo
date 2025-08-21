@@ -9,7 +9,7 @@ import Animated, {
 import { colors, spacing, typography } from '../../design';
 import { Caption } from '../../components/base';
 
-export type ViewType = 'calendar' | 'list';
+export type ViewType = 'month' | 'week' | 'day' | 'agenda';
 
 interface ViewToggleProps {
   currentView: ViewType;
@@ -20,10 +20,27 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
   currentView,
   onViewChange,
 }) => {
-  const translateX = useSharedValue(currentView === 'calendar' ? 0 : 60);
+  const views: ViewType[] = ['month', 'week', 'day', 'agenda'];
+  const viewIcons = {
+    month: 'calendar',
+    week: 'columns',
+    day: 'square',
+    agenda: 'list',
+  };
+  
+  const viewLabels = {
+    month: 'Month',
+    week: 'Week', 
+    day: 'Day',
+    agenda: 'List',
+  };
+  
+  const currentIndex = views.indexOf(currentView);
+  const translateX = useSharedValue(currentIndex * 64);
   
   React.useEffect(() => {
-    translateX.value = withSpring(currentView === 'calendar' ? 0 : 60);
+    const newIndex = views.indexOf(currentView);
+    translateX.value = withSpring(newIndex * 64); // Adjusted for new width
   }, [currentView, translateX]);
   
   const animatedStyle = useAnimatedStyle(() => ({
@@ -41,51 +58,31 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
       {/* Background slider */}
       <Animated.View style={[styles.slider, animatedStyle]} />
       
-      {/* Calendar option */}
-      <TouchableOpacity
-        style={styles.option}
-        onPress={() => handleViewChange('calendar')}
-        activeOpacity={0.7}
-      >
-        <Feather
-          name="calendar"
-          size={16}
-          color={currentView === 'calendar' ? colors.neutral[0] : colors.neutral[500]}
-        />
-        <Caption
-          style={[
-            styles.optionText,
-            {
-              color: currentView === 'calendar' ? colors.neutral[0] : colors.neutral[500],
-            },
-          ]}
+      {/* View options */}
+      {views.map((view) => (
+        <TouchableOpacity
+          key={view}
+          style={styles.option}
+          onPress={() => handleViewChange(view)}
+          activeOpacity={0.7}
         >
-          Calendar
-        </Caption>
-      </TouchableOpacity>
-      
-      {/* List option */}
-      <TouchableOpacity
-        style={styles.option}
-        onPress={() => handleViewChange('list')}
-        activeOpacity={0.7}
-      >
-        <Feather
-          name="list"
-          size={16}
-          color={currentView === 'list' ? colors.neutral[0] : colors.neutral[500]}
-        />
-        <Caption
-          style={[
-            styles.optionText,
-            {
-              color: currentView === 'list' ? colors.neutral[0] : colors.neutral[500],
-            },
-          ]}
-        >
-          List
-        </Caption>
-      </TouchableOpacity>
+          <Feather
+            name={viewIcons[view] as any}
+            size={14}
+            color={currentView === view ? colors.neutral[0] : colors.neutral[500]}
+          />
+          <Caption
+            style={[
+              styles.optionText,
+              {
+                color: currentView === view ? colors.neutral[0] : colors.neutral[500],
+              },
+            ]}
+          >
+            {viewLabels[view]}
+          </Caption>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -97,13 +94,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 2,
     position: 'relative',
-    width: 124,
+    width: 260, // Increased width for better spacing
+    maxWidth: '100%', // Responsive on small screens
   },
   slider: {
     position: 'absolute',
     top: 2,
     left: 2,
-    width: 60,
+    width: 62, // Adjusted for better spacing
     height: 32,
     backgroundColor: colors.primary[500],
     borderRadius: 10,
@@ -114,12 +112,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing[2],
-    paddingHorizontal: spacing[2],
+    paddingHorizontal: spacing[1],
     borderRadius: 10,
   },
   optionText: {
     marginLeft: spacing[1],
     fontWeight: '600',
-    fontSize: 11,
+    fontSize: 10, // Smaller font for more options
   },
 });

@@ -128,8 +128,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               style={styles.metadataIcon}
             />
             <Text style={styles.metadataText} numberOfLines={1}>
-              {event.venue.name}
-              {event.venue.neighborhood && ` • ${event.venue.neighborhood}`}
+              {`${event.venue.name}${event.venue.neighborhood ? ` • ${event.venue.neighborhood}` : ''}`}
             </Text>
           </View>
           
@@ -176,10 +175,8 @@ export const EventCard: React.FC<EventCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: cardWidth,
+    flex: 1,
     backgroundColor: colors.neutral[0],
-    borderRadius: layout.cardBorderRadius,
-    overflow: 'hidden',
     ...shadows.large,
   },
   

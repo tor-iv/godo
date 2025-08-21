@@ -84,14 +84,6 @@ export const DiscoverScreen = () => {
     );
   }, []);
 
-  const getInstructions = () => {
-    return [
-      '👈 Swipe left: Not interested',
-      '👉 Swipe right: Add to private calendar',
-      '👆 Swipe up: Add to public calendar',
-      '👇 Swipe down: Save for later',
-    ];
-  };
 
   if (loading) {
     return (
@@ -145,14 +137,6 @@ export const DiscoverScreen = () => {
         />
       </View>
 
-      {/* Instructions */}
-      <View style={styles.instructions}>
-        {getInstructions().map((instruction, index) => (
-          <Body key={index} color={colors.neutral[400]} style={styles.instructionText}>
-            {instruction}
-          </Body>
-        ))}
-      </View>
     </Container>
   );
 };
@@ -179,18 +163,6 @@ const styles = StyleSheet.create({
   swipeContainer: {
     flex: 1,
     paddingHorizontal: spacing[4],
-  },
-  instructions: {
-    paddingHorizontal: spacing[6],
-    paddingVertical: spacing[4],
-    backgroundColor: colors.neutral[50],
-    borderTopWidth: 1,
-    borderTopColor: colors.neutral[100],
-  },
-  instructionText: {
-    fontSize: 12,
-    marginBottom: spacing[1],
-    textAlign: 'center',
   },
   emptyTitle: {
     marginBottom: spacing[2],

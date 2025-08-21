@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -13,8 +13,10 @@ import Animated, {
 import { Event, SwipeDirection } from '../../types';
 import { EventCard } from './EventCard';
 import { SwipeOverlay } from './SwipeOverlay';
+import { layout, spacing } from '../../design';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const cardWidth = screenWidth - (layout.screenPadding * 2);
 
 interface SwipeCardProps {
   event: Event;
@@ -130,37 +132,22 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   return (
     <PanGestureHandler onGestureEvent={gestureHandler}>
       <Animated.View style={[styles.container, cardAnimatedStyle]}>
-        <EventCard
-          event={event}
-          onPress={onPress}
-          style={styles.card}
-        />
-        
-        {/* Swipe Overlays - only for top card */}
-        {showOverlays && (
-          <>
+        {/* Card wrapper with proper dimensions and rounded corners */}
+        <View style={styles.cardWrapper}>
+          <EventCard
+            event={event}
+            onPress={onPress}
+            style={styles.card}
+          />
+          
+          {/* Swipe Overlay - only for top card and active direction */}
+          {showOverlays && (
             <SwipeOverlay 
-              direction={SwipeDirection.LEFT} 
               translateX={translateX} 
               translateY={translateY} 
             />
-            <SwipeOverlay 
-              direction={SwipeDirection.RIGHT} 
-              translateX={translateX} 
-              translateY={translateY} 
-            />
-            <SwipeOverlay 
-              direction={SwipeDirection.UP} 
-              translateX={translateX} 
-              translateY={translateY} 
-            />
-            <SwipeOverlay 
-              direction={SwipeDirection.DOWN} 
-              translateX={translateX} 
-              translateY={translateY} 
-            />
-          </>
-        )}
+          )}
+        </View>
       </Animated.View>
     </PanGestureHandler>
   );
@@ -171,6 +158,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     alignItems: 'center',
+  },
+  cardWrapper: {
+    width: cardWidth,
+    borderRadius: layout.cardBorderRadius,
+    overflow: 'hidden',
+    position: 'relative',
   },
   card: {
     // EventCard styles are handled in the EventCard component
