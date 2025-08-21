@@ -19,6 +19,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDateSelect,
   onEventPress,
 }) => {
+  const getCategoryColor = (category: string): string => {
+    const categoryColors: Record<string, string> = {
+      'NETWORKING': colors.info[500],
+      'CULTURE': colors.primary[500],
+      'FITNESS': colors.success[500],
+      'FOOD': colors.warning[500],
+      'NIGHTLIFE': '#ec4899',
+      'OUTDOOR': '#059669',
+      'PROFESSIONAL': '#6366f1',
+    };
+    return categoryColors[category] || colors.neutral[400];
+  };
+
   // Convert events to calendar format
   const markedDates = useMemo(() => {
     const marked: any = {};
@@ -50,7 +63,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
     
     return marked;
-  }, [events, selectedDate]);
+  }, [events, selectedDate, getCategoryColor]);
   
   // Get events for selected date
   const selectedDateEvents = useMemo(() => {
@@ -61,19 +74,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       return eventDate === selectedDate;
     });
   }, [events, selectedDate]);
-  
-  const getCategoryColor = (category: string): string => {
-    const categoryColors: Record<string, string> = {
-      'NETWORKING': colors.info[500],
-      'CULTURE': colors.primary[500],
-      'FITNESS': colors.success[500],
-      'FOOD': colors.warning[500],
-      'NIGHTLIFE': '#ec4899',
-      'OUTDOOR': '#059669',
-      'PROFESSIONAL': '#6366f1',
-    };
-    return categoryColors[category] || colors.neutral[400];
-  };
   
   const formatEventTime = (datetime: string) => {
     return format(new Date(datetime), 'h:mm a');
