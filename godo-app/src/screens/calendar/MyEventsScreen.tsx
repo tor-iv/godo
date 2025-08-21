@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export const DiscoverScreen = () => {
+export const MyEventsScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Discover Events</Text>
-      <Text style={styles.subtitle}>Swipe through NYC events</Text>
+      <Text style={styles.title}>My Events</Text>
+      <Text style={styles.subtitle}>Your personal calendar</Text>
     </View>
   );
 };

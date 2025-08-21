@@ -1,56 +1,49 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
-import { RootTabParamList } from '../types/navigation';
-import DiscoverStack from './DiscoverStack';
-import MyEventsStack from './MyEventsStack';
+import { Feather } from '@expo/vector-icons';
+import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
+import { MyEventsScreen } from '../screens/calendar/MyEventsScreen';
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+export const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-
+          let iconName: any;
+          
           if (route.name === 'Discover') {
-            iconName = focused ? 'heart' : 'heart-outline';
+            iconName = 'compass';
           } else if (route.name === 'MyEvents') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else {
-            iconName = 'help-outline';
+            iconName = 'calendar';
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          
+          return <Feather name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: COLORS.SECONDARY,
-        tabBarInactiveTintColor: COLORS.TEXT_LIGHT,
-        tabBarStyle: {
-          backgroundColor: COLORS.WHITE,
-          borderTopColor: COLORS.LIGHT_GRAY,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
-        },
+        tabBarActiveTintColor: '#8B5CF6',
+        tabBarInactiveTintColor: '#71717A',
+        headerShown: false,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
         },
-        headerShown: false,
+        tabBarStyle: {
+          paddingTop: 8,
+          height: 80,
+        },
       })}
     >
       <Tab.Screen 
         name="Discover" 
-        component={DiscoverStack}
+        component={DiscoverScreen} 
         options={{ tabBarLabel: 'Discover' }}
       />
       <Tab.Screen 
         name="MyEvents" 
-        component={MyEventsStack}
+        component={MyEventsScreen} 
         options={{ tabBarLabel: 'My Events' }}
       />
     </Tab.Navigator>
   );
-}
+};
