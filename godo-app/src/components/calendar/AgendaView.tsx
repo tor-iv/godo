@@ -30,14 +30,12 @@ interface EventsByDate {
   [dateString: string]: Event[];
 }
 
-export const AgendaView: React.FC<AgendaViewProps> = ({
-  events,
-  onEventPress,
-}) => {
+export const AgendaView: React.FC<AgendaViewProps> = props => {
+  const { events, onEventPress } = props;
   // Group events by date
   const eventsByDate = useMemo(() => {
     const grouped: EventsByDate = {};
-    
+
     events.forEach(event => {
       const dateString = format(new Date(event.datetime), 'yyyy-MM-dd');
       if (!grouped[dateString]) {
@@ -45,65 +43,66 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
       }
       grouped[dateString].push(event);
     });
-    
+
     // Sort events within each date
     Object.keys(grouped).forEach(date => {
-      grouped[date].sort((a, b) => 
-        new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+      grouped[date].sort(
+        (a, b) =>
+          new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
       );
     });
-    
+
     return grouped;
   }, [events]);
 
   // Get sorted date keys
   const sortedDates = useMemo(() => {
-    return Object.keys(eventsByDate).sort((a, b) => 
-      new Date(a).getTime() - new Date(b).getTime()
+    return Object.keys(eventsByDate).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
     );
   }, [eventsByDate]);
 
   const formatDateHeader = (dateString: string) => {
     const date = new Date(dateString);
-    
+
     if (isToday(date)) {
       return 'Today';
     }
-    
+
     if (isTomorrow(date)) {
       return 'Tomorrow';
     }
-    
+
     if (isThisWeek(date)) {
       return format(date, 'EEEE'); // "Monday"
     }
-    
+
     if (isThisYear(date)) {
       return format(date, 'EEEE, MMMM d'); // "Monday, August 24"
     }
-    
+
     return format(date, 'EEEE, MMMM d, yyyy'); // "Monday, August 24, 2024"
   };
 
   const formatDateSubtitle = (dateString: string) => {
     const date = new Date(dateString);
-    
+
     if (isToday(date) || isTomorrow(date)) {
       return format(date, 'MMMM d, yyyy');
     }
-    
+
     return format(date, 'MMMM d, yyyy');
   };
 
   const getCategoryIcon = (category: string): string => {
     const iconMap: Record<string, string> = {
-      'NETWORKING': 'users',
-      'CULTURE': 'camera',
-      'FITNESS': 'activity',
-      'FOOD': 'coffee',
-      'NIGHTLIFE': 'music',
-      'OUTDOOR': 'sun',
-      'PROFESSIONAL': 'briefcase',
+      NETWORKING: 'users',
+      CULTURE: 'camera',
+      FITNESS: 'activity',
+      FOOD: 'coffee',
+      NIGHTLIFE: 'music',
+      OUTDOOR: 'sun',
+      PROFESSIONAL: 'briefcase',
     };
     return iconMap[category] || 'calendar';
   };
@@ -112,10 +111,18 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     return (
       <View style={styles.emptyContainer}>
         <Feather name="calendar" size={48} color={colors.neutral[300]} />
-        <Heading3 color={colors.neutral[400]} align="center" style={styles.emptyTitle}>
+        <Heading3
+          color={colors.neutral[400]}
+          align="center"
+          style={styles.emptyTitle}
+        >
           No Events Scheduled
         </Heading3>
-        <Body color={colors.neutral[400]} align="center" style={styles.emptyText}>
+        <Body
+          color={colors.neutral[400]}
+          align="center"
+          style={styles.emptyText}
+        >
           Your upcoming events will appear here in chronological order
         </Body>
       </View>
@@ -123,27 +130,29 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
     >
-      {sortedDates.map((dateString) => {
+      {sortedDates.map(dateString => {
         const dayEvents = eventsByDate[dateString];
         const date = new Date(dateString);
         const isDayToday = isToday(date);
         const isDayTomorrow = isTomorrow(date);
-        
+
         return (
           <View key={dateString} style={styles.dateSection}>
             {/* Date Header */}
-            <View style={[
-              styles.dateHeader,
-              isDayToday && styles.todayHeader,
-              isDayTomorrow && styles.tomorrowHeader,
-            ]}>
+            <View
+              style={[
+                styles.dateHeader,
+                isDayToday && styles.todayHeader,
+                isDayTomorrow && styles.tomorrowHeader,
+              ]}
+            >
               <View style={styles.dateHeaderContent}>
-                <Heading3 
+                <Heading3
                   style={[
                     styles.dateTitle,
                     isDayToday && styles.todayTitle,
@@ -152,19 +161,25 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 >
                   {formatDateHeader(dateString)}
                 </Heading3>
-                <Caption 
-                  color={isDayToday || isDayTomorrow ? colors.neutral[0] : colors.neutral[500]} 
+                <Caption
+                  color={
+                    isDayToday || isDayTomorrow
+                      ? colors.neutral[0]
+                      : colors.neutral[500]
+                  }
                   style={styles.dateSubtitle}
                 >
                   {formatDateSubtitle(dateString)}
                 </Caption>
               </View>
-              <View style={[
-                styles.eventCountBadge,
-                isDayToday && styles.todayBadge,
-                isDayTomorrow && styles.tomorrowBadge,
-              ]}>
-                <Caption 
+              <View
+                style={[
+                  styles.eventCountBadge,
+                  isDayToday && styles.todayBadge,
+                  isDayTomorrow && styles.tomorrowBadge,
+                ]}
+              >
+                <Caption
                   style={[
                     styles.eventCountText,
                     (isDayToday || isDayTomorrow) && styles.eventCountTextLight,
@@ -189,23 +204,23 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 >
                   {/* Event Image */}
                   <View style={styles.eventImageContainer}>
-                    <Image 
-                      source={{ uri: event.imageUrl }} 
+                    <Image
+                      source={{ uri: event.imageUrl }}
                       style={styles.eventImage}
                       resizeMode="cover"
                     />
-                    
+
                     {/* Category Badge */}
-                    <View 
+                    <View
                       style={[
-                        styles.categoryBadge, 
-                        { backgroundColor: getCategoryColor(event.category) }
+                        styles.categoryBadge,
+                        { backgroundColor: getCategoryColor(event.category) },
                       ]}
                     >
-                      <Feather 
-                        name={getCategoryIcon(event.category) as any} 
-                        size={10} 
-                        color={colors.neutral[0]} 
+                      <Feather
+                        name={getCategoryIcon(event.category) as any}
+                        size={10}
+                        color={colors.neutral[0]}
                       />
                     </View>
                   </View>
@@ -216,7 +231,10 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                       <Body style={styles.eventTitle} numberOfLines={2}>
                         {event.title}
                       </Body>
-                      <Caption color={colors.neutral[500]} style={styles.eventTime}>
+                      <Caption
+                        color={colors.neutral[500]}
+                        style={styles.eventTime}
+                      >
                         {format(new Date(event.datetime), 'h:mm a')}
                       </Caption>
                     </View>
@@ -225,24 +243,30 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     <View style={styles.eventDetails}>
                       {/* Location */}
                       <View style={styles.detailRow}>
-                        <Feather 
-                          name="map-pin" 
-                          size={12} 
+                        <Feather
+                          name="map-pin"
+                          size={12}
                           color={colors.neutral[400]}
                           style={styles.detailIcon}
                         />
-                        <Caption color={colors.neutral[500]} numberOfLines={1} style={styles.detailText}>
+                        <Caption
+                          color={colors.neutral[500]}
+                          numberOfLines={1}
+                          style={styles.detailText}
+                        >
                           {event.venue.name}
-                          {event.venue.neighborhood && `, ${event.venue.neighborhood}`}
+                          {event.venue.neighborhood
+                            ? `, ${event.venue.neighborhood}`
+                            : ''}
                         </Caption>
                       </View>
 
                       {/* Attendees */}
                       {event.currentAttendees && event.currentAttendees > 0 && (
                         <View style={styles.detailRow}>
-                          <Feather 
-                            name="users" 
-                            size={12} 
+                          <Feather
+                            name="users"
+                            size={12}
                             color={colors.neutral[400]}
                             style={styles.detailIcon}
                           />
@@ -255,17 +279,16 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                       {/* Price */}
                       {(event.priceMin ?? 0) > 0 && (
                         <View style={styles.detailRow}>
-                          <Feather 
-                            name="dollar-sign" 
-                            size={12} 
+                          <Feather
+                            name="dollar-sign"
+                            size={12}
                             color={colors.neutral[400]}
                             style={styles.detailIcon}
                           />
                           <Caption color={colors.neutral[500]}>
-                            {event.priceMax && event.priceMax !== event.priceMin 
+                            {event.priceMax && event.priceMax !== event.priceMin
                               ? `$${event.priceMin} - $${event.priceMax}`
-                              : `$${event.priceMin}`
-                            }
+                              : `$${event.priceMin}`}
                           </Caption>
                         </View>
                       )}
@@ -275,10 +298,19 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     {event.friendsAttending && event.friendsAttending > 0 && (
                       <View style={styles.socialRow}>
                         <View style={styles.friendIndicator}>
-                          <Caption style={styles.friendCount}>+{event.friendsAttending}</Caption>
+                          <Caption style={styles.friendCount}>
+                            +{event.friendsAttending}
+                          </Caption>
                         </View>
-                        <Caption color={colors.primary[600]} style={styles.friendText}>
-                          {event.friendsAttending} {event.friendsAttending === 1 ? 'friend' : 'friends'} interested
+                        <Caption
+                          color={colors.primary[600]}
+                          style={styles.friendText}
+                        >
+                          {event.friendsAttending}{' '}
+                          {String(
+                            event.friendsAttending === 1 ? 'friend' : 'friends'
+                          )}{' '}
+                          interested
                         </Caption>
                       </View>
                     )}

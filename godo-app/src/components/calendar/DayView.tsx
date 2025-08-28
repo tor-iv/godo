@@ -18,11 +18,8 @@ interface DayViewProps {
   onEventPress?: (event: Event) => void;
 }
 
-export const DayView: React.FC<DayViewProps> = ({
-  events,
-  selectedDate,
-  onEventPress,
-}) => {
+export const DayView: React.FC<DayViewProps> = props => {
+  const { events, selectedDate, onEventPress } = props;
   const selectedDateObj = new Date(selectedDate);
   const isDayToday = isToday(selectedDateObj);
 
@@ -43,25 +40,28 @@ export const DayView: React.FC<DayViewProps> = ({
         const eventDate = format(new Date(event.datetime), 'yyyy-MM-dd');
         return eventDate === selectedDate;
       })
-      .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+      );
   }, [events, selectedDate]);
 
   const getEventPosition = (event: Event): { top: number; height: number } => {
     const eventDate = new Date(event.datetime);
     const hour = eventDate.getHours();
     const minutes = eventDate.getMinutes();
-    
+
     // Calculate position relative to 6 AM start
     const startHour = 6;
     const relativeHour = hour - startHour;
     const slotHeight = 60; // Height per hour
-    
-    const top = (relativeHour * slotHeight) + (minutes / 60 * slotHeight);
-    
+
+    const top = relativeHour * slotHeight + (minutes / 60) * slotHeight;
+
     // Event duration (default to 1 hour if not specified)
     const durationMinutes = 60; // Default duration
     const height = Math.max(40, (durationMinutes / 60) * slotHeight);
-    
+
     return { top: Math.max(0, top), height };
   };
 
@@ -73,11 +73,11 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const isCurrentTimeSlot = (hour: number, minute: number) => {
     if (!isDayToday) return false;
-    
+
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
-    
+
     return currentHour === hour && Math.abs(currentMinute - minute) < 30;
   };
 
@@ -88,16 +88,15 @@ export const DayView: React.FC<DayViewProps> = ({
         <Heading3 style={[styles.dateTitle, isDayToday && styles.todayTitle]}>
           {format(selectedDateObj, 'EEEE, MMMM d')}
         </Heading3>
-        {isDayToday && (
-          <Caption style={styles.todayLabel}>Today</Caption>
-        )}
+        {isDayToday && <Caption style={styles.todayLabel}>Today</Caption>}
         <Caption color={colors.neutral[500]} style={styles.eventCount}>
-          {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'}
+          {String(dayEvents.length)}{' '}
+          {String(dayEvents.length === 1 ? 'event' : 'events')}
         </Caption>
       </View>
 
       {/* Time grid */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -106,10 +105,10 @@ export const DayView: React.FC<DayViewProps> = ({
           {timeSlots.map(({ hour, minute }) => {
             const isCurrentTime = isCurrentTimeSlot(hour, minute);
             const isHourMark = minute === 0;
-            
+
             return (
-              <View 
-                key={`${hour}-${minute}`} 
+              <View
+                key={`${hour}-${minute}`}
                 style={[
                   styles.timeSlot,
                   isHourMark && styles.hourMark,
@@ -119,9 +118,16 @@ export const DayView: React.FC<DayViewProps> = ({
                 {/* Time label (only show on hour marks) */}
                 {isHourMark && (
                   <View style={styles.timeLabel}>
-                    <Caption 
-                      color={isCurrentTime ? colors.primary[600] : colors.neutral[500]} 
-                      style={[styles.timeLabelText, isCurrentTime && styles.currentTimeText]}
+                    <Caption
+                      color={
+                        isCurrentTime
+                          ? colors.primary[600]
+                          : colors.neutral[500]
+                      }
+                      style={[
+                        styles.timeLabelText,
+                        isCurrentTime && styles.currentTimeText,
+                      ]}
                     >
                       {formatTimeSlot(hour, minute)}
                     </Caption>
@@ -144,9 +150,9 @@ export const DayView: React.FC<DayViewProps> = ({
 
           {/* Overlay events */}
           <View style={styles.eventsOverlay}>
-            {dayEvents.map((event) => {
+            {dayEvents.map(event => {
               const position = getEventPosition(event);
-              
+
               return (
                 <TouchableOpacity
                   key={event.id}

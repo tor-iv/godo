@@ -1,8 +1,8 @@
 import React from 'react';
-import { 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   View,
   Image,
 } from 'react-native';
@@ -19,33 +19,30 @@ interface ListViewProps {
   emptyMessage?: string;
 }
 
-export const ListView: React.FC<ListViewProps> = ({
-  events,
-  onEventPress,
-  emptyMessage = 'No events to show',
-}) => {
+export const ListView: React.FC<ListViewProps> = props => {
+  const { events, onEventPress, emptyMessage = 'No events to show' } = props;
   const getCategoryColor = (category: string): string => {
     const categoryColors: Record<string, string> = {
-      'NETWORKING': colors.info[500],
-      'CULTURE': colors.primary[500],
-      'FITNESS': colors.success[500],
-      'FOOD': colors.warning[500],
-      'NIGHTLIFE': '#ec4899',
-      'OUTDOOR': '#059669',
-      'PROFESSIONAL': '#6366f1',
+      NETWORKING: colors.info[500],
+      CULTURE: colors.primary[500],
+      FITNESS: colors.success[500],
+      FOOD: colors.warning[500],
+      NIGHTLIFE: '#ec4899',
+      OUTDOOR: '#059669',
+      PROFESSIONAL: '#6366f1',
     };
     return categoryColors[category] || colors.neutral[400];
   };
 
   const getCategoryIcon = (category: string): string => {
     const iconMap: Record<string, string> = {
-      'NETWORKING': 'users',
-      'CULTURE': 'camera',
-      'FITNESS': 'activity',
-      'FOOD': 'coffee',
-      'NIGHTLIFE': 'music',
-      'OUTDOOR': 'sun',
-      'PROFESSIONAL': 'briefcase',
+      NETWORKING: 'users',
+      CULTURE: 'camera',
+      FITNESS: 'activity',
+      FOOD: 'coffee',
+      NIGHTLIFE: 'music',
+      OUTDOOR: 'sun',
+      PROFESSIONAL: 'briefcase',
     };
     return iconMap[category] || 'calendar';
   };
@@ -54,7 +51,11 @@ export const ListView: React.FC<ListViewProps> = ({
     return (
       <View style={styles.emptyContainer}>
         <Feather name="calendar" size={48} color={colors.neutral[300]} />
-        <Body color={colors.neutral[400]} align="center" style={styles.emptyText}>
+        <Body
+          color={colors.neutral[400]}
+          align="center"
+          style={styles.emptyText}
+        >
           {emptyMessage}
         </Body>
       </View>
@@ -62,12 +63,12 @@ export const ListView: React.FC<ListViewProps> = ({
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.contentContainer}
     >
-      {events.map((event) => (
+      {events.map(event => (
         <TouchableOpacity
           key={event.id}
           style={styles.eventCard}
@@ -76,26 +77,26 @@ export const ListView: React.FC<ListViewProps> = ({
         >
           {/* Event Image */}
           <View style={styles.imageContainer}>
-            <Image 
-              source={{ uri: event.imageUrl }} 
+            <Image
+              source={{ uri: event.imageUrl }}
               style={styles.eventImage}
               resizeMode="cover"
             />
-            
+
             {/* Category Badge */}
-            <View 
+            <View
               style={[
-                styles.categoryBadge, 
-                { backgroundColor: getCategoryColor(event.category) }
+                styles.categoryBadge,
+                { backgroundColor: getCategoryColor(event.category) },
               ]}
             >
-              <Feather 
-                name={getCategoryIcon(event.category) as any} 
-                size={12} 
-                color={colors.neutral[0]} 
+              <Feather
+                name={getCategoryIcon(event.category) as any}
+                size={12}
+                color={colors.neutral[0]}
               />
             </View>
-            
+
             {/* Price Badge */}
             {(event.priceMin ?? 0) > 0 && (
               <View style={styles.priceBadge}>
@@ -105,46 +106,50 @@ export const ListView: React.FC<ListViewProps> = ({
               </View>
             )}
           </View>
-          
+
           {/* Event Content */}
           <View style={styles.eventContent}>
             <Heading3 style={styles.eventTitle} numberOfLines={2}>
               {event.title}
             </Heading3>
-            
+
             <View style={styles.metadataContainer}>
               {/* Date & Time */}
               <View style={styles.metadataRow}>
-                <Feather 
-                  name="calendar" 
-                  size={14} 
-                  color={colors.neutral[400]} 
+                <Feather
+                  name="calendar"
+                  size={14}
+                  color={colors.neutral[400]}
                   style={styles.metadataIcon}
                 />
                 <Caption color={colors.neutral[500]}>
                   {formatEventDate(event.date)}
                 </Caption>
               </View>
-              
+
               {/* Location */}
               <View style={styles.metadataRow}>
-                <Feather 
-                  name="map-pin" 
-                  size={14} 
+                <Feather
+                  name="map-pin"
+                  size={14}
                   color={colors.neutral[400]}
                   style={styles.metadataIcon}
                 />
-                <Caption color={colors.neutral[500]} numberOfLines={1} style={styles.locationText}>
+                <Caption
+                  color={colors.neutral[500]}
+                  numberOfLines={1}
+                  style={styles.locationText}
+                >
                   {event.venue.name}, {event.venue.neighborhood}
                 </Caption>
               </View>
-              
+
               {/* Attendees */}
               {event.currentAttendees && event.currentAttendees > 0 && (
                 <View style={styles.metadataRow}>
-                  <Feather 
-                    name="users" 
-                    size={14} 
+                  <Feather
+                    name="users"
+                    size={14}
                     color={colors.neutral[400]}
                     style={styles.metadataIcon}
                   />
@@ -154,22 +159,30 @@ export const ListView: React.FC<ListViewProps> = ({
                 </View>
               )}
             </View>
-            
+
             {/* Friends Attending */}
             {event.friendsAttending && event.friendsAttending > 0 && (
               <View style={styles.socialRow}>
                 <View style={styles.friendIndicator}>
-                  <Caption style={styles.friendCount}>+{event.friendsAttending}</Caption>
+                  <Caption style={styles.friendCount}>
+                    +{event.friendsAttending}
+                  </Caption>
                 </View>
                 <Caption color={colors.primary[600]} style={styles.friendText}>
-                  {event.friendsAttending} {event.friendsAttending === 1 ? 'friend' : 'friends'} interested
+                  {event.friendsAttending}{' '}
+                  {String(event.friendsAttending === 1 ? 'friend' : 'friends')}{' '}
+                  interested
                 </Caption>
               </View>
             )}
-            
+
             {/* Description */}
             {event.description && (
-              <Body color={colors.neutral[500]} style={styles.description} numberOfLines={2}>
+              <Body
+                color={colors.neutral[500]}
+                style={styles.description}
+                numberOfLines={2}
+              >
                 {event.description}
               </Body>
             )}
