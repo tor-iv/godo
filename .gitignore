@@ -335,3 +335,6 @@ claude-flow
 claude-flow.bat
 claude-flow.ps1
 hive-mind-prompt-*.txt
+# Claude Flow metrics and cache files
+.claude-flow/metrics/
+.claude-flow/cache/
