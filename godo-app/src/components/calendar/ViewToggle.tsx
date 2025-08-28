@@ -16,10 +16,8 @@ interface ViewToggleProps {
   onViewChange: (view: ViewType) => void;
 }
 
-export const ViewToggle: React.FC<ViewToggleProps> = ({
-  currentView,
-  onViewChange,
-}) => {
+export const ViewToggle: React.FC<ViewToggleProps> = props => {
+  const { currentView, onViewChange } = props;
   const views: ViewType[] = ['month', 'week', 'day', 'agenda'];
   const viewIcons = {
     month: 'calendar',
@@ -27,39 +25,39 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
     day: 'square',
     agenda: 'list',
   };
-  
+
   const viewLabels = {
     month: 'Month',
-    week: 'Week', 
+    week: 'Week',
     day: 'Day',
     agenda: 'List',
   };
-  
+
   const currentIndex = views.indexOf(currentView);
-  const translateX = useSharedValue(currentIndex * 64);
-  
+  const translateX = useSharedValue(currentIndex * 58);
+
   React.useEffect(() => {
     const newIndex = views.indexOf(currentView);
-    translateX.value = withSpring(newIndex * 64); // Adjusted for new width
+    translateX.value = withSpring(newIndex * 58); // Adjusted for new width
   }, [currentView, translateX]);
-  
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
-  
+
   const handleViewChange = (view: ViewType) => {
     if (view !== currentView) {
       onViewChange(view);
     }
   };
-  
+
   return (
     <View style={styles.container}>
       {/* Background slider */}
       <Animated.View style={[styles.slider, animatedStyle]} />
-      
+
       {/* View options */}
-      {views.map((view) => (
+      {views.map(view => (
         <TouchableOpacity
           key={view}
           style={styles.option}
@@ -69,13 +67,18 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
           <Feather
             name={viewIcons[view] as any}
             size={14}
-            color={currentView === view ? colors.neutral[0] : colors.neutral[500]}
+            color={
+              currentView === view ? colors.neutral[0] : colors.neutral[500]
+            }
           />
           <Caption
             style={[
               styles.optionText,
               {
-                color: currentView === view ? colors.neutral[0] : colors.neutral[500],
+                color:
+                  currentView === view
+                    ? colors.neutral[0]
+                    : colors.neutral[500],
               },
             ]}
           >
@@ -94,14 +97,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 2,
     position: 'relative',
-    width: 260, // Increased width for better spacing
+    width: 240, // Reduced width to prevent overlap
     maxWidth: '100%', // Responsive on small screens
   },
   slider: {
     position: 'absolute',
     top: 2,
     left: 2,
-    width: 62, // Adjusted for better spacing
+    width: 56, // Adjusted for new container width
     height: 32,
     backgroundColor: colors.primary[500],
     borderRadius: 10,

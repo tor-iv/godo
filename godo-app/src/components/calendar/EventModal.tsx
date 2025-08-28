@@ -14,8 +14,19 @@ import { format } from 'date-fns';
 import { Feather } from '@expo/vector-icons';
 import { Event, SwipeDirection } from '../../types';
 import { colors, spacing, layout, shadows, typography } from '../../design';
-import { Body, Caption, Heading2, Heading3, Button } from '../../components/base';
-import { getCategoryColor, getCategoryDisplayName, formatPrice, formatEventDate } from '../../utils';
+import {
+  Body,
+  Caption,
+  Heading2,
+  Heading3,
+  Button,
+} from '../../components/base';
+import {
+  getCategoryColor,
+  getCategoryDisplayName,
+  formatPrice,
+  formatEventDate,
+} from '../../utils';
 import { EventService } from '../../services';
 
 interface EventModalProps {
@@ -25,12 +36,8 @@ interface EventModalProps {
   onRemoveFromCalendar?: (event: Event) => void;
 }
 
-export const EventModal: React.FC<EventModalProps> = ({
-  event,
-  visible,
-  onClose,
-  onRemoveFromCalendar,
-}) => {
+export const EventModal: React.FC<EventModalProps> = props => {
+  const { event, visible, onClose, onRemoveFromCalendar } = props;
   if (!event) return null;
 
   const eventService = EventService.getInstance();
@@ -38,13 +45,13 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   const getCategoryIcon = (category: string): string => {
     const iconMap: Record<string, string> = {
-      'NETWORKING': 'users',
-      'CULTURE': 'camera',
-      'FITNESS': 'activity',
-      'FOOD': 'coffee',
-      'NIGHTLIFE': 'music',
-      'OUTDOOR': 'sun',
-      'PROFESSIONAL': 'briefcase',
+      NETWORKING: 'users',
+      CULTURE: 'camera',
+      FITNESS: 'activity',
+      FOOD: 'coffee',
+      NIGHTLIFE: 'music',
+      OUTDOOR: 'sun',
+      PROFESSIONAL: 'briefcase',
     };
     return iconMap[category] || 'calendar';
   };
@@ -52,11 +59,23 @@ export const EventModal: React.FC<EventModalProps> = ({
   const getSwipeActionText = (direction: SwipeDirection | null) => {
     switch (direction) {
       case SwipeDirection.UP:
-        return { text: 'Added to Public Calendar', color: colors.success[600], icon: 'calendar' };
+        return {
+          text: 'Added to Public Calendar',
+          color: colors.success[600],
+          icon: 'calendar',
+        };
       case SwipeDirection.RIGHT:
-        return { text: 'Added to Private Calendar', color: colors.info[600], icon: 'calendar' };
+        return {
+          text: 'Added to Private Calendar',
+          color: colors.info[600],
+          icon: 'calendar',
+        };
       case SwipeDirection.DOWN:
-        return { text: 'Saved for Later', color: colors.warning[600], icon: 'bookmark' };
+        return {
+          text: 'Saved for Later',
+          color: colors.warning[600],
+          icon: 'bookmark',
+        };
       default:
         return null;
     }
@@ -87,7 +106,9 @@ export const EventModal: React.FC<EventModalProps> = ({
       const url = `https://maps.apple.com/?q=${lat},${lng}`;
       Linking.openURL(url);
     } else if (event.venue?.name) {
-      const query = encodeURIComponent(`${event.venue.name} ${event.venue.neighborhood || ''}`);
+      const query = encodeURIComponent(
+        `${event.venue.name} ${event.venue.neighborhood || ''}`
+      );
       const url = `https://maps.apple.com/?q=${query}`;
       Linking.openURL(url);
     }
@@ -113,9 +134,9 @@ export const EventModal: React.FC<EventModalProps> = ({
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Feather name="x" size={24} color={colors.neutral[600]} />
           </TouchableOpacity>
-          
+
           <Heading3 style={styles.headerTitle}>Event Details</Heading3>
-          
+
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Feather name="share" size={20} color={colors.neutral[600]} />
           </TouchableOpacity>
@@ -124,26 +145,26 @@ export const EventModal: React.FC<EventModalProps> = ({
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Event Image */}
           <View style={styles.imageContainer}>
-            <Image 
-              source={{ uri: event.imageUrl }} 
+            <Image
+              source={{ uri: event.imageUrl }}
               style={styles.eventImage}
               resizeMode="cover"
             />
-            
+
             {/* Overlay content */}
             <View style={styles.imageOverlay}>
               <View style={styles.imageContent}>
                 {/* Category Badge */}
-                <View 
+                <View
                   style={[
-                    styles.categoryBadge, 
-                    { backgroundColor: getCategoryColor(event.category) }
+                    styles.categoryBadge,
+                    { backgroundColor: getCategoryColor(event.category) },
                   ]}
                 >
-                  <Feather 
-                    name={getCategoryIcon(event.category) as any} 
-                    size={16} 
-                    color={colors.neutral[0]} 
+                  <Feather
+                    name={getCategoryIcon(event.category) as any}
+                    size={16}
+                    color={colors.neutral[0]}
                   />
                   <Caption style={styles.categoryText}>
                     {getCategoryDisplayName(event.category)}
@@ -169,8 +190,17 @@ export const EventModal: React.FC<EventModalProps> = ({
 
             {/* Status Badge */}
             {swipeAction && (
-              <View style={[styles.statusBadge, { backgroundColor: swipeAction.color }]}>
-                <Feather name={swipeAction.icon as any} size={14} color={colors.neutral[0]} />
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: swipeAction.color },
+                ]}
+              >
+                <Feather
+                  name={swipeAction.icon as any}
+                  size={14}
+                  color={colors.neutral[0]}
+                />
                 <Caption style={styles.statusText}>{swipeAction.text}</Caption>
               </View>
             )}
@@ -178,7 +208,12 @@ export const EventModal: React.FC<EventModalProps> = ({
             {/* Date & Time */}
             <View style={styles.detailSection}>
               <View style={styles.detailRow}>
-                <Feather name="calendar" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                <Feather
+                  name="calendar"
+                  size={20}
+                  color={colors.neutral[400]}
+                  style={styles.detailIcon}
+                />
                 <View style={styles.detailContent}>
                   <Body style={styles.detailTitle}>Date & Time</Body>
                   <Caption color={colors.neutral[500]}>
@@ -191,18 +226,33 @@ export const EventModal: React.FC<EventModalProps> = ({
             {/* Location */}
             <View style={styles.detailSection}>
               <Pressable style={styles.detailRow} onPress={handleOpenMap}>
-                <Feather name="map-pin" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                <Feather
+                  name="map-pin"
+                  size={20}
+                  color={colors.neutral[400]}
+                  style={styles.detailIcon}
+                />
                 <View style={styles.detailContent}>
                   <Body style={styles.detailTitle}>Location</Body>
-                  <Caption color={colors.neutral[500]}>{event.venue.name}</Caption>
+                  <Caption color={colors.neutral[500]}>
+                    {event.venue.name}
+                  </Caption>
                   {event.venue.neighborhood && (
-                    <Caption color={colors.neutral[400]}>{event.venue.neighborhood}</Caption>
+                    <Caption color={colors.neutral[400]}>
+                      {event.venue.neighborhood}
+                    </Caption>
                   )}
                   {event.location?.address && (
-                    <Caption color={colors.neutral[400]}>{event.location.address}</Caption>
+                    <Caption color={colors.neutral[400]}>
+                      {event.location.address}
+                    </Caption>
                   )}
                 </View>
-                <Feather name="external-link" size={16} color={colors.neutral[400]} />
+                <Feather
+                  name="external-link"
+                  size={16}
+                  color={colors.neutral[400]}
+                />
               </Pressable>
             </View>
 
@@ -210,7 +260,12 @@ export const EventModal: React.FC<EventModalProps> = ({
             {event.currentAttendees && event.currentAttendees > 0 && (
               <View style={styles.detailSection}>
                 <View style={styles.detailRow}>
-                  <Feather name="users" size={20} color={colors.neutral[400]} style={styles.detailIcon} />
+                  <Feather
+                    name="users"
+                    size={20}
+                    color={colors.neutral[400]}
+                    style={styles.detailIcon}
+                  />
                   <View style={styles.detailContent}>
                     <Body style={styles.detailTitle}>Attendees</Body>
                     <Caption color={colors.neutral[500]}>
@@ -226,10 +281,16 @@ export const EventModal: React.FC<EventModalProps> = ({
               <View style={styles.socialSection}>
                 <View style={styles.friendsRow}>
                   <View style={styles.friendIndicator}>
-                    <Caption style={styles.friendCount}>+{event.friendsAttending}</Caption>
+                    <Caption style={styles.friendCount}>
+                      +{event.friendsAttending}
+                    </Caption>
                   </View>
                   <Body style={styles.friendsText}>
-                    {event.friendsAttending} {event.friendsAttending === 1 ? 'friend' : 'friends'} interested
+                    {event.friendsAttending}{' '}
+                    {String(
+                      event.friendsAttending === 1 ? 'friend' : 'friends'
+                    )}{' '}
+                    interested
                   </Body>
                 </View>
               </View>

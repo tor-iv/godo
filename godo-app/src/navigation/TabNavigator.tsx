@@ -11,19 +11,19 @@ const Tab = createBottomTabNavigator();
 
 export const TabNavigator = () => {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any;
-          
+
           if (route.name === 'Discover') {
             iconName = 'compass';
           } else if (route.name === 'MyEvents') {
             iconName = 'calendar';
           }
-          
+
           return <Feather name={iconName} size={24} color={color} />;
         },
         tabBarActiveTintColor: colors.primary[500],
@@ -57,14 +57,14 @@ export const TabNavigator = () => {
         },
       })}
     >
-      <Tab.Screen 
-        name="Discover" 
-        component={DiscoverScreen} 
+      <Tab.Screen
+        name="Discover"
+        component={DiscoverScreen}
         options={{ tabBarLabel: 'Discover' }}
       />
-      <Tab.Screen 
-        name="MyEvents" 
-        component={MyEventsScreen} 
+      <Tab.Screen
+        name="MyEvents"
+        component={MyEventsScreen}
         options={{ tabBarLabel: 'My Events' }}
       />
     </Tab.Navigator>

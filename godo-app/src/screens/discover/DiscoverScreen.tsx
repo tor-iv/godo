@@ -32,7 +32,7 @@ export const DiscoverScreen = () => {
   const handleSwipe = useCallback((event: Event, direction: SwipeDirection) => {
     console.log(`Swiped ${event.title} ${direction}`);
     setSwipeCount(prev => prev + 1);
-    
+
     // Show feedback based on swipe direction
     const messages = {
       [SwipeDirection.RIGHT]: `Added "${event.title}" to your private calendar! 📅`,
@@ -40,7 +40,7 @@ export const DiscoverScreen = () => {
       [SwipeDirection.DOWN]: `Saved "${event.title}" for later! 🔖`,
       [SwipeDirection.LEFT]: `Passed on "${event.title}" ❌`,
     };
-    
+
     // Optional: Show toast/alert for feedback (for testing)
     // Alert.alert('Swiped!', messages[direction]);
   }, []);
@@ -56,40 +56,43 @@ export const DiscoverScreen = () => {
   const handleStackEmpty = useCallback(() => {
     Alert.alert(
       'All done! 🎉',
-      'You\'ve swiped through all available events. Check back later for more!',
+      "You've swiped through all available events. Check back later for more!",
       [
         {
           text: 'Reload Events',
           onPress: () => {
             const eventService = EventService.getInstance();
             // Reset all swipes for demo purposes
-            eventService.getSwipedEvents(SwipeDirection.LEFT).forEach(event => 
-              eventService.removeSwipe(event.id)
-            );
-            eventService.getSwipedEvents(SwipeDirection.RIGHT).forEach(event => 
-              eventService.removeSwipe(event.id)
-            );
-            eventService.getSwipedEvents(SwipeDirection.UP).forEach(event => 
-              eventService.removeSwipe(event.id)
-            );
-            eventService.getSwipedEvents(SwipeDirection.DOWN).forEach(event => 
-              eventService.removeSwipe(event.id)
-            );
+            eventService
+              .getSwipedEvents(SwipeDirection.LEFT)
+              .forEach(event => eventService.removeSwipe(event.id));
+            eventService
+              .getSwipedEvents(SwipeDirection.RIGHT)
+              .forEach(event => eventService.removeSwipe(event.id));
+            eventService
+              .getSwipedEvents(SwipeDirection.UP)
+              .forEach(event => eventService.removeSwipe(event.id));
+            eventService
+              .getSwipedEvents(SwipeDirection.DOWN)
+              .forEach(event => eventService.removeSwipe(event.id));
             setSwipeCount(0);
             loadEvents();
-          }
+          },
         },
-        { text: 'OK' }
+        { text: 'OK' },
       ]
     );
   }, []);
-
 
   if (loading) {
     return (
       <Container variant="screenCentered">
         <ActivityIndicator size="large" color={colors.primary[500]} />
-        <Body color={colors.neutral[500]} align="center" style={styles.loadingText}>
+        <Body
+          color={colors.neutral[500]}
+          align="center"
+          style={styles.loadingText}
+        >
           Loading events...
         </Body>
       </Container>
@@ -102,11 +105,15 @@ export const DiscoverScreen = () => {
         <Heading2 align="center" style={styles.emptyTitle}>
           No Events Available
         </Heading2>
-        <Body color={colors.neutral[500]} align="center" style={styles.emptySubtitle}>
+        <Body
+          color={colors.neutral[500]}
+          align="center"
+          style={styles.emptySubtitle}
+        >
           Check back later for new events!
         </Body>
-        <Button 
-          title="Reload" 
+        <Button
+          title="Reload"
           onPress={loadEvents}
           style={styles.reloadButton}
         />
@@ -121,7 +128,11 @@ export const DiscoverScreen = () => {
         <Heading2 align="center" style={styles.title}>
           Discover Events
         </Heading2>
-        <Body color={colors.neutral[500]} align="center" style={styles.subtitle}>
+        <Body
+          color={colors.neutral[500]}
+          align="center"
+          style={styles.subtitle}
+        >
           Swipe to explore NYC events • {swipeCount} swiped
         </Body>
       </View>
@@ -136,7 +147,6 @@ export const DiscoverScreen = () => {
           maxVisibleCards={3}
         />
       </View>
-
     </Container>
   );
 };

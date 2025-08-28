@@ -30,14 +30,10 @@ interface WeekViewProps {
   onEventPress?: (event: Event) => void;
 }
 
-export const WeekView: React.FC<WeekViewProps> = ({
-  events,
-  selectedDate,
-  onDateSelect,
-  onEventPress,
-}) => {
+export const WeekView: React.FC<WeekViewProps> = props => {
+  const { events, selectedDate, onDateSelect, onEventPress } = props;
   const selectedDateObj = new Date(selectedDate);
-  
+
   // Get week days starting from Monday
   const weekDays = useMemo(() => {
     const start = startOfWeek(selectedDateObj, { weekStartsOn: 1 });
@@ -57,15 +53,20 @@ export const WeekView: React.FC<WeekViewProps> = ({
   // Group events by day and time
   const eventsByDay = useMemo(() => {
     const grouped: { [key: string]: Event[] } = {};
-    
+
     weekDays.forEach(day => {
       const dayKey = format(day, 'yyyy-MM-dd');
-      grouped[dayKey] = events.filter(event => {
-        const eventDate = format(new Date(event.datetime), 'yyyy-MM-dd');
-        return eventDate === dayKey;
-      }).sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+      grouped[dayKey] = events
+        .filter(event => {
+          const eventDate = format(new Date(event.datetime), 'yyyy-MM-dd');
+          return eventDate === dayKey;
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+        );
     });
-    
+
     return grouped;
   }, [events, weekDays]);
 
@@ -73,15 +74,15 @@ export const WeekView: React.FC<WeekViewProps> = ({
     const eventDate = new Date(event.datetime);
     const hour = eventDate.getHours();
     const minutes = eventDate.getMinutes();
-    
+
     // Calculate position relative to 6 AM start
     const startHour = 6;
     const relativeHour = hour - startHour;
     const slotHeight = 60; // Height per hour slot
-    
-    const top = (relativeHour * slotHeight) + (minutes / 60 * slotHeight);
+
+    const top = relativeHour * slotHeight + (minutes / 60) * slotHeight;
     const height = 50; // Default event height (could be calculated from duration)
-    
+
     return { top: Math.max(0, top), height };
   };
 
@@ -102,11 +103,11 @@ export const WeekView: React.FC<WeekViewProps> = ({
       {/* Header with days */}
       <View style={styles.header}>
         <View style={styles.timeHeaderSpace} />
-        {weekDays.map((day) => {
+        {weekDays.map(day => {
           const dayString = format(day, 'yyyy-MM-dd');
           const isSelected = dayString === selectedDate;
           const isDayToday = isToday(day);
-          
+
           return (
             <TouchableOpacity
               key={dayString}
@@ -117,7 +118,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
               ]}
               onPress={() => handleDatePress(day)}
             >
-              <Caption 
+              <Caption
                 style={[
                   styles.dayOfWeek,
                   isSelected && styles.selectedDayText,
@@ -126,7 +127,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
               >
                 {format(day, 'EEE')}
               </Caption>
-              <Body 
+              <Body
                 style={[
                   styles.dayNumber,
                   isSelected && styles.selectedDayText,
@@ -141,32 +142,36 @@ export const WeekView: React.FC<WeekViewProps> = ({
       </View>
 
       {/* Scrollable time grid */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.timeGrid}>
-          {timeSlots.map((hour) => (
+          {timeSlots.map(hour => (
             <View key={hour} style={styles.timeRow}>
               {/* Time label */}
               <View style={styles.timeLabel}>
-                <Caption color={colors.neutral[500]} style={styles.timeLabelText}>
+                <Caption
+                  color={colors.neutral[500]}
+                  style={styles.timeLabelText}
+                >
                   {formatTimeSlot(hour)}
                 </Caption>
               </View>
 
               {/* Day columns */}
-              {weekDays.map((day) => {
+              {weekDays.map(day => {
                 const dayString = format(day, 'yyyy-MM-dd');
                 const dayEvents = eventsByDay[dayString] || [];
-                
+
                 return (
-                  <View 
-                    key={`${dayString}-${hour}`} 
+                  <View
+                    key={`${dayString}-${hour}`}
                     style={[
                       styles.dayColumn,
-                      hour === timeSlots[timeSlots.length - 1] && styles.lastRow,
+                      hour === timeSlots[timeSlots.length - 1] &&
+                        styles.lastRow,
                     ]}
                   >
                     {/* Events for this hour */}
@@ -183,7 +188,9 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             style={[
                               styles.eventBlock,
                               {
-                                backgroundColor: getCategoryColor(event.category),
+                                backgroundColor: getCategoryColor(
+                                  event.category
+                                ),
                                 height: position.height,
                                 zIndex: 10 + index,
                               },
@@ -199,8 +206,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             </Text>
                           </TouchableOpacity>
                         );
-                      })
-                    }
+                      })}
                   </View>
                 );
               })}

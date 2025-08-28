@@ -42,7 +42,7 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
-  date: Date;
+  date: string; // ISO string for consistency
   datetime: string; // ISO string for compatibility
   location: Location;
   venue: Venue;
@@ -60,10 +60,10 @@ export interface Event {
 
 // Swipe types
 export enum SwipeDirection {
-  LEFT = 'left',   // Not interested
+  LEFT = 'left', // Not interested
   RIGHT = 'right', // Add to private calendar
-  UP = 'up',       // Share/add to public calendar
-  DOWN = 'down',   // Save for later
+  UP = 'up', // Share/add to public calendar
+  DOWN = 'down', // Save for later
 }
 
 // User types

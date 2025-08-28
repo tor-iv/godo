@@ -8,16 +8,17 @@ interface ContainerProps extends ViewProps {
   margin?: number;
 }
 
-export const Container: React.FC<ContainerProps> = ({
-  variant = 'screen',
-  padding,
-  margin,
-  style,
-  children,
-  ...props
-}) => {
+export const Container: React.FC<ContainerProps> = allProps => {
+  const {
+    variant = 'screen',
+    padding,
+    margin,
+    style,
+    children,
+    ...props
+  } = allProps;
   const dynamicStyles: any[] = [styles[variant]];
-  
+
   if (padding) {
     dynamicStyles.push({ padding });
   }
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     paddingHorizontal: layout.screenPadding,
   },
-  
+
   screenCentered: {
     flex: 1,
     backgroundColor: colors.neutral[0],
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   card: {
     backgroundColor: colors.neutral[0],
     borderRadius: layout.cardBorderRadius,
@@ -57,7 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: layout.cardMargin,
     ...shadows.medium,
   },
-  
+
   premiumCard: {
     backgroundColor: colors.neutral[0],
     borderRadius: layout.cardBorderRadius,
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     marginBottom: layout.cardMargin,
     ...shadows.large,
   },
-  
+
   section: {
     paddingVertical: layout.sectionPadding,
   },

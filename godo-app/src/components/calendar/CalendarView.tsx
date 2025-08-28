@@ -13,21 +13,17 @@ interface CalendarViewProps {
   onEventPress?: (event: Event) => void;
 }
 
-export const CalendarView: React.FC<CalendarViewProps> = ({
-  events,
-  selectedDate,
-  onDateSelect,
-  onEventPress,
-}) => {
+export const CalendarView: React.FC<CalendarViewProps> = props => {
+  const { events, selectedDate, onDateSelect, onEventPress } = props;
   const getCategoryColor = (category: string): string => {
     const categoryColors: Record<string, string> = {
-      'NETWORKING': colors.info[500],
-      'CULTURE': colors.primary[500],
-      'FITNESS': colors.success[500],
-      'FOOD': colors.warning[500],
-      'NIGHTLIFE': '#ec4899',
-      'OUTDOOR': '#059669',
-      'PROFESSIONAL': '#6366f1',
+      NETWORKING: colors.info[500],
+      CULTURE: colors.primary[500],
+      FITNESS: colors.success[500],
+      FOOD: colors.warning[500],
+      NIGHTLIFE: '#ec4899',
+      OUTDOOR: '#059669',
+      PROFESSIONAL: '#6366f1',
     };
     return categoryColors[category] || colors.neutral[400];
   };
@@ -35,10 +31,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Convert events to calendar format with better indicators
   const markedDates = useMemo(() => {
     const marked: any = {};
-    
+
     events.forEach(event => {
       const dateString = format(new Date(event.datetime), 'yyyy-MM-dd');
-      
+
       if (!marked[dateString]) {
         marked[dateString] = {
           dots: [],
@@ -47,9 +43,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           eventCount: 0,
         };
       }
-      
+
       marked[dateString].eventCount = (marked[dateString].eventCount || 0) + 1;
-      
+
       // Add up to 3 dots for events (color-coded by category)
       if (marked[dateString].dots.length < 3) {
         marked[dateString].dots.push({
@@ -57,7 +53,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         });
       }
     });
-    
+
     // Ensure selected date is marked even if no events
     if (selectedDate && !marked[selectedDate]) {
       marked[selectedDate] = {
@@ -67,24 +63,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         eventCount: 0,
       };
     }
-    
+
     return marked;
   }, [events, selectedDate]);
-  
+
   // Get events for selected date
   const selectedDateEvents = useMemo(() => {
     if (!selectedDate) return [];
-    
+
     return events.filter(event => {
       const eventDate = format(new Date(event.datetime), 'yyyy-MM-dd');
       return eventDate === selectedDate;
     });
   }, [events, selectedDate]);
-  
+
   const formatEventTime = (datetime: string) => {
     return format(new Date(datetime), 'h:mm a');
   };
-  
+
   const calendarTheme: CalendarProps['theme'] = {
     backgroundColor: colors.neutral[0],
     calendarBackground: colors.neutral[0],
@@ -111,12 +107,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     textMonthFontSize: 18,
     textDayHeaderFontSize: 14,
   };
-  
+
   return (
     <View style={styles.container}>
       <Calendar
         markedDates={markedDates}
-        onDayPress={(day) => onDateSelect?.(day.dateString)}
+        onDayPress={day => onDateSelect?.(day.dateString)}
         theme={calendarTheme}
         markingType="multi-dot"
         firstDay={1} // Start week on Monday
@@ -125,7 +121,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         enableSwipeMonths={true}
         style={styles.calendar}
       />
-      
+
       {/* Event List for Selected Date */}
       {selectedDate && (
         <View style={styles.eventList}>
@@ -135,18 +131,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             </Body>
             {selectedDateEvents.length > 0 && (
               <Caption style={styles.eventCount}>
-                {selectedDateEvents.length} {selectedDateEvents.length === 1 ? 'event' : 'events'}
+                {selectedDateEvents.length}{' '}
+                {String(selectedDateEvents.length === 1 ? 'event' : 'events')}
               </Caption>
             )}
           </View>
-          
+
           {selectedDateEvents.length === 0 ? (
             <View style={styles.emptyEventsContainer}>
               <Caption style={styles.noEvents}>No events on this date</Caption>
             </View>
           ) : (
             <View style={styles.eventsContainer}>
-              {selectedDateEvents.map((event) => (
+              {selectedDateEvents.map(event => (
                 <TouchableOpacity
                   key={event.id}
                   style={styles.eventItem}
@@ -158,37 +155,49 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       {formatEventTime(event.datetime)}
                     </Caption>
                   </View>
-                  
+
                   <View style={styles.eventDetails}>
                     <Body style={styles.eventTitle} numberOfLines={2}>
                       {event.title}
                     </Body>
-                    <Caption color={colors.neutral[500]} numberOfLines={1} style={styles.eventVenue}>
+                    <Caption
+                      color={colors.neutral[500]}
+                      numberOfLines={1}
+                      style={styles.eventVenue}
+                    >
                       {event.venue.name}
-                      {event.venue.neighborhood && `, ${event.venue.neighborhood}`}
+                      {event.venue.neighborhood
+                        ? `, ${event.venue.neighborhood}`
+                        : ''}
                     </Caption>
-                    
+
                     {/* Event metadata */}
                     <View style={styles.eventMetadata}>
                       {event.currentAttendees && event.currentAttendees > 0 && (
-                        <Caption color={colors.neutral[400]} style={styles.metadata}>
+                        <Caption
+                          color={colors.neutral[400]}
+                          style={styles.metadata}
+                        >
                           {event.currentAttendees} attending
                         </Caption>
                       )}
                       {event.friendsAttending && event.friendsAttending > 0 && (
-                        <Caption color={colors.primary[600]} style={styles.friendsMetadata}>
+                        <Caption
+                          color={colors.primary[600]}
+                          style={styles.friendsMetadata}
+                        >
                           +{event.friendsAttending} friends
                         </Caption>
                       )}
                     </View>
                   </View>
-                  
+
                   <View style={styles.eventActions}>
-                    <View 
+                    <View
                       style={[
-                        styles.categoryDot, 
-                        { backgroundColor: getCategoryColor(event.category) }
-                      ]} 
+                        styles.categoryDot,
+                        { backgroundColor: getCategoryColor(event.category) },
+                      ]}
                     />
                   </View>
                 </TouchableOpacity>

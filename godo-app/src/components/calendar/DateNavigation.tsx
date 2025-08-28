@@ -32,11 +32,8 @@ interface DateNavigationProps {
   onDateChange: (date: string) => void;
 }
 
-export const DateNavigation: React.FC<DateNavigationProps> = ({
-  selectedDate,
-  viewType,
-  onDateChange,
-}) => {
+export const DateNavigation: React.FC<DateNavigationProps> = props => {
+  const { selectedDate, viewType, onDateChange } = props;
   const [showDatePicker, setShowDatePicker] = useState(false);
   const selectedDateObj = new Date(selectedDate);
 
@@ -162,10 +159,10 @@ export const DateNavigation: React.FC<DateNavigationProps> = ({
         activeOpacity={0.7}
       >
         <Body style={styles.titleText}>{getDisplayText()}</Body>
-        <Feather 
-          name="calendar" 
-          size={16} 
-          color={colors.neutral[500]} 
+        <Feather
+          name="calendar"
+          size={16}
+          color={colors.neutral[500]}
           style={styles.calendarIcon}
         />
       </TouchableOpacity>
@@ -197,7 +194,7 @@ export const DateNavigation: React.FC<DateNavigationProps> = ({
         animationType="fade"
         onRequestClose={() => setShowDatePicker(false)}
       >
-        <Pressable 
+        <Pressable
           style={styles.modalOverlay}
           onPress={() => setShowDatePicker(false)}
         >
@@ -216,7 +213,7 @@ export const DateNavigation: React.FC<DateNavigationProps> = ({
               hideExtraDays={true}
               enableSwipeMonths={true}
             />
-            
+
             <View style={styles.modalActions}>
               <Button
                 title="Cancel"

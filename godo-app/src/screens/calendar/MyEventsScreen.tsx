@@ -3,16 +3,18 @@ import { StyleSheet, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Container, Heading2, Body, Button } from '../../components/base';
-import { 
-  CalendarView, 
-  ListView, 
+import {
+  CalendarView,
+  ListView,
   WeekView,
   DayView,
   AgendaView,
-  ViewToggle, 
+  ViewToggle,
   ViewType,
   DateNavigation,
   EventModal,
+  EventFilterToggle,
+  EventFilterType,
 } from '../../components/calendar';
 import { spacing, colors } from '../../design';
 import { EventService } from '../../services';
@@ -22,20 +24,22 @@ import { format } from 'date-fns';
 export const MyEventsScreen = () => {
   const [calendarEvents, setCalendarEvents] = useState<Event[]>([]);
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
-  const [currentTab, setCurrentTab] = useState<'calendar' | 'saved'>('calendar');
+  const [eventFilter, setEventFilter] = useState<EventFilterType>('all');
   const [viewType, setViewType] = useState<ViewType>('month');
-  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState<string>(
+    format(new Date(), 'yyyy-MM-dd')
+  );
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const insets = useSafeAreaInsets();
 
   const loadEvents = useCallback(() => {
     const eventService = EventService.getInstance();
-    
+
     // Get all calendar events (right + up swipes)
     const allCalendarEvents = eventService.getAllCalendarEvents();
     setCalendarEvents(allCalendarEvents);
-    
+
     // Get saved events (down swipes)
     const savedEventsList = eventService.getSavedEvents();
     setSavedEvents(savedEventsList);
@@ -75,29 +79,32 @@ export const MyEventsScreen = () => {
   const getStatsText = () => {
     const eventService = EventService.getInstance();
     const stats = eventService.getSwipeStats();
-    
+
     return `${stats.interested} going • ${stats.publicEvents} public • ${stats.saved} saved`;
   };
 
-  const renderCalendarContent = () => {
-    if (calendarEvents.length === 0) {
-      return (
-        <Container variant="screenCentered">
-          <Heading2 align="center" style={styles.emptyTitle}>
-            No Events Yet
-          </Heading2>
-          <Body color={colors.neutral[500]} align="center" style={styles.emptySubtitle}>
-            Swipe right or up on events in the Discover tab to add them to your calendar!
-          </Body>
-        </Container>
-      );
+  const getFilteredEvents = () => {
+    const eventService = EventService.getInstance();
+
+    if (eventFilter === 'private') {
+      return eventService.getPrivateCalendarEvents();
+    } else if (eventFilter === 'public') {
+      return eventService.getPublicCalendarEvents();
     }
+    return calendarEvents; // 'all'
+  };
+
+  const renderCalendarContent = () => {
+    const filteredEvents = getFilteredEvents();
+
+    // Always render the calendar views, even when empty
+    // The individual calendar components handle their own empty states appropriately
 
     switch (viewType) {
       case 'month':
         return (
           <CalendarView
-            events={calendarEvents}
+            events={filteredEvents}
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
             onEventPress={handleEventPress}
@@ -106,7 +113,7 @@ export const MyEventsScreen = () => {
       case 'week':
         return (
           <WeekView
-            events={calendarEvents}
+            events={filteredEvents}
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
             onEventPress={handleEventPress}
@@ -115,30 +122,27 @@ export const MyEventsScreen = () => {
       case 'day':
         return (
           <DayView
-            events={calendarEvents}
+            events={filteredEvents}
             selectedDate={selectedDate}
             onEventPress={handleEventPress}
           />
         );
       case 'agenda':
         return (
-          <AgendaView
-            events={calendarEvents}
-            onEventPress={handleEventPress}
-          />
+          <AgendaView events={filteredEvents} onEventPress={handleEventPress} />
         );
       default:
         return (
           <ListView
-            events={calendarEvents}
+            events={filteredEvents}
             onEventPress={handleEventPress}
-            emptyMessage="No events in your calendar"
+            emptyMessage={`No ${eventFilter === 'all' ? '' : eventFilter + ' '}events in your calendar`}
           />
         );
     }
   };
 
-  const renderCalendarTab = () => {
+  const renderMainContent = () => {
     return (
       <View style={styles.contentContainer}>
         {/* Date Navigation */}
@@ -149,21 +153,22 @@ export const MyEventsScreen = () => {
             onDateChange={handleDateSelect}
           />
         )}
-        
+
+        {/* Empty state hint for new users */}
+        {calendarEvents.length === 0 && (
+          <View style={styles.emptyHint}>
+            <Body
+              color={colors.neutral[400]}
+              align="center"
+              style={styles.emptyHintText}
+            >
+              Swipe on events in Discover to add them here
+            </Body>
+          </View>
+        )}
+
         {/* Calendar Content */}
         {renderCalendarContent()}
-      </View>
-    );
-  };
-
-  const renderSavedTab = () => {
-    return (
-      <View style={styles.contentContainer}>
-        <ListView
-          events={savedEvents}
-          onEventPress={handleEventPress}
-          emptyMessage="No saved events. Swipe down on events to save them for later!"
-        />
       </View>
     );
   };
@@ -181,40 +186,27 @@ export const MyEventsScreen = () => {
             </Body>
           </View>
         </View>
-        
-        {/* Tabs Row */}
-        <View style={styles.tabsRow}>
-          <View style={styles.tabContainer}>
-            <Button
-              title="Calendar"
-              onPress={() => setCurrentTab('calendar')}
-              variant={currentTab === 'calendar' ? 'primary' : 'ghost'}
-              size="small"
-              style={styles.tabButton}
-            />
-            <Button
-              title="Saved"
-              onPress={() => setCurrentTab('saved')}
-              variant={currentTab === 'saved' ? 'primary' : 'ghost'}
-              size="small"
-              style={styles.tabButton}
+
+        {/* Filter Row */}
+        {calendarEvents.length > 0 && (
+          <View style={styles.filterRow}>
+            <EventFilterToggle
+              currentFilter={eventFilter}
+              onFilterChange={setEventFilter}
             />
           </View>
-        </View>
-        
-        {/* View Toggle Row (only for calendar tab) */}
-        {currentTab === 'calendar' && calendarEvents.length > 0 && (
+        )}
+
+        {/* View Toggle Row */}
+        {calendarEvents.length > 0 && (
           <View style={styles.viewToggleRow}>
-            <ViewToggle
-              currentView={viewType}
-              onViewChange={setViewType}
-            />
+            <ViewToggle currentView={viewType} onViewChange={setViewType} />
           </View>
         )}
       </View>
 
       {/* Content */}
-      {currentTab === 'calendar' ? renderCalendarTab() : renderSavedTab()}
+      {renderMainContent()}
 
       {/* Event Modal */}
       <EventModal
@@ -251,16 +243,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
   },
-  tabsRow: {
+  filterRow: {
+    alignItems: 'center',
     paddingHorizontal: spacing[6],
     paddingBottom: spacing[3],
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    gap: spacing[2],
-  },
-  tabButton: {
-    flex: 1,
   },
   viewToggleRow: {
     alignItems: 'center',
@@ -270,11 +256,15 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
-  emptyTitle: {
-    marginBottom: spacing[2],
+  emptyHint: {
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[3],
+    backgroundColor: colors.neutral[50],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
-  emptySubtitle: {
-    marginBottom: spacing[8],
-    paddingHorizontal: spacing[4],
+  emptyHintText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
