@@ -7,7 +7,7 @@ module.exports = function (api) {
       ['@babel/preset-typescript'],
     ],
     plugins: [
-      '@babel/plugin-proposal-export-namespace-from',
+      '@babel/plugin-transform-export-namespace-from',
       'react-native-reanimated/plugin',
     ],
     env: {
@@ -18,7 +18,7 @@ module.exports = function (api) {
           ['@babel/preset-typescript'],
         ],
         plugins: [
-          '@babel/plugin-proposal-export-namespace-from',
+          '@babel/plugin-transform-export-namespace-from',
         ],
       },
     },

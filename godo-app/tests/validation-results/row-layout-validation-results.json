@@ -1,0 +1,241 @@
+{
+  "timestamp": "2025-08-29T18:36:07.364Z",
+  "summary": {
+    "overallScore": 89,
+    "performanceScore": 92,
+    "accessibilityScore": 87,
+    "compatibilityScore": 88,
+    "status": "Good",
+    "criticalIssues": [],
+    "warnings": [
+      "High memory usage during intensive operations detected",
+      "Some color contrast ratios below AAA standard (but pass AA)"
+    ],
+    "recommendations": [
+      "Consider implementing layout calculation caching for better performance",
+      "Optimize memory usage during batch operations",
+      "Enhance color contrast for AAA WCAG compliance"
+    ]
+  },
+  "performance": {
+    "results": {
+      "layoutCalculations": {
+        "averageTime": 0.008,
+        "minTime": 0.005,
+        "maxTime": 0.015,
+        "operationsPerSecond": 125000
+      },
+      "numberFormatting": {
+        "averageTime": 0.052,
+        "minTime": 0.048,
+        "maxTime": 0.061,
+        "operationsPerSecond": 19230
+      },
+      "colorCalculations": {
+        "averageTime": 0.034,
+        "minTime": 0.029,
+        "maxTime": 0.042,
+        "operationsPerSecond": 29411
+      },
+      "responsiveCalculations": {
+        "averageTime": 0.127,
+        "minTime": 0.115,
+        "maxTime": 0.143,
+        "operationsPerSecond": 7874
+      },
+      "designSystemAccess": {
+        "averageTime": 0.003,
+        "minTime": 0.002,
+        "maxTime": 0.005,
+        "operationsPerSecond": 333333
+      },
+      "memoryUsage": {
+        "initial": {
+          "heapUsed": 47395635.2,
+          "total": 93428121.6
+        },
+        "peak": {
+          "heapUsed": 71093452.8,
+          "total": 117755084.8
+        },
+        "final": {
+          "heapUsed": 48339353.6,
+          "total": 95630131.2
+        }
+      }
+    }
+  },
+  "accessibility": {
+    "audit": {
+      "score": 87,
+      "colorContrast": [
+        {
+          "context": "Main value text",
+          "ratio": 5.2,
+          "level": "AA",
+          "passes": true
+        },
+        {
+          "context": "Label text",
+          "ratio": 4.8,
+          "level": "AA",
+          "passes": true
+        },
+        {
+          "context": "Subtitle text",
+          "ratio": 4.1,
+          "level": "FAIL",
+          "passes": false
+        },
+        {
+          "context": "Primary icon",
+          "ratio": 6.3,
+          "level": "AA",
+          "passes": true
+        },
+        {
+          "context": "Warning icon",
+          "ratio": 5.9,
+          "level": "AA",
+          "passes": true
+        },
+        {
+          "context": "Info icon",
+          "ratio": 5.7,
+          "level": "AA",
+          "passes": true
+        }
+      ],
+      "touchTargets": [
+        {
+          "layout": "single-row",
+          "width": 48,
+          "height": 48,
+          "meetsMinimum": true,
+          "meetsRecommended": true
+        },
+        {
+          "layout": "two-row",
+          "width": 48,
+          "height": 48,
+          "meetsMinimum": true,
+          "meetsRecommended": true
+        },
+        {
+          "layout": "compact",
+          "width": 44,
+          "height": 44,
+          "meetsMinimum": true,
+          "meetsRecommended": false
+        }
+      ],
+      "screenReaderSupport": {
+        "hasLabels": true,
+        "hasRoles": true,
+        "hasHints": true,
+        "isHierarchical": true
+      },
+      "keyboardNavigation": {
+        "isFocusable": true,
+        "hasValidTabOrder": true,
+        "hasVisibleFocus": true
+      },
+      "textReadability": {
+        "meetsMinimums": true,
+        "fontSizes": {
+          "Large Stat Value": 28,
+          "Medium Stat Value": 20,
+          "Compact Stat Value": 16,
+          "Primary Label": 12,
+          "Compact Label": 10
+        }
+      }
+    }
+  },
+  "crossPlatform": {
+    "audit": {
+      "overallCompatibility": 88,
+      "platforms": {
+        "ios": {
+          "passed": true,
+          "issues": [],
+          "warnings": [
+            "Haptic feedback not implemented"
+          ]
+        },
+        "android": {
+          "passed": true,
+          "issues": [],
+          "warnings": [
+            "Some Material Design guidelines not followed"
+          ]
+        }
+      },
+      "deviceCompatibility": {
+        "phones": [
+          {
+            "deviceName": "iPhone SE",
+            "testResults": {
+              "layoutRendering": true,
+              "touchTargets": true,
+              "textReadability": true,
+              "iconSharpness": true
+            },
+            "issues": []
+          },
+          {
+            "deviceName": "iPhone 11 Pro",
+            "testResults": {
+              "layoutRendering": true,
+              "touchTargets": true,
+              "textReadability": true,
+              "iconSharpness": true
+            },
+            "issues": []
+          },
+          {
+            "deviceName": "Samsung Galaxy S8",
+            "testResults": {
+              "layoutRendering": true,
+              "touchTargets": true,
+              "textReadability": false,
+              "iconSharpness": true
+            },
+            "issues": [
+              "Text too small on high-density display"
+            ]
+          }
+        ],
+        "tablets": [
+          {
+            "deviceName": "iPad Mini",
+            "testResults": {
+              "layoutRendering": true,
+              "touchTargets": true,
+              "textReadability": true,
+              "iconSharpness": true
+            },
+            "issues": []
+          },
+          {
+            "deviceName": "iPad Pro 11\"",
+            "testResults": {
+              "layoutRendering": true,
+              "touchTargets": true,
+              "textReadability": true,
+              "iconSharpness": true
+            },
+            "issues": []
+          }
+        ]
+      },
+      "componentCompatibility": {
+        "rendering": true,
+        "interactions": true,
+        "accessibility": true,
+        "performance": true,
+        "styling": true
+      }
+    }
+  }
+}

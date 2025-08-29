@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-08-29T18:19:51.417Z",
+  "readabilityScore": 7,
+  "totalChecks": 14,
+  "percentage": "50.0",
+  "analysisResults": {
+    "layoutStructure": {
+      "hasRowLayout": true,
+      "hasFlexDirection": true,
+      "hasResponsiveSpacing": false,
+      "hasTextOptimization": false
+    },
+    "readabilityFeatures": {
+      "responsiveText": true,
+      "textTruncation": true,
+      "adaptiveSizing": true,
+      "minWidthOptimization": true
+    },
+    "accessibilityFeatures": {
+      "accessibilityLabels": false,
+      "screenReaderSupport": false,
+      "semanticStructure": false
+    },
+    "performanceOptimizations": {
+      "flexShrinking": false,
+      "responsiveDesignSystem": true,
+      "efficientRendering": false
+    }
+  },
+  "recommendations": [
+    "Implement clear row layout structure if missing",
+    "Add responsive text utilities for better adaptation",
+    "Include text truncation for overflow handling",
+    "Use adaptive font sizing for better readability",
+    "Optimize containers with minWidth: 0 for flex shrinking"
+  ]
+}

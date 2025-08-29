@@ -1,0 +1,122 @@
+{
+  "timestamp": "2025-08-29T18:18:56.607Z",
+  "layoutTests": [
+    {
+      "test": "ProfileStats component exists",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    },
+    {
+      "test": "ResponsiveProfileStats component exists",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    },
+    {
+      "test": "Row layout structure implemented",
+      "status": "FAIL",
+      "details": "Missing row layout elements",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    },
+    {
+      "test": "CSS flexbox row direction used",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    }
+  ],
+  "readabilityTests": [
+    {
+      "test": "Responsive text utility used",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    },
+    {
+      "test": "Text properties optimization",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    },
+    {
+      "test": "Text truncation handling",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.609Z"
+    }
+  ],
+  "accessibilityTests": [
+    {
+      "test": "Accessibility labels implemented",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Accessibility roles defined",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Accessible property set",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    }
+  ],
+  "performanceTests": [
+    {
+      "test": "Flex shrinking optimization",
+      "status": "PASS",
+      "details": "minWidth: 0 found for flex shrinking",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Responsive spacing system used",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    }
+  ],
+  "regressionTests": [
+    {
+      "test": "TypeScript interfaces defined",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Proper imports structure",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "React Native StyleSheet used",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Consistent design system usage",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    },
+    {
+      "test": "Consistent color token usage",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-08-29T18:18:56.610Z"
+    }
+  ],
+  "summary": {
+    "passed": 16,
+    "failed": 1,
+    "warnings": 0
+  },
+  "overallStatus": "FAIL",
+  "successRate": "94.1"
+}

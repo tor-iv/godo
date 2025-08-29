@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewProps, StyleSheet } from 'react-native';
-import { colors, layout, shadows } from '../../design/tokens';
+import { colors, layout } from '../../design/tokens';
 
 interface ContainerProps extends ViewProps {
   variant?: 'screen' | 'screenCentered' | 'card' | 'premiumCard' | 'section';
@@ -27,6 +27,16 @@ export const Container: React.FC<ContainerProps> = allProps => {
   }
   if (style) {
     dynamicStyles.push(style);
+  }
+
+  // Debug logging to help identify rendering issues
+  if (__DEV__) {
+    console.log(
+      'Container rendering with variant:',
+      variant,
+      'styles:',
+      dynamicStyles
+    );
   }
 
   return (
@@ -56,15 +66,17 @@ const styles = StyleSheet.create({
     borderRadius: layout.cardBorderRadius,
     padding: layout.cardPadding,
     marginBottom: layout.cardMargin,
-    ...shadows.medium,
+    borderColor: colors.neutral[200],
+    borderWidth: 1,
   },
 
   premiumCard: {
-    backgroundColor: colors.neutral[0],
+    backgroundColor: colors.neutral[50],
     borderRadius: layout.cardBorderRadius,
     padding: layout.cardPadding,
     marginBottom: layout.cardMargin,
-    ...shadows.large,
+    borderColor: colors.neutral[300],
+    borderWidth: 2,
   },
 
   section: {

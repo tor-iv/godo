@@ -15,6 +15,7 @@ const { width, height } = Dimensions.get('window');
 interface SwipeOverlayProps {
   translateX: Animated.SharedValue<number>;
   translateY: Animated.SharedValue<number>;
+  isSwipeActive?: Animated.SharedValue<boolean>;
 }
 
 const OVERLAY_CONFIG = {
@@ -57,10 +58,11 @@ interface DirectionalOverlayProps {
   direction: SwipeDirection;
   translateX: Animated.SharedValue<number>;
   translateY: Animated.SharedValue<number>;
+  isSwipeActive?: boolean; // Track if swipe gesture is actively happening
 }
 
 const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
-  const { direction, translateX, translateY } = props;
+  const { direction, translateX, translateY, isSwipeActive } = props;
   const config = OVERLAY_CONFIG[direction];
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -70,7 +72,17 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
     let currentDirection: SwipeDirection | null = null;
     let opacity = 0;
 
-    if (absX > 20 || absY > 20) {
+    // Increased thresholds to prevent premature visibility
+    const MINIMUM_SWIPE_THRESHOLD = 50; // Increased from 20
+    const FULL_OPACITY_THRESHOLD = 120; // Increased from 100
+
+    // Only show overlay if swipe is actively happening
+    const isActivelySwiping = isSwipeActive?.value ?? false;
+
+    if (
+      isActivelySwiping &&
+      (absX > MINIMUM_SWIPE_THRESHOLD || absY > MINIMUM_SWIPE_THRESHOLD)
+    ) {
       if (absX > absY) {
         currentDirection =
           translateX.value > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
@@ -85,7 +97,19 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
           direction === SwipeDirection.RIGHT
             ? absX
             : absY;
-        opacity = interpolate(threshold, [20, 100], [0, 1], Extrapolate.CLAMP);
+
+        // Only show overlay if threshold is met and this is the dominant direction
+        const dominanceRatio =
+          absX > absY ? absX / (absY + 1) : absY / (absX + 1);
+
+        if (threshold >= MINIMUM_SWIPE_THRESHOLD && dominanceRatio > 1.5) {
+          opacity = interpolate(
+            threshold,
+            [MINIMUM_SWIPE_THRESHOLD, FULL_OPACITY_THRESHOLD],
+            [0, 1],
+            Extrapolate.CLAMP
+          );
+        }
       }
     }
 
@@ -141,28 +165,32 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
 };
 
 export const SwipeOverlay: React.FC<SwipeOverlayProps> = props => {
-  const { translateX, translateY } = props;
+  const { translateX, translateY, isSwipeActive } = props;
   return (
     <>
       <DirectionalOverlay
         direction={SwipeDirection.LEFT}
         translateX={translateX}
         translateY={translateY}
+        isSwipeActive={isSwipeActive}
       />
       <DirectionalOverlay
         direction={SwipeDirection.RIGHT}
         translateX={translateX}
         translateY={translateY}
+        isSwipeActive={isSwipeActive}
       />
       <DirectionalOverlay
         direction={SwipeDirection.UP}
         translateX={translateX}
         translateY={translateY}
+        isSwipeActive={isSwipeActive}
       />
       <DirectionalOverlay
         direction={SwipeDirection.DOWN}
         translateX={translateX}
         translateY={translateY}
+        isSwipeActive={isSwipeActive}
       />
     </>
   );
@@ -213,11 +241,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing[3],
-    shadowColor: colors.neutral[900],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 2,
+    borderColor: colors.neutral[200],
   },
 
   overlayTitle: {

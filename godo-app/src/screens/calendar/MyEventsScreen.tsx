@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View, Alert, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
-import { Container, Heading2, Body, Button } from '../../components/base';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import type { CalendarStackParamList } from '../../navigation/CalendarStackNavigator';
+import {
+  Container,
+  Heading2,
+  Body,
+  Button,
+  ErrorBoundary,
+  LoadingSpinner,
+} from '../../components/base';
 import {
   CalendarView,
   ListView,
@@ -12,16 +21,21 @@ import {
   ViewToggle,
   ViewType,
   DateNavigation,
-  EventModal,
   EventFilterToggle,
   EventFilterType,
 } from '../../components/calendar';
 import { spacing, colors } from '../../design';
 import { EventService } from '../../services';
+import { SwipeInteractionTracker } from '../../services/SwipeInteractionTracker';
 import { Event, SwipeDirection } from '../../types';
 import { format } from 'date-fns';
+import { deviceInfo } from '../../design/responsiveTokens';
+import { formatStatsText, getContainerWidth } from '../../utils/responsiveText';
+
+type NavigationProp = StackNavigationProp<CalendarStackParamList>;
 
 export const MyEventsScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [calendarEvents, setCalendarEvents] = useState<Event[]>([]);
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
   const [eventFilter, setEventFilter] = useState<EventFilterType>('all');
@@ -29,20 +43,46 @@ export const MyEventsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), 'yyyy-MM-dd')
   );
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [showEventModal, setShowEventModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasUserSwipedEvents, setHasUserSwipedEvents] = useState(false); // Track if user has swiped events
   const insets = useSafeAreaInsets();
 
-  const loadEvents = useCallback(() => {
-    const eventService = EventService.getInstance();
+  const loadEvents = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('MyEventsScreen: Loading events...');
 
-    // Get all calendar events (right + up swipes)
-    const allCalendarEvents = eventService.getAllCalendarEvents();
-    setCalendarEvents(allCalendarEvents);
+      const eventService = EventService.getInstance();
 
-    // Get saved events (down swipes)
-    const savedEventsList = eventService.getSavedEvents();
-    setSavedEvents(savedEventsList);
+      // Get all calendar events (right + up swipes)
+      const allCalendarEvents = eventService.getAllCalendarEvents();
+      console.log(
+        'MyEventsScreen: Calendar events loaded:',
+        allCalendarEvents.length
+      );
+      setCalendarEvents(allCalendarEvents);
+
+      // Get saved events (down swipes)
+      const savedEventsList = eventService.getSavedEvents();
+      console.log(
+        'MyEventsScreen: Saved events loaded:',
+        savedEventsList.length
+      );
+      setSavedEvents(savedEventsList);
+
+      // Update hasUserSwipedEvents if user has events
+      if (allCalendarEvents.length > 0 || savedEventsList.length > 0) {
+        setHasUserSwipedEvents(true);
+      }
+    } catch (err) {
+      setError('Failed to load events. Please try again.');
+      console.error('MyEventsScreen: Error loading events:', err);
+    } finally {
+      setIsLoading(false);
+      console.log('MyEventsScreen: Loading complete');
+    }
   }, []);
 
   useEffect(() => {
@@ -57,40 +97,44 @@ export const MyEventsScreen = () => {
   );
 
   const handleEventPress = useCallback((event: Event) => {
-    setSelectedEvent(event);
-    setShowEventModal(true);
-  }, []);
+    navigation.navigate('EventDetail', { event });
+  }, [navigation]);
 
   const handleDateSelect = useCallback((date: string) => {
     setSelectedDate(date);
   }, []);
 
-  const handleRemoveFromCalendar = useCallback(() => {
-    loadEvents(); // Reload events after removal
-    setShowEventModal(false);
-    setSelectedEvent(null);
-  }, [loadEvents]);
-
-  const handleCloseModal = useCallback(() => {
-    setShowEventModal(false);
-    setSelectedEvent(null);
-  }, []);
 
   const getStatsText = () => {
     const eventService = EventService.getInstance();
     const stats = eventService.getSwipeStats();
 
-    return `${stats.interested} going • ${stats.publicEvents} public • ${stats.saved} saved`;
+    // Use responsive text formatting
+    return formatStatsText({
+      going: stats.interested,
+      public: stats.publicEvents,
+      saved: stats.saved,
+    });
+  };
+
+  const shouldShowToggle = () => {
+    return calendarEvents.length > 0 && !isLoading;
   };
 
   const getFilteredEvents = () => {
     const eventService = EventService.getInstance();
+    console.log('MyEventsScreen: Filtering events with filter:', eventFilter);
 
     if (eventFilter === 'private') {
-      return eventService.getPrivateCalendarEvents();
+      const privateEvents = eventService.getPrivateCalendarEvents();
+      console.log('MyEventsScreen: Private events:', privateEvents.length);
+      return privateEvents;
     } else if (eventFilter === 'public') {
-      return eventService.getPublicCalendarEvents();
+      const publicEvents = eventService.getPublicCalendarEvents();
+      console.log('MyEventsScreen: Public events:', publicEvents.length);
+      return publicEvents;
     }
+    console.log('MyEventsScreen: All events:', calendarEvents.length);
     return calendarEvents; // 'all'
   };
 
@@ -143,6 +187,36 @@ export const MyEventsScreen = () => {
   };
 
   const renderMainContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.contentContainer}>
+          <LoadingSpinner text="Loading your events..." />
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.contentContainer}>
+          <ErrorBoundary
+            fallback={
+              <View style={styles.errorContainer}>
+                <Body style={styles.errorText}>{error}</Body>
+                <Button
+                  title="Retry"
+                  onPress={loadEvents}
+                  variant="outline"
+                  style={styles.retryButton}
+                />
+              </View>
+            }
+          >
+            <></>
+          </ErrorBoundary>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.contentContainer}>
         {/* Date Navigation */}
@@ -174,45 +248,47 @@ export const MyEventsScreen = () => {
   };
 
   return (
-    <Container style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Title and Filter Row */}
-        <View style={styles.titleRow}>
-          <View style={styles.titleContainer}>
-            <Heading2 style={styles.title}>My Events</Heading2>
-            <Body color={colors.neutral[500]} style={styles.subtitle}>
-              {getStatsText()}
-            </Body>
+    <ErrorBoundary>
+      <Container style={[styles.container, { paddingTop: insets.top }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          {/* Title and Filter Row */}
+          <View style={styles.titleRow}>
+            <View style={styles.titleContainer}>
+              <Heading2 style={styles.title}>My Events</Heading2>
+              <Body color={colors.neutral[500]} style={styles.subtitle}>
+                {getStatsText()}
+              </Body>
+            </View>
+            {shouldShowToggle() && (
+              <View style={styles.filterToggleContainer}>
+                <EventFilterToggle
+                  currentFilter={eventFilter}
+                  onFilterChange={filter => {
+                    console.log(
+                      'MyEventsScreen: Filter change received:',
+                      filter
+                    );
+                    setEventFilter(filter);
+                  }}
+                  variant="dropdown"
+                />
+              </View>
+            )}
           </View>
-          {calendarEvents.length > 0 && (
-            <EventFilterToggle
-              currentFilter={eventFilter}
-              onFilterChange={setEventFilter}
-              variant="dropdown"
-            />
+
+          {/* View Toggle Row */}
+          {shouldShowToggle() && (
+            <View style={styles.viewToggleRow}>
+              <ViewToggle currentView={viewType} onViewChange={setViewType} />
+            </View>
           )}
         </View>
 
-        {/* View Toggle Row */}
-        {calendarEvents.length > 0 && (
-          <View style={styles.viewToggleRow}>
-            <ViewToggle currentView={viewType} onViewChange={setViewType} />
-          </View>
-        )}
-      </View>
-
-      {/* Content */}
-      {renderMainContent()}
-
-      {/* Event Modal */}
-      <EventModal
-        event={selectedEvent}
-        visible={showEventModal}
-        onClose={handleCloseModal}
-        onRemoveFromCalendar={handleRemoveFromCalendar}
-      />
-    </Container>
+        {/* Content */}
+        {renderMainContent()}
+      </Container>
+    </ErrorBoundary>
   );
 };
 
@@ -229,25 +305,28 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', // Changed from 'flex-start' to center align with dropdown
-    paddingHorizontal: spacing[6],
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
     paddingBottom: spacing[3],
+    minHeight: 80,
   },
   titleContainer: {
     flex: 1,
     alignItems: 'flex-start',
-    paddingRight: spacing[3], // Reduced padding for tighter layout
+    paddingRight: spacing[3],
+    minWidth: 0,
   },
   title: {
     marginBottom: spacing[1],
   },
   subtitle: {
     fontSize: 14,
+    flexWrap: 'wrap',
   },
   viewToggleRow: {
     alignItems: 'center',
-    paddingHorizontal: spacing[6],
+    paddingHorizontal: spacing[4],
     paddingBottom: spacing[4],
   },
   contentContainer: {
@@ -263,5 +342,25 @@ const styles = StyleSheet.create({
   emptyHintText: {
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing[6],
+  },
+  errorText: {
+    textAlign: 'center',
+    color: colors.error[500],
+    marginBottom: spacing[4],
+  },
+  retryButton: {
+    minWidth: 120,
+  },
+  filterToggleContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 120,
+    maxWidth: 140,
   },
 });

@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing } from '../../design';
 import { Caption, Body } from '../../components/base';
+import { deviceInfo } from '../../design/responsiveTokens';
+import {
+  getResponsiveText,
+  getContainerWidth,
+  textVariants,
+} from '../../utils/responsiveText';
 
 export type EventFilterType = 'all' | 'private' | 'public';
 
@@ -15,7 +21,7 @@ interface EventFilterToggleProps {
 export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
   const { currentFilter, onFilterChange, variant = 'dropdown' } = props;
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const filters: EventFilterType[] = ['all', 'private', 'public'];
   const filterIcons = {
     all: 'calendar',
@@ -29,14 +35,28 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
     public: 'Public',
   };
 
+  const filterLabelsCompact = {
+    all: 'All',
+    private: 'Private',
+    public: 'Public',
+  };
+
   const handleFilterChange = (filter: EventFilterType) => {
+    console.log(
+      'EventFilterToggle: Filter change requested:',
+      filter,
+      'current:',
+      currentFilter
+    );
     if (filter !== currentFilter) {
       onFilterChange(filter);
+      console.log('EventFilterToggle: Filter changed to:', filter);
     }
     setIsOpen(false);
   };
 
   const toggleDropdown = () => {
+    console.log('EventFilterToggle: Toggle dropdown, current state:', isOpen);
     setIsOpen(!isOpen);
   };
 
@@ -45,80 +65,95 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
     return (
       <View style={styles.dropdownContainer}>
         <TouchableOpacity
-          style={styles.dropdownButton}
+          style={[
+            styles.dropdownButtonIconOnly,
+            deviceInfo.size === 'small' && styles.dropdownButtonIconOnlySmall,
+          ]}
           onPress={toggleDropdown}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Current filter: ${filterLabels[currentFilter]}. Tap to open filter options.`}
+          accessibilityHint="Shows filter options menu"
+          accessibilityState={{ expanded: isOpen }}
         >
           <Feather
             name={filterIcons[currentFilter] as any}
-            size={16}
+            size={deviceInfo.size === 'small' ? 16 : 18}
             color={colors.neutral[600]}
           />
-          <Body style={styles.dropdownButtonText}>
-            {filterLabels[currentFilter]}
-          </Body>
           <Feather
-            name={isOpen ? "chevron-up" : "chevron-down"}
-            size={16}
+            name={isOpen ? 'chevron-up' : 'chevron-down'}
+            size={deviceInfo.size === 'small' ? 14 : 16}
             color={colors.neutral[500]}
+            style={styles.chevronIcon}
           />
         </TouchableOpacity>
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <View style={styles.dropdownMenu}>
-            {filters.map(filter => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.dropdownOption,
-                  currentFilter === filter && styles.dropdownOptionSelected,
-                ]}
-                onPress={() => handleFilterChange(filter)}
-                activeOpacity={0.7}
-              >
-                <Feather
-                  name={filterIcons[filter] as any}
-                  size={16}
-                  color={
-                    currentFilter === filter 
-                      ? colors.primary[500] 
-                      : colors.neutral[600]
-                  }
-                />
-                <Body
+          <View
+            style={[
+              styles.dropdownMenu,
+              deviceInfo.size === 'small' && styles.dropdownMenuSmall,
+            ]}
+          >
+            {filters.map(filter => {
+              const optionText = getResponsiveText(
+                filterLabels[filter],
+                deviceInfo.size === 'small' ? 120 : 140,
+                14,
+                'medium'
+              );
+
+              return (
+                <TouchableOpacity
+                  key={filter}
                   style={[
-                    styles.dropdownOptionText,
-                    currentFilter === filter && styles.dropdownOptionTextSelected,
+                    styles.dropdownOption,
+                    currentFilter === filter && styles.dropdownOptionSelected,
                   ]}
+                  onPress={() => {
+                    console.log('EventFilterToggle: Option clicked:', filter);
+                    handleFilterChange(filter);
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityRole="menuitem"
+                  accessibilityLabel={`Filter by ${filterLabels[filter]}`}
+                  accessibilityState={{ selected: currentFilter === filter }}
                 >
-                  {filterLabels[filter]}
-                </Body>
-                {currentFilter === filter && (
                   <Feather
-                    name="check"
-                    size={16}
-                    color={colors.primary[500]}
+                    name={filterIcons[filter] as any}
+                    size={deviceInfo.size === 'small' ? 14 : 16}
+                    color={
+                      currentFilter === filter
+                        ? colors.primary[500]
+                        : colors.neutral[600]
+                    }
                   />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Body
+                    style={[
+                      styles.dropdownOptionText,
+                      currentFilter === filter &&
+                        styles.dropdownOptionTextSelected,
+                      deviceInfo.size === 'small' &&
+                        styles.dropdownOptionTextSmall,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {optionText}
+                  </Body>
+                  {currentFilter === filter && (
+                    <Feather
+                      name="check"
+                      size={deviceInfo.size === 'small' ? 14 : 16}
+                      color={colors.primary[500]}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
-
-        {/* Overlay to close dropdown when clicking outside */}
-        <Modal
-          visible={isOpen}
-          transparent={true}
-          animationType="none"
-          onRequestClose={() => setIsOpen(false)}
-        >
-          <TouchableOpacity
-            style={styles.overlay}
-            onPress={() => setIsOpen(false)}
-            activeOpacity={1}
-          />
-        </Modal>
       </View>
     );
   }
@@ -153,8 +188,9 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
                     : colors.neutral[500],
               },
             ]}
+            numberOfLines={1}
           >
-            {filterLabels[filter]}
+            {filterLabelsCompact[filter]}
           </Caption>
         </TouchableOpacity>
       ))}
@@ -171,13 +207,20 @@ const styles = StyleSheet.create({
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.neutral[50],
+    backgroundColor: colors.neutral[0],
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.neutral[200],
     minWidth: 120,
+    maxWidth: 140,
+  },
+  dropdownButtonSmall: {
+    minWidth: 100,
+    maxWidth: 120,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
   },
   dropdownButtonText: {
     flex: 1,
@@ -185,6 +228,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.neutral[700],
+    textAlign: 'left',
+  },
+  dropdownButtonTextSmall: {
+    fontSize: 12,
+    marginHorizontal: spacing[1],
+  },
+  // Icon-only button styles (new compact design)
+  dropdownButtonIconOnly: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.neutral[0],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2],
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    minWidth: 60,
+    maxWidth: 70,
+    justifyContent: 'space-between',
+  },
+  dropdownButtonIconOnlySmall: {
+    minWidth: 50,
+    maxWidth: 60,
+    paddingHorizontal: spacing[1],
+    paddingVertical: spacing[1],
+  },
+  chevronIcon: {
+    marginLeft: spacing[1],
   },
   dropdownMenu: {
     position: 'absolute',
@@ -195,16 +266,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.neutral[200],
-    shadowColor: colors.neutral[900],
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
     zIndex: 1001,
     marginTop: 4,
+  },
+  dropdownMenuSmall: {
+    minWidth: 140,
   },
   dropdownOption: {
     flexDirection: 'row',
@@ -224,24 +290,27 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.neutral[700],
   },
+  dropdownOptionTextSmall: {
+    fontSize: 12,
+    marginLeft: spacing[1],
+  },
   dropdownOptionTextSelected: {
     fontWeight: '500',
     color: colors.primary[700],
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  
+
   // Legacy full variant styles (kept for backwards compatibility)
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.neutral[100],
-    borderRadius: 12,
+    backgroundColor: colors.neutral[0],
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
     padding: 2,
     position: 'relative',
-    width: 210,
+    width: 180,
     maxWidth: '100%',
+    minWidth: 150,
   },
   option: {
     flex: 1,
@@ -250,7 +319,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[1],
-    borderRadius: 10,
+    borderRadius: 6,
+    minWidth: 0,
   },
   optionSelected: {
     backgroundColor: colors.primary[500],
@@ -258,6 +328,7 @@ const styles = StyleSheet.create({
   optionText: {
     marginLeft: spacing[1],
     fontWeight: '600',
-    fontSize: 10,
+    fontSize: 11,
+    flexShrink: 1,
   },
 });
