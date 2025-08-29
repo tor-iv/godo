@@ -2,18 +2,18 @@ import { Platform } from 'react-native';
 
 // Color System
 export const colors = {
-  // Primary Brand Colors (Purple)
+  // Primary Brand Colors (British Racing Green - Sophisticated & Rich)
   primary: {
-    50: '#faf7ff', // Almost white with purple tint
-    100: '#f3edff', // Very light purple
-    200: '#e6d7ff', // Light purple
-    300: '#d1b5ff', // Medium light purple
-    400: '#b887ff', // Medium purple
-    500: '#8B5CF6', // Main brand color
-    600: '#7C3AED', // Primary dark
-    700: '#6D28D9', // Darker purple
-    800: '#5B21B6', // Very dark purple
-    900: '#4C1D95', // Darkest purple
+    50: '#f0f7f2', // Almost white with racing green tint
+    100: '#dceee2', // Very light racing green
+    200: '#b8dcc8', // Light racing green
+    300: '#8fc5a4', // Medium light racing green
+    400: '#5fa97b', // Medium racing green
+    500: '#2d6e3e', // Main British Racing Green (darker, richer)
+    600: '#1d5029', // Deep racing green
+    700: '#154020', // Darker racing green
+    800: '#0d3017', // Very dark racing green
+    900: '#004225', // Classic British Racing Green (darkest)
   },
 
   // Neutral Palette (Warm Grays)
@@ -34,9 +34,9 @@ export const colors = {
 
   // Semantic Colors
   success: {
-    50: '#f0fdf4',
-    500: '#10b981', // Main success color (up swipe - public calendar)
-    600: '#059669', // Darker success
+    50: '#f0f7f2',
+    500: '#2d6e3e', // British Racing Green success color (up swipe - public calendar)
+    600: '#1d5029', // Darker British Racing Green success
   },
   warning: {
     50: '#fffbeb',

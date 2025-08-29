@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, typography } from '../../design';
 import { Caption } from '../../components/base';
+import { deviceInfo } from '../../design/responsiveTokens';
 
 export type ViewType = 'month' | 'week' | 'day' | 'agenda';
 
@@ -19,6 +20,7 @@ interface ViewToggleProps {
 export const ViewToggle: React.FC<ViewToggleProps> = props => {
   const { currentView, onViewChange } = props;
   const views: ViewType[] = ['month', 'week', 'day', 'agenda'];
+
   const viewIcons = {
     month: 'calendar',
     week: 'columns',
@@ -26,20 +28,64 @@ export const ViewToggle: React.FC<ViewToggleProps> = props => {
     agenda: 'list',
   };
 
+  // Full labels for active state
   const viewLabels = {
     month: 'Month',
     week: 'Week',
     day: 'Day',
+    agenda: 'Agenda',
+  };
+
+  // Abbreviated labels for inactive state
+  const viewLabelsShort = {
+    month: 'Mo',
+    week: 'Wk',
+    day: 'Day',
     agenda: 'List',
   };
 
+  // Device-specific sizing
+  const getContainerWidth = () => {
+    switch (deviceInfo.size) {
+      case 'small':
+        return 200;
+      case 'medium':
+        return 240;
+      case 'large':
+      case 'xlarge':
+        return 280;
+      default:
+        return 240;
+    }
+  };
+
+  // Calculate button widths - active button gets more space
+  const containerWidth = getContainerWidth();
+  const totalPadding = 4; // 2px padding on each side
+  const availableWidth = containerWidth - totalPadding;
+  const activeButtonWidth = Math.floor(availableWidth * 0.4); // 40% for active
+  const inactiveButtonWidth = Math.floor(
+    (availableWidth - activeButtonWidth) / 3
+  ); // Split remaining among 3 inactive
+
+  // Calculate slider position
   const currentIndex = views.indexOf(currentView);
-  const translateX = useSharedValue(currentIndex * 58);
+  const getSliderPosition = () => {
+    let position = 2; // Initial padding
+    for (let i = 0; i < currentIndex; i++) {
+      position += inactiveButtonWidth;
+    }
+    return position;
+  };
+
+  const translateX = useSharedValue(getSliderPosition());
 
   React.useEffect(() => {
-    const newIndex = views.indexOf(currentView);
-    translateX.value = withSpring(newIndex * 58); // Adjusted for new width
-  }, [currentView, translateX]);
+    translateX.value = withSpring(getSliderPosition(), {
+      damping: 20,
+      stiffness: 300,
+    });
+  }, [currentView]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -51,41 +97,65 @@ export const ViewToggle: React.FC<ViewToggleProps> = props => {
     }
   };
 
+  const getButtonStyle = (view: ViewType) => {
+    const isActive = currentView === view;
+    return [
+      styles.option,
+      {
+        width: isActive ? activeButtonWidth : inactiveButtonWidth,
+        paddingHorizontal: isActive ? spacing[3] : spacing[1],
+        paddingVertical: isActive ? spacing[2] : spacing[1],
+      },
+    ];
+  };
+
+  const getTextLabel = (view: ViewType) => {
+    const isActive = currentView === view;
+    return isActive ? viewLabels[view] : viewLabelsShort[view];
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: containerWidth }]}>
       {/* Background slider */}
-      <Animated.View style={[styles.slider, animatedStyle]} />
+      <Animated.View
+        style={[styles.slider, animatedStyle, { width: activeButtonWidth }]}
+      />
 
       {/* View options */}
-      {views.map(view => (
-        <TouchableOpacity
-          key={view}
-          style={styles.option}
-          onPress={() => handleViewChange(view)}
-          activeOpacity={0.7}
-        >
-          <Feather
-            name={viewIcons[view] as any}
-            size={14}
-            color={
-              currentView === view ? colors.neutral[0] : colors.neutral[500]
-            }
-          />
-          <Caption
-            style={[
-              styles.optionText,
-              {
-                color:
-                  currentView === view
-                    ? colors.neutral[0]
-                    : colors.neutral[500],
-              },
-            ]}
+      {views.map(view => {
+        const isActive = currentView === view;
+        return (
+          <TouchableOpacity
+            key={view}
+            style={getButtonStyle(view)}
+            onPress={() => handleViewChange(view)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${viewLabels[view]} view`}
+            accessibilityState={{ selected: isActive }}
           >
-            {viewLabels[view]}
-          </Caption>
-        </TouchableOpacity>
-      ))}
+            <Feather
+              name={viewIcons[view] as any}
+              size={isActive ? 16 : 14}
+              color={isActive ? colors.neutral[0] : colors.neutral[500]}
+            />
+            <Caption
+              style={[
+                styles.optionText,
+                {
+                  color: isActive ? colors.neutral[0] : colors.neutral[500],
+                  fontSize: isActive ? 12 : 10,
+                  fontWeight: isActive ? '700' : '600',
+                  marginLeft: isActive ? spacing[2] : spacing[1],
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {getTextLabel(view)}
+            </Caption>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
@@ -97,30 +167,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 2,
     position: 'relative',
-    width: 240, // Reduced width to prevent overlap
-    maxWidth: '100%', // Responsive on small screens
+    alignSelf: 'center',
   },
   slider: {
     position: 'absolute',
     top: 2,
-    left: 2,
-    width: 56, // Adjusted for new container width
-    height: 32,
+    height: 44, // Increased height for proper vertical alignment
     backgroundColor: colors.primary[500],
     borderRadius: 10,
+    shadowColor: colors.primary[500],
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   option: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[1],
     borderRadius: 10,
+    minWidth: 0,
+    height: 44, // Increased height for proper vertical alignment
   },
   optionText: {
-    marginLeft: spacing[1],
     fontWeight: '600',
-    fontSize: 10, // Smaller font for more options
+    textAlign: 'center',
   },
 });

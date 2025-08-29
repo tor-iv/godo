@@ -384,7 +384,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     marginHorizontal: layout.screenPadding,
     borderRadius: layout.cardBorderRadius,
-    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
     marginBottom: spacing[4],
   },
 });

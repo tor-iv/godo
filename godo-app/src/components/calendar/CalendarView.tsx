@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Calendar, CalendarProps } from 'react-native-calendars';
 import { format } from 'date-fns';
@@ -13,9 +13,9 @@ interface CalendarViewProps {
   onEventPress?: (event: Event) => void;
 }
 
-export const CalendarView: React.FC<CalendarViewProps> = props => {
+export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
   const { events, selectedDate, onDateSelect, onEventPress } = props;
-  const getCategoryColor = (category: string): string => {
+  const getCategoryColor = useCallback((category: string): string => {
     const categoryColors: Record<string, string> = {
       NETWORKING: colors.info[500],
       CULTURE: colors.primary[500],
@@ -26,7 +26,7 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
       PROFESSIONAL: '#6366f1',
     };
     return categoryColors[category] || colors.neutral[400];
-  };
+  }, []);
 
   // Convert events to calendar format with better indicators
   const markedDates = useMemo(() => {
@@ -65,7 +65,7 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
     }
 
     return marked;
-  }, [events, selectedDate]);
+  }, [events, selectedDate, getCategoryColor]);
 
   // Get events for selected date
   const selectedDateEvents = useMemo(() => {
@@ -77,25 +77,25 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
     });
   }, [events, selectedDate]);
 
-  const formatEventTime = (datetime: string) => {
+  const formatEventTime = useCallback((datetime: string) => {
     return format(new Date(datetime), 'h:mm a');
-  };
+  }, []);
 
   const calendarTheme: CalendarProps['theme'] = {
     backgroundColor: colors.neutral[0],
     calendarBackground: colors.neutral[0],
     textSectionTitleColor: colors.neutral[600],
-    textSectionTitleDisabledColor: colors.neutral[300],
+    textSectionTitleDisabledColor: colors.neutral[400],
     selectedDayBackgroundColor: colors.primary[500],
-    selectedDayTextColor: colors.neutral[0],
+    selectedDayTextColor: colors.neutral[0], // White text on primary background - this is correct
     todayTextColor: colors.primary[600],
-    dayTextColor: colors.neutral[800],
-    textDisabledColor: colors.neutral[300],
+    dayTextColor: colors.neutral[800], // Dark text on white background - visible
+    textDisabledColor: colors.neutral[400], // Better contrast for disabled text
     dotColor: colors.primary[500],
     selectedDotColor: colors.neutral[0],
     arrowColor: colors.primary[500],
-    disabledArrowColor: colors.neutral[300],
-    monthTextColor: colors.neutral[800],
+    disabledArrowColor: colors.neutral[400], // Better contrast
+    monthTextColor: colors.neutral[800], // Dark text on white background - visible
     indicatorColor: colors.primary[500],
     textDayFontFamily: typography.body1.fontFamily,
     textMonthFontFamily: typography.h3.fontFamily,
@@ -106,7 +106,30 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
     textDayFontSize: 16,
     textMonthFontSize: 18,
     textDayHeaderFontSize: 14,
+    // Hide the built-in month header to prevent duplicate display
+    'stylesheet.calendar.header': {
+      monthText: {
+        fontSize: 0,
+        height: 0,
+        lineHeight: 0,
+      },
+      header: {
+        marginTop: 0,
+        marginBottom: 0,
+        height: 0,
+      },
+    },
   };
+
+  // Debug logging for calendar rendering
+  if (__DEV__) {
+    console.log(
+      'CalendarView rendering with events:',
+      events.length,
+      'selectedDate:',
+      selectedDate
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -147,6 +170,9 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
                   style={styles.eventItem}
                   onPress={() => onEventPress?.(event)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${event.title} at ${event.venue.name}`}
+                  accessibilityHint={`Event at ${formatEventTime(event.datetime)}. Tap for details`}
                 >
                   <View style={styles.eventTimeContainer}>
                     <Caption style={styles.eventTime}>
@@ -206,7 +232,7 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -235,11 +261,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   eventCount: {
-    backgroundColor: colors.primary[100],
+    backgroundColor: colors.neutral[0],
+    borderWidth: 1,
+    borderColor: colors.primary[300],
     color: colors.primary[700],
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
-    borderRadius: 12,
+    borderRadius: 8,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -256,14 +284,19 @@ const styles = StyleSheet.create({
   },
   eventsContainer: {
     flex: 1,
+    paddingTop: spacing[2],
   },
   eventItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: spacing[6],
     paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral[100],
+    marginHorizontal: spacing[4],
+    marginVertical: spacing[1],
+    backgroundColor: colors.neutral[0],
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
   eventTimeContainer: {
     width: 70,
@@ -271,10 +304,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing[1],
   },
   eventTime: {
-    backgroundColor: colors.neutral[100],
+    backgroundColor: colors.neutral[0],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
-    borderRadius: 8,
+    borderRadius: 6,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',

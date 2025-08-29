@@ -29,9 +29,10 @@ interface SwipeCardProps {
   totalCards: number;
 }
 
-const SWIPE_THRESHOLD = 120;
+const SWIPE_THRESHOLD = 150; // Increased threshold to prevent accidental swipes
 const ROTATION_FACTOR = 20;
 const SCALE_FACTOR = 0.05;
+const VELOCITY_THRESHOLD = 800; // Higher velocity threshold
 
 export const SwipeCard: React.FC<SwipeCardProps> = props => {
   const { event, onSwipe, onPress, index, totalCards } = props;
@@ -39,17 +40,27 @@ export const SwipeCard: React.FC<SwipeCardProps> = props => {
   const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const isSwipeActive = useSharedValue(false); // Track active swipe state
 
   const gestureHandler =
     useAnimatedGestureHandler<PanGestureHandlerGestureEvent>({
       onStart: () => {
         'worklet';
         scale.value = withSpring(1.02);
+        isSwipeActive.value = false; // Reset swipe state
       },
       onActive: event => {
         'worklet';
         translateX.value = event.translationX;
         translateY.value = event.translationY;
+
+        // Only mark as active swipe if threshold is met
+        const absX = Math.abs(event.translationX);
+        const absY = Math.abs(event.translationY);
+        if (absX > 50 || absY > 50) {
+          // Lower threshold for activation tracking
+          isSwipeActive.value = true;
+        }
       },
       onEnd: event => {
         'worklet';
@@ -61,12 +72,12 @@ export const SwipeCard: React.FC<SwipeCardProps> = props => {
 
         let direction: SwipeDirection | null = null;
 
-        // Check if swipe is strong enough
+        // Check if swipe is strong enough - more restrictive criteria
         const isSwipeStrong =
-          absX > SWIPE_THRESHOLD ||
-          absY > SWIPE_THRESHOLD ||
-          Math.abs(velocityX) > 500 ||
-          Math.abs(velocityY) > 500;
+          (absX > SWIPE_THRESHOLD && absX > absY * 1.2) || // Horizontal must be dominant
+          (absY > SWIPE_THRESHOLD && absY > absX * 1.2) || // Vertical must be dominant
+          Math.abs(velocityX) > VELOCITY_THRESHOLD ||
+          Math.abs(velocityY) > VELOCITY_THRESHOLD;
 
         if (isSwipeStrong) {
           // Determine primary direction
@@ -114,6 +125,9 @@ export const SwipeCard: React.FC<SwipeCardProps> = props => {
           translateY.value = withSpring(0);
           scale.value = withSpring(1);
         }
+
+        // Reset swipe active state
+        isSwipeActive.value = false;
       },
     });
 
@@ -154,9 +168,13 @@ export const SwipeCard: React.FC<SwipeCardProps> = props => {
         <View style={styles.cardWrapper}>
           <EventCard event={event} onPress={onPress} style={styles.card} />
 
-          {/* Swipe Overlay - only for top card and active direction */}
+          {/* Swipe Overlay - only for top card and when swipe is active */}
           {showOverlays && (
-            <SwipeOverlay translateX={translateX} translateY={translateY} />
+            <SwipeOverlay
+              translateX={translateX}
+              translateY={translateY}
+              isSwipeActive={isSwipeActive}
+            />
           )}
         </View>
       </Animated.View>

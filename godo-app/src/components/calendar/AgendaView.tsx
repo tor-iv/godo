@@ -307,9 +307,7 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                           style={styles.friendText}
                         >
                           {event.friendsAttending}{' '}
-                          {String(
-                            event.friendsAttending === 1 ? 'friend' : 'friends'
-                          )}{' '}
+                          {event.friendsAttending === 1 ? 'friend' : 'friends'}{' '}
                           interested
                         </Caption>
                       </View>

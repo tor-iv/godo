@@ -1,13 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import {
-  colors,
-  typography,
-  spacing,
-  layout,
-  shadows,
-} from '../../design/tokens';
+import { ProfileStatsRowLayout, StatType } from './ProfileStatsRowLayout';
+import { responsiveDesignSystem } from '../../design/responsiveTokens';
 
 interface ProfileStatsProps {
   stats: {
@@ -15,66 +8,49 @@ interface ProfileStatsProps {
     eventsSaved: number;
     friendsConnected: number;
   };
+  // Optional props for enhanced functionality
+  layout?: 'single-row' | 'two-row' | 'compact';
+  showSubtitles?: boolean;
+  interactive?: boolean;
+  onStatPress?: (statType: StatType, value: number) => void;
+  testID?: string;
 }
 
-export const ProfileStats: React.FC<ProfileStatsProps> = ({ stats }) => {
-  const renderStatCard = (
-    title: string,
-    value: number,
-    icon: keyof typeof Feather.glyphMap
-  ) => {
-    return (
-      <View style={styles.statCard}>
-        <View style={styles.statIcon}>
-          <Feather name={icon} size={24} color={colors.primary[500]} />
-        </View>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statTitle}>{title}</Text>
-      </View>
-    );
-  };
+export const ProfileStats: React.FC<ProfileStatsProps> = ({
+  stats,
+  layout,
+  showSubtitles = false,
+  interactive = false,
+  onStatPress,
+  testID = 'profile-stats',
+}) => {
+  // Determine optimal layout if not specified
+  const optimalLayout =
+    layout ||
+    (responsiveDesignSystem.device.size === 'small' ? 'compact' : 'single-row');
 
   return (
-    <View style={styles.container}>
-      {renderStatCard('Events Attended', stats.eventsAttended, 'calendar')}
-      {renderStatCard('Events Saved', stats.eventsSaved, 'bookmark')}
-      {renderStatCard('Friends', stats.friendsConnected, 'users')}
-    </View>
+    <ProfileStatsRowLayout
+      stats={stats}
+      layout={optimalLayout}
+      showSubtitles={showSubtitles}
+      showIcons={true}
+      onStatPress={onStatPress}
+      interactive={interactive}
+      colorVariant="default"
+      testID={testID}
+    />
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    paddingHorizontal: layout.screenPadding,
-    marginBottom: spacing[10],
-    gap: spacing[4],
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.neutral[0],
-    borderRadius: layout.cardBorderRadius,
-    padding: spacing[6],
-    alignItems: 'center',
-    ...shadows.medium,
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[3],
-  },
-  statValue: {
-    ...typography.display3,
-    color: colors.neutral[800],
-    marginBottom: spacing[1],
-  },
-  statTitle: {
-    ...typography.caption,
-    color: colors.neutral[500],
-    textAlign: 'center',
-  },
-});
+// Export the StatType for consumers who need to handle stat press events
+export type { StatType };
+
+// ProfileStats now uses ProfileStatsRowLayout for enhanced functionality:
+// - Multiple layout variants (single-row, two-row, compact)
+// - Improved accessibility with proper ARIA labels
+// - Interactive capabilities with onStatPress support
+// - Advanced responsive behavior with device-optimized layouts
+// - Consistent design system integration
+// - Performance optimizations with memoization
+// - Comprehensive test coverage support

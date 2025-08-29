@@ -7,7 +7,7 @@ export type TabParamList = {
 
 export type RootStackParamList = {
   Main: undefined;
-  EditProfile: { user?: User };
+  EditProfile: { user: User };
   Settings: undefined;
   AccountManagement: undefined;
   ChangeEmail: undefined;
@@ -33,7 +33,7 @@ export type RootStackParamList = {
 
 export type ProfileStackParamList = {
   ProfileHome: undefined;
-  EditProfile: { user?: User };
+  EditProfile: { user: User };
   Settings: undefined;
   AccountManagement: undefined;
   ChangeEmail: undefined;

@@ -210,9 +210,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     backgroundColor: colors.neutral[100],
     borderWidth: 3,
-    borderColor: colors.neutral[0],
+    borderColor: colors.neutral[200],
     overflow: 'hidden',
-    ...shadows.medium,
   },
   image: {
     width: '100%',
@@ -231,8 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.neutral[0],
-    ...shadows.small,
+    borderColor: colors.neutral[200],
   },
   loadingOverlay: {
     position: 'absolute',

@@ -253,7 +253,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.neutral[0],
-    ...shadows.large,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    borderRadius: 12,
   },
 
   imageContainer: {
@@ -305,7 +307,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
     borderRadius: 12,
-    ...shadows.small,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
 
   priceText: {
@@ -324,7 +327,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.small,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
 
   content: {

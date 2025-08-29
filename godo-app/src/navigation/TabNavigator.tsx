@@ -4,8 +4,8 @@ import { Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, layout, spacing, shadows } from '../design';
-import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
-import { MyEventsScreen } from '../screens/calendar/MyEventsScreen';
+import { CalendarStackNavigator } from './CalendarStackNavigator';
+import { DiscoverStackNavigator } from './DiscoverStackNavigator';
 import { ProfileStackNavigator } from './ProfileStackNavigator';
 
 const Tab = createBottomTabNavigator();
@@ -17,17 +17,28 @@ export const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: any;
+          let iconName: keyof typeof Feather.glyphMap = 'calendar';
+          let accessibilityLabel: string = '';
 
           if (route.name === 'Calendar') {
             iconName = 'calendar';
+            accessibilityLabel = 'Calendar tab';
           } else if (route.name === 'Discover') {
             iconName = 'compass';
+            accessibilityLabel = 'Discover events tab';
           } else if (route.name === 'Profile') {
             iconName = 'user';
+            accessibilityLabel = 'Profile tab';
           }
 
-          return <Feather name={iconName} size={24} color={color} />;
+          return (
+            <Feather
+              name={iconName}
+              size={24}
+              color={color}
+              accessibilityLabel={accessibilityLabel}
+            />
+          );
         },
         tabBarActiveTintColor: colors.primary[500],
         tabBarInactiveTintColor: colors.neutral[400],
@@ -49,20 +60,10 @@ export const TabNavigator = () => {
         tabBarStyle: {
           backgroundColor: colors.neutral[0],
           borderTopWidth: 1,
-          borderTopColor: colors.neutral[100],
+          borderTopColor: colors.neutral[200],
           paddingTop: spacing[2],
           paddingBottom: insets.bottom,
           height: layout.tabBarHeight + insets.bottom,
-          ...Platform.select({
-            ios: shadows.medium,
-            android: {
-              elevation: 8,
-              shadowColor: colors.neutral[900],
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-            },
-          }),
         },
         tabBarItemStyle: {
           paddingVertical: spacing[2],
@@ -71,18 +72,21 @@ export const TabNavigator = () => {
     >
       <Tab.Screen
         name="Calendar"
-        component={MyEventsScreen}
+        component={CalendarStackNavigator}
         options={{
           tabBarLabel: 'Calendar',
-          headerTitle: 'My Calendar',
+          headerShown: false, // Stack navigator handles headers
+          tabBarAccessibilityLabel:
+            'Calendar. View your saved events and calendar',
         }}
       />
       <Tab.Screen
         name="Discover"
-        component={DiscoverScreen}
+        component={DiscoverStackNavigator}
         options={{
           tabBarLabel: 'Discover',
-          headerTitle: 'Discover Events',
+          headerShown: false, // Stack navigator handles headers
+          tabBarAccessibilityLabel: 'Discover. Find new events to attend',
         }}
       />
       <Tab.Screen
@@ -91,6 +95,8 @@ export const TabNavigator = () => {
         options={{
           tabBarLabel: 'Profile',
           headerShown: false, // Profile stack will handle its own headers
+          tabBarAccessibilityLabel:
+            'Profile. View and manage your profile settings',
         }}
       />
     </Tab.Navigator>

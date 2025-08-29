@@ -5,3 +5,4 @@ export { ProfileStats } from './ProfileStats';
 export { ProfilePreferences } from './ProfilePreferences';
 export { ProfileActions } from './ProfileActions';
 export { ProfileContent } from './ProfileContent';
+export { ProfileStatsRowLayout } from './ProfileStatsRowLayout';

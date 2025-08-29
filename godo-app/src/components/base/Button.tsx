@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -29,7 +28,7 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const Button: React.FC<ButtonProps> = allProps => {
+export const Button: React.FC<ButtonProps> = memo(allProps => {
   const {
     title,
     onPress,
@@ -125,28 +124,7 @@ export const Button: React.FC<ButtonProps> = allProps => {
     </View>
   );
 
-  if (variant === 'primary') {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled || loading}
-        activeOpacity={1}
-      >
-        <Animated.View style={animatedStyle}>
-          <LinearGradient
-            colors={[colors.primary[500], colors.primary[600]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={getButtonStyle()}
-          >
-            {renderContent()}
-          </LinearGradient>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  }
+  // All variants use same TouchableOpacity structure for flat design consistency
 
   return (
     <TouchableOpacity
@@ -155,13 +133,17 @@ export const Button: React.FC<ButtonProps> = allProps => {
       onPressOut={handlePressOut}
       disabled={disabled || loading}
       activeOpacity={1}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }}
+      accessibilityHint={loading ? 'Button is loading' : undefined}
     >
       <Animated.View style={[getButtonStyle(), animatedStyle]}>
         {renderContent()}
       </Animated.View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   button: {
@@ -171,23 +153,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // Variants
+  // Flat Design Variants
   primary: {
-    // Gradient applied via LinearGradient component
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+    borderWidth: 1,
   },
 
   secondary: {
-    backgroundColor: colors.neutral[800],
+    backgroundColor: colors.neutral[100],
+    borderColor: colors.primary[500],
+    borderWidth: 1,
   },
 
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.primary[500],
   },
 
   ghost: {
     backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 1,
   },
 
   // Sizes
@@ -232,7 +220,7 @@ const styles = StyleSheet.create({
   },
 
   secondaryText: {
-    color: colors.neutral[0],
+    color: colors.neutral[800],
   },
 
   outlineText: {

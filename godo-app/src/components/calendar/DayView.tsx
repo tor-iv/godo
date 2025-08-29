@@ -306,11 +306,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: spacing[2],
     marginVertical: 1,
-    shadowColor: colors.neutral[900],
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
   eventContent: {
     flex: 1,

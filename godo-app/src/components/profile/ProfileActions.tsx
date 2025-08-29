@@ -77,7 +77,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     borderRadius: layout.cardBorderRadius,
     marginBottom: spacing[8],
-    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
   actionItem: {
     flexDirection: 'row',

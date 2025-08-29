@@ -1,17 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Container, Heading2, Body, Button } from '../../components/base';
+import type { DiscoverStackParamList } from '../../navigation/DiscoverStackNavigator';
 import { SwipeStack } from '../../components/events';
-import { spacing, colors } from '../../design';
+import { spacing, colors, layout } from '../../design';
+import { deviceInfo } from '../../design/responsiveTokens';
 import { EventService } from '../../services';
+import { SwipeInteractionTracker } from '../../services/SwipeInteractionTracker';
 import { Event, SwipeDirection } from '../../types';
 
+type NavigationProp = StackNavigationProp<DiscoverStackParamList>;
+
 export const DiscoverScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [swipeCount, setSwipeCount] = useState(0);
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     loadEvents();
@@ -30,28 +38,19 @@ export const DiscoverScreen = () => {
   };
 
   const handleSwipe = useCallback((event: Event, direction: SwipeDirection) => {
-    console.log(`Swiped ${event.title} ${direction}`);
     setSwipeCount(prev => prev + 1);
 
-    // Show feedback based on swipe direction
-    const messages = {
-      [SwipeDirection.RIGHT]: `Added "${event.title}" to your private calendar! 📅`,
-      [SwipeDirection.UP]: `Added "${event.title}" to your public calendar! 👥`,
-      [SwipeDirection.DOWN]: `Saved "${event.title}" for later! 🔖`,
-      [SwipeDirection.LEFT]: `Passed on "${event.title}" ❌`,
-    };
-
-    // Optional: Show toast/alert for feedback (for testing)
-    // Alert.alert('Swiped!', messages[direction]);
+    // Track the swipe interaction
+    const swipeTracker = SwipeInteractionTracker.getInstance();
+    swipeTracker.recordSwipe(direction);
   }, []);
 
-  const handleEventPress = useCallback((event: Event) => {
-    Alert.alert(
-      event.title,
-      `${event.description}\n\nVenue: ${event.venue.name}\nNeighborhood: ${event.venue.neighborhood}`,
-      [{ text: 'OK' }]
-    );
-  }, []);
+  const handleEventPress = useCallback(
+    (event: Event) => {
+      navigation.navigate('EventDetail', { event });
+    },
+    [navigation]
+  );
 
   const handleStackEmpty = useCallback(() => {
     Alert.alert(
@@ -122,12 +121,9 @@ export const DiscoverScreen = () => {
   }
 
   return (
-    <Container style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Heading2 align="center" style={styles.title}>
-          Discover Events
-        </Heading2>
+    <Container variant="screen">
+      {/* Header with proper spacing */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing[4] }]}>
         <Body
           color={colors.neutral[500]}
           align="center"
@@ -152,27 +148,25 @@ export const DiscoverScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.neutral[0],
-  },
   header: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[2],
-  },
-  title: {
-    marginBottom: spacing[1],
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing[6],
+    backgroundColor: colors.neutral[0],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: deviceInfo.isSmallDevice ? 12 : 14,
+    lineHeight: deviceInfo.isSmallDevice ? 16 : 20,
+    fontWeight: '500',
+    paddingHorizontal: spacing[4],
   },
   loadingText: {
     marginTop: spacing[4],
   },
   swipeContainer: {
     flex: 1,
-    paddingHorizontal: spacing[4],
+    paddingTop: 0,
   },
   emptyTitle: {
     marginBottom: spacing[2],

@@ -369,7 +369,8 @@ const styles = StyleSheet.create({
     borderRadius: layout.cardBorderRadius,
     padding: spacing[6],
     marginBottom: spacing[4],
-    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
   },
   infoRow: {
     flexDirection: 'row',
@@ -401,7 +402,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     marginHorizontal: layout.screenPadding,
     borderRadius: layout.cardBorderRadius,
-    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
     marginBottom: spacing[4],
   },
   actionContainer: {
