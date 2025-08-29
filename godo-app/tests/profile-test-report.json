@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-29T14:02:58.423Z",
+  "duration": 5,
+  "results": {
+    "passed": 21,
+    "failed": 3,
+    "issues": [
+      "TypeScript interfaces missing or incomplete",
+      "ProfilePictureUpload missing responsive sizing",
+      "Missing design tokens: spacing"
+    ],
+    "recommendations": []
+  },
+  "passRate": 87.5
+}

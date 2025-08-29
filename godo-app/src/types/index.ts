@@ -1,7 +1,60 @@
 // Navigation types
 export type TabParamList = {
+  Calendar: undefined;
   Discover: undefined;
-  MyEvents: undefined;
+  Profile: undefined;
+};
+
+export type RootStackParamList = {
+  Main: undefined;
+  EditProfile: { user?: User };
+  Settings: undefined;
+  AccountManagement: undefined;
+  ChangeEmail: undefined;
+  ChangePassword: undefined;
+  ChangePhoneNumber: undefined;
+  TwoFactorAuth: undefined;
+  SubscriptionManagement: undefined;
+  BillingHistory: undefined;
+  StorageManagement: undefined;
+  ConnectedApps: undefined;
+  PrivacySettings: undefined;
+  ProfileVisibility: undefined;
+  LanguageSelection: undefined;
+  DataExport: undefined;
+  DeleteAccount: undefined;
+  DeleteAccountConfirmation: undefined;
+  Security: undefined;
+  Terms: undefined;
+  PrivacyPolicy: undefined;
+  Support: undefined;
+  Privacy: undefined;
+};
+
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
+  EditProfile: { user?: User };
+  Settings: undefined;
+  AccountManagement: undefined;
+  ChangeEmail: undefined;
+  ChangePassword: undefined;
+  ChangePhoneNumber: undefined;
+  TwoFactorAuth: undefined;
+  SubscriptionManagement: undefined;
+  BillingHistory: undefined;
+  StorageManagement: undefined;
+  ConnectedApps: undefined;
+  PrivacySettings: undefined;
+  ProfileVisibility: undefined;
+  LanguageSelection: undefined;
+  DataExport: undefined;
+  DeleteAccount: undefined;
+  DeleteAccountConfirmation: undefined;
+  Security: undefined;
+  Terms: undefined;
+  PrivacyPolicy: undefined;
+  Support: undefined;
+  Privacy: undefined;
 };
 
 // Event types

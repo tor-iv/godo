@@ -48,5 +48,10 @@ mypy==1.8.0
 # Monitoring
 sentry-sdk[fastapi]==1.39.2
 
+# Additional dependencies for user profile management
+email-validator==2.1.0
+bleach==6.1.0
+aiofiles==23.2.1
+
 # NYC Transit API
 gtfs-realtime-bindings==1.0.0

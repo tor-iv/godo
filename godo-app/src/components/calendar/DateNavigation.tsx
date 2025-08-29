@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
   TouchableOpacity,
   Modal,
   Pressable,
+  Vibration,
 } from 'react-native';
 import {
   format,
@@ -35,6 +36,7 @@ interface DateNavigationProps {
 export const DateNavigation: React.FC<DateNavigationProps> = props => {
   const { selectedDate, viewType, onDateChange } = props;
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const selectedDateObj = new Date(selectedDate);
 
   const getDisplayText = () => {
@@ -50,7 +52,7 @@ export const DateNavigation: React.FC<DateNavigationProps> = props => {
         return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
       }
       case 'month':
-        return format(selectedDateObj, 'MMMM yyyy');
+        return format(selectedDateObj, 'MMM yyyy');
       case 'agenda':
         return 'Upcoming Events';
       default:
@@ -58,7 +60,12 @@ export const DateNavigation: React.FC<DateNavigationProps> = props => {
     }
   };
 
-  const navigatePrevious = () => {
+  const navigatePrevious = useCallback(() => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    console.log(`[DateNavigation] Navigating previous from ${selectedDate} in ${viewType} view`);
+    
     const currentDate = new Date(selectedDate);
     let newDate: Date;
 
@@ -76,10 +83,19 @@ export const DateNavigation: React.FC<DateNavigationProps> = props => {
         newDate = subDays(currentDate, 1);
     }
 
-    onDateChange(format(newDate, 'yyyy-MM-dd'));
-  };
+    const newDateString = format(newDate, 'yyyy-MM-dd');
+    console.log(`[DateNavigation] New date: ${newDateString}`);
+    onDateChange(newDateString);
+    
+    setTimeout(() => setIsNavigating(false), 200);
+  }, [selectedDate, viewType, onDateChange, isNavigating]);
 
-  const navigateNext = () => {
+  const navigateNext = useCallback(() => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    console.log(`[DateNavigation] Navigating next from ${selectedDate} in ${viewType} view`);
+    
     const currentDate = new Date(selectedDate);
     let newDate: Date;
 
@@ -97,18 +113,34 @@ export const DateNavigation: React.FC<DateNavigationProps> = props => {
         newDate = addDays(currentDate, 1);
     }
 
-    onDateChange(format(newDate, 'yyyy-MM-dd'));
-  };
+    const newDateString = format(newDate, 'yyyy-MM-dd');
+    console.log(`[DateNavigation] New date: ${newDateString}`);
+    onDateChange(newDateString);
+    
+    setTimeout(() => setIsNavigating(false), 200);
+  }, [selectedDate, viewType, onDateChange, isNavigating]);
 
-  const goToToday = () => {
+  const goToToday = useCallback(() => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
     const today = format(new Date(), 'yyyy-MM-dd');
+    
+    console.log(`[DateNavigation] Going to today: ${today} from current: ${selectedDate}`);
+    
+    // Add haptic feedback
+    Vibration.vibrate(50);
+    
     onDateChange(today);
-  };
+    
+    setTimeout(() => setIsNavigating(false), 300);
+  }, [selectedDate, onDateChange, isNavigating]);
 
-  const handleDateSelect = (day: any) => {
+  const handleDateSelect = useCallback((day: any) => {
+    console.log(`[DateNavigation] Date selected from picker: ${day.dateString}`);
     onDateChange(day.dateString);
     setShowDatePicker(false);
-  };
+  }, [onDateChange]);
 
   const calendarTheme = {
     backgroundColor: colors.neutral[0],
