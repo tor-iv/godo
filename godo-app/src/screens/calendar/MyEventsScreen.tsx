@@ -177,7 +177,7 @@ export const MyEventsScreen = () => {
     <Container style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        {/* Title and Stats Row */}
+        {/* Title and Filter Row */}
         <View style={styles.titleRow}>
           <View style={styles.titleContainer}>
             <Heading2 style={styles.title}>My Events</Heading2>
@@ -185,17 +185,14 @@ export const MyEventsScreen = () => {
               {getStatsText()}
             </Body>
           </View>
-        </View>
-
-        {/* Filter Row */}
-        {calendarEvents.length > 0 && (
-          <View style={styles.filterRow}>
+          {calendarEvents.length > 0 && (
             <EventFilterToggle
               currentFilter={eventFilter}
               onFilterChange={setEventFilter}
+              variant="dropdown"
             />
-          </View>
-        )}
+          )}
+        </View>
 
         {/* View Toggle Row */}
         {calendarEvents.length > 0 && (
@@ -230,23 +227,23 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.neutral[100],
   },
   titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center', // Changed from 'flex-start' to center align with dropdown
     paddingHorizontal: spacing[6],
     paddingTop: spacing[4],
     paddingBottom: spacing[3],
   },
   titleContainer: {
+    flex: 1,
     alignItems: 'flex-start',
+    paddingRight: spacing[3], // Reduced padding for tighter layout
   },
   title: {
     marginBottom: spacing[1],
   },
   subtitle: {
     fontSize: 14,
-  },
-  filterRow: {
-    alignItems: 'center',
-    paddingHorizontal: spacing[6],
-    paddingBottom: spacing[3],
   },
   viewToggleRow: {
     alignItems: 'center',

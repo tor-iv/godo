@@ -119,6 +119,7 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
         showWeekNumbers={false}
         hideExtraDays={true}
         enableSwipeMonths={true}
+        hideArrows={true}
         style={styles.calendar}
       />
 
@@ -126,9 +127,6 @@ export const CalendarView: React.FC<CalendarViewProps> = props => {
       {selectedDate && (
         <View style={styles.eventList}>
           <View style={styles.eventListHeader}>
-            <Body style={styles.eventListTitle}>
-              {format(new Date(selectedDate), 'MMMM d, yyyy')}
-            </Body>
             {selectedDateEvents.length > 0 && (
               <Caption style={styles.eventCount}>
                 {selectedDateEvents.length}{' '}
