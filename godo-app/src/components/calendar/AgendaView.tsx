@@ -6,19 +6,11 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import {
-  format,
-  isToday,
-  isTomorrow,
-  isThisWeek,
-  isThisYear,
-  startOfDay,
-  parseISO,
-} from 'date-fns';
+import { format, isToday, isTomorrow, isThisWeek, isThisYear } from 'date-fns';
 import { Event } from '../../types';
-import { colors, typography, spacing, layout, shadows } from '../../design';
+import { colors, spacing, layout, shadows } from '../../design';
 import { Body, Caption, Heading3 } from '../../components/base';
-import { getCategoryColor, formatEventDate } from '../../utils';
+import { getCategoryColor } from '../../utils';
 import { Feather } from '@expo/vector-icons';
 
 interface AgendaViewProps {
@@ -29,6 +21,16 @@ interface AgendaViewProps {
 interface EventsByDate {
   [dateString: string]: Event[];
 }
+
+// Utility function to safely render text
+const safeText = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  const result = String(value);
+  if (__DEV__) {
+    console.log('safeText input:', value, 'output:', result);
+  }
+  return result;
+};
 
 export const AgendaView: React.FC<AgendaViewProps> = props => {
   const { events, onEventPress } = props;
@@ -185,7 +187,7 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                     (isDayToday || isDayTomorrow) && styles.eventCountTextLight,
                   ]}
                 >
-                  {dayEvents.length}
+                  {String(dayEvents.length)}
                 </Caption>
               </View>
             </View>
@@ -254,10 +256,10 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                           numberOfLines={1}
                           style={styles.detailText}
                         >
-                          {event.venue.name}
-                          {event.venue.neighborhood
-                            ? `, ${event.venue.neighborhood}`
-                            : ''}
+                          {safeText(event.venue?.name || 'Unknown Venue') +
+                            (event.venue?.neighborhood
+                              ? `, ${event.venue.neighborhood}`
+                              : '')}
                         </Caption>
                       </View>
 
@@ -271,7 +273,7 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                             style={styles.detailIcon}
                           />
                           <Caption color={colors.neutral[500]}>
-                            {event.currentAttendees} attending
+                            {`${safeText(event.currentAttendees || 0)} attending`}
                           </Caption>
                         </View>
                       )}
@@ -287,8 +289,8 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                           />
                           <Caption color={colors.neutral[500]}>
                             {event.priceMax && event.priceMax !== event.priceMin
-                              ? `$${event.priceMin} - $${event.priceMax}`
-                              : `$${event.priceMin}`}
+                              ? `$${safeText(event.priceMin || 0)} - $${safeText(event.priceMax || 0)}`
+                              : `$${safeText(event.priceMin || 0)}`}
                           </Caption>
                         </View>
                       )}
@@ -299,16 +301,14 @@ export const AgendaView: React.FC<AgendaViewProps> = props => {
                       <View style={styles.socialRow}>
                         <View style={styles.friendIndicator}>
                           <Caption style={styles.friendCount}>
-                            +{event.friendsAttending}
+                            +{safeText(event.friendsAttending || 0)}
                           </Caption>
                         </View>
                         <Caption
                           color={colors.primary[600]}
                           style={styles.friendText}
                         >
-                          {event.friendsAttending}{' '}
-                          {event.friendsAttending === 1 ? 'friend' : 'friends'}{' '}
-                          interested
+                          {`${safeText(event.friendsAttending || 0)} ${(event.friendsAttending || 0) === 1 ? 'friend' : 'friends'} interested`}
                         </Caption>
                       </View>
                     )}
