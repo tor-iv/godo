@@ -1,8 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { colors, layout, spacing, shadows } from '../design';
 import { CalendarStackNavigator } from './CalendarStackNavigator';
 import { DiscoverStackNavigator } from './DiscoverStackNavigator';
@@ -34,7 +35,7 @@ export const TabNavigator = () => {
           return (
             <Feather
               name={iconName}
-              size={24}
+              size={focused ? 26 : 24} // Slightly larger when focused
               color={color}
               accessibilityLabel={accessibilityLabel}
             />
@@ -64,9 +65,40 @@ export const TabNavigator = () => {
           paddingTop: spacing[2],
           paddingBottom: insets.bottom,
           height: layout.tabBarHeight + insets.bottom,
+          // Enhanced mobile shadows
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+            },
+            android: {
+              elevation: 8,
+            },
+          }),
         },
         tabBarItemStyle: {
           paddingVertical: spacing[2],
+        },
+        // Add haptic feedback and enhanced accessibility
+        tabBarButton: props => {
+          return (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              onPress={async e => {
+                // Haptic feedback on tab press
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                props.onPress?.(e);
+              }}
+              // Enhanced accessibility
+              accessibilityRole="tab"
+              accessibilityState={{
+                selected: props.accessibilityState?.selected,
+              }}
+            />
+          );
         },
       })}
     >

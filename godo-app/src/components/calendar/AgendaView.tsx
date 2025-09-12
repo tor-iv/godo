@@ -27,7 +27,6 @@ const safeText = (value: any): string => {
   if (value === null || value === undefined) return '';
   const result = String(value);
   if (__DEV__) {
-    console.log('safeText input:', value, 'output:', result);
   }
   return result;
 };

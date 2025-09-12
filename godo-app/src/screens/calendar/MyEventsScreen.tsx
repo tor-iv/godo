@@ -96,14 +96,16 @@ export const MyEventsScreen = () => {
     }, [loadEvents])
   );
 
-  const handleEventPress = useCallback((event: Event) => {
-    navigation.navigate('EventDetail', { event });
-  }, [navigation]);
+  const handleEventPress = useCallback(
+    (event: Event) => {
+      navigation.navigate('EventDetail', { event });
+    },
+    [navigation]
+  );
 
   const handleDateSelect = useCallback((date: string) => {
     setSelectedDate(date);
   }, []);
-
 
   const getStatsText = () => {
     const eventService = EventService.getInstance();

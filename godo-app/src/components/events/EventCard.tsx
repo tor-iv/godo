@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { Event } from '../../types';
@@ -16,7 +23,7 @@ interface EventCardProps {
   style?: object;
 }
 
-export const EventCard: React.FC<EventCardProps> = props => {
+export const EventCard: React.FC<EventCardProps> = React.memo(props => {
   const { event, onPress, style } = props;
   // Simple null check
   if (!event) {
@@ -70,6 +77,9 @@ export const EventCard: React.FC<EventCardProps> = props => {
       activeOpacity={0.95}
       onPress={onPress}
       style={[styles.container, style]}
+      accessibilityRole="button"
+      accessibilityLabel={`${safeText(safeEvent.title, 'Event')} at ${safeText(safeEvent.venue?.name, 'venue')}`}
+      accessibilityHint="Double tap to view event details"
     >
       {/* Hero Image Container */}
       <View style={styles.imageContainer}>
@@ -77,6 +87,9 @@ export const EventCard: React.FC<EventCardProps> = props => {
           source={{ uri: safeEvent.imageUrl }}
           style={styles.image}
           resizeMode="cover"
+          onError={() => {
+            // Image failed to load - using placeholder
+          }}
         />
 
         {/* Gradient Overlay */}
@@ -238,16 +251,18 @@ export const EventCard: React.FC<EventCardProps> = props => {
             </Text>
           </View>
         ) : null}
-        {/* Description Preview */}
-        {safeEvent.description ? (
-          <Text style={styles.description} numberOfLines={3}>
+        {/* Description Preview - Only show if meaningful content */}
+        {safeEvent.description && safeEvent.description.trim().length > 20 ? (
+          <Text style={styles.description} numberOfLines={3} accessible={true}>
             {safeText(safeEvent.description, 'No description available')}
           </Text>
         ) : null}
       </View>
     </TouchableOpacity>
   );
-};
+});
+
+EventCard.displayName = 'EventCard';
 
 const styles = StyleSheet.create({
   container: {
@@ -256,6 +271,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.neutral[200],
     borderRadius: 12,
+    // Enhanced shadows for better mobile depth
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
 
   imageContainer: {
@@ -267,6 +297,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+    backgroundColor: colors.neutral[100], // Placeholder background
   },
 
   imageGradient: {
@@ -340,6 +371,9 @@ const styles = StyleSheet.create({
     color: colors.neutral[800],
     marginBottom: spacing[3],
     lineHeight: 26,
+    // Better text rendering on mobile
+    textAlignVertical: 'top',
+    includeFontPadding: false,
   },
 
   metadata: {
@@ -401,5 +435,7 @@ const styles = StyleSheet.create({
     ...typography.body2,
     color: colors.neutral[500],
     lineHeight: 20,
+    textAlignVertical: 'top',
+    includeFontPadding: false,
   },
 });

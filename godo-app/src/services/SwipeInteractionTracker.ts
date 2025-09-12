@@ -175,7 +175,7 @@ export class SwipeInteractionTracker {
       //   }));
       // }
     } catch (error) {
-      console.warn('Failed to load swipe interaction state:', error);
+      // Failed to load swipe interaction state
     }
   }
 
@@ -193,7 +193,7 @@ export class SwipeInteractionTracker {
       // };
       // await AsyncStorage.setItem('swipe_interaction_state', JSON.stringify(state));
     } catch (error) {
-      console.warn('Failed to save swipe interaction state:', error);
+      // Failed to save swipe interaction state
     }
   }
 

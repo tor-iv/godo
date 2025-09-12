@@ -1,4 +1,4 @@
-import { deviceInfo, getResponsiveFontSize } from '../design/responsiveTokens';
+import { deviceInfo } from '../design/responsiveTokens';
 
 // Text variant system for different screen sizes
 export interface TextVariants {

@@ -116,8 +116,8 @@ function runJest(options = {}) {
   if (bail) args.push('--bail');
   if (maxWorkers) args.push(`--maxWorkers=${maxWorkers}`);
   
-  // Always use colors and show progress
-  args.push('--colors', '--progress');
+  // Always use colors
+  args.push('--colors');
   
   try {
     execSync(args.join(' '), { 

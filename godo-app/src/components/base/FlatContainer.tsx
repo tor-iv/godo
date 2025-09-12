@@ -38,11 +38,6 @@ export const FlatContainer: React.FC<FlatContainerProps> = allProps => {
     return dynamicStyles;
   };
 
-  // Debug logging to help identify rendering issues
-  if (__DEV__) {
-    console.log('FlatContainer rendering with variant:', variant);
-  }
-
   return (
     <View style={getContainerStyle()} {...props}>
       {children}

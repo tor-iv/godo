@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Event, SwipeDirection } from '../../types';
 import { SwipeCard } from './SwipeCard';
@@ -14,7 +14,7 @@ interface SwipeStackProps {
   maxVisibleCards?: number;
 }
 
-export const SwipeStack: React.FC<SwipeStackProps> = props => {
+export const SwipeStack: React.FC<SwipeStackProps> = React.memo(props => {
   const {
     events,
     onSwipe,
@@ -24,14 +24,19 @@ export const SwipeStack: React.FC<SwipeStackProps> = props => {
   } = props;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleEvents, setVisibleEvents] = useState<Event[]>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  // Update visible events when events prop changes or index changes
-  useEffect(() => {
+  // Memoize visible events calculation
+  const visibleEventsMemo = useMemo(() => {
     const startIndex = currentIndex;
     const endIndex = Math.min(currentIndex + maxVisibleCards, events.length);
-    const newVisibleEvents = events.slice(startIndex, endIndex);
-    setVisibleEvents(newVisibleEvents);
+    return events.slice(startIndex, endIndex);
   }, [events, currentIndex, maxVisibleCards]);
+
+  // Update visible events when memo changes
+  useEffect(() => {
+    setVisibleEvents(visibleEventsMemo);
+  }, [visibleEventsMemo]);
 
   // Check if stack is empty
   useEffect(() => {
@@ -43,7 +48,9 @@ export const SwipeStack: React.FC<SwipeStackProps> = props => {
   const handleSwipe = useCallback(
     (direction: SwipeDirection) => {
       const currentEvent = events[currentIndex];
-      if (!currentEvent) return;
+      if (!currentEvent || isAnimating) return;
+
+      setIsAnimating(true);
 
       // Record the swipe in EventService
       const eventService = EventService.getInstance();
@@ -52,10 +59,15 @@ export const SwipeStack: React.FC<SwipeStackProps> = props => {
       // Call the onSwipe callback
       onSwipe(currentEvent, direction);
 
-      // Move to next card
+      // Move to next card with debounced animation reset
       setCurrentIndex(prev => prev + 1);
+
+      // Reset animation state after a delay
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
     },
-    [currentIndex, events, onSwipe]
+    [currentIndex, events, onSwipe, isAnimating]
   );
 
   const handleEventPress = useCallback(
@@ -67,30 +79,31 @@ export const SwipeStack: React.FC<SwipeStackProps> = props => {
     [onEventPress]
   );
 
+  // Memoize cards to prevent unnecessary re-renders
+  const renderedCards = useMemo(() => {
+    return visibleEvents.map((event, index) => {
+      const globalIndex = currentIndex + index;
+
+      return (
+        <SwipeCard
+          key={`${event.id}-${globalIndex}`}
+          event={event}
+          onSwipe={handleSwipe}
+          onPress={() => handleEventPress(event)}
+          index={index}
+          totalCards={visibleEvents.length}
+        />
+      );
+    });
+  }, [visibleEvents, currentIndex, handleSwipe, handleEventPress]);
+
   // If no events or all events have been swiped
   if (visibleEvents.length === 0) {
     return <View style={styles.emptyContainer} />;
   }
 
-  return (
-    <View style={styles.container}>
-      {visibleEvents.map((event, index) => {
-        const globalIndex = currentIndex + index;
-
-        return (
-          <SwipeCard
-            key={`${event.id}-${globalIndex}`}
-            event={event}
-            onSwipe={handleSwipe}
-            onPress={() => handleEventPress(event)}
-            index={index}
-            totalCards={visibleEvents.length}
-          />
-        );
-      })}
-    </View>
-  );
-};
+  return <View style={styles.container}>{renderedCards}</View>;
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -103,3 +116,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+SwipeStack.displayName = 'SwipeStack';

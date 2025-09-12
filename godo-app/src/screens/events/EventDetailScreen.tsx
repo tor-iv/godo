@@ -177,7 +177,10 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
 
   return (
     <Container style={[styles.container, { paddingTop: 0 }]}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+      >
         {/* Hero Image */}
         <View style={styles.imageContainer}>
           <Image
@@ -336,9 +339,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
                     )}{' '}
                     interested
                   </Body>
-                  <Caption color={colors.neutral[500]}>
-                    See who's going
-                  </Caption>
+                  <Caption color={colors.neutral[500]}>See who's going</Caption>
                 </View>
               </View>
             </View>

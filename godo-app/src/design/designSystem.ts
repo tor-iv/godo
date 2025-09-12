@@ -190,9 +190,7 @@ export const designValidation = {
   validateTouchTarget: (size: number) => {
     const minimum = accessibility.touchTargetSize.minimum;
     if (size < minimum) {
-      console.warn(
-        `Touch target size ${size}px is below the minimum ${minimum}px`
-      );
+      // Touch target size is below minimum - consider increasing size
     }
     return size >= minimum;
   },
@@ -201,9 +199,7 @@ export const designValidation = {
   validateContrast: (foreground: string, background: string) => {
     // In a real implementation, you'd calculate actual contrast ratios
     // This is a placeholder for the concept
-    console.info(
-      'Contrast validation should be implemented with a proper color contrast library'
-    );
+    // Contrast validation should be implemented with proper color contrast library
     return true;
   },
 
@@ -211,7 +207,7 @@ export const designValidation = {
   validateFontSize: (size: number) => {
     const minimum = 10; // Minimum readable font size
     if (size < minimum) {
-      console.warn(`Font size ${size}px may be too small for accessibility`);
+      // Font size may be too small for accessibility - consider increasing
     }
     return size >= minimum;
   },

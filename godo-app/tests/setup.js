@@ -118,6 +118,18 @@ global.mockEvent = {
   tags: ['networking', 'tech', 'startup'],
 };
 
+// Define __DEV__ global for React Native
+global.__DEV__ = true;
+
+// Mock performance.now() for performance tests
+global.performance = global.performance || {
+  now: () => Date.now(),
+};
+
+// Mock requestAnimationFrame for animation tests
+global.requestAnimationFrame = global.requestAnimationFrame || ((cb) => setTimeout(cb, 16));
+global.cancelAnimationFrame = global.cancelAnimationFrame || ((id) => clearTimeout(id));
+
 // Suppress specific warnings during tests
 const originalWarn = console.warn;
 beforeAll(() => {

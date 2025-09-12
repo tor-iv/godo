@@ -16,6 +16,7 @@ interface SwipeOverlayProps {
   translateX: Animated.SharedValue<number>;
   translateY: Animated.SharedValue<number>;
   isSwipeActive?: Animated.SharedValue<boolean>;
+  swipeIntensity?: Animated.SharedValue<number>;
 }
 
 const OVERLAY_CONFIG = {
@@ -58,11 +59,13 @@ interface DirectionalOverlayProps {
   direction: SwipeDirection;
   translateX: Animated.SharedValue<number>;
   translateY: Animated.SharedValue<number>;
-  isSwipeActive?: boolean; // Track if swipe gesture is actively happening
+  isSwipeActive?: Animated.SharedValue<boolean>;
+  swipeIntensity?: Animated.SharedValue<number>;
 }
 
 const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
-  const { direction, translateX, translateY, isSwipeActive } = props;
+  const { direction, translateX, translateY, isSwipeActive, swipeIntensity } =
+    props;
   const config = OVERLAY_CONFIG[direction];
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -71,22 +74,24 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
 
     let currentDirection: SwipeDirection | null = null;
     let opacity = 0;
+    let scale = 1;
 
-    // Increased thresholds to prevent premature visibility
-    const MINIMUM_SWIPE_THRESHOLD = 50; // Increased from 20
-    const FULL_OPACITY_THRESHOLD = 120; // Increased from 100
+    // Responsive thresholds based on swipe intensity
+    const MINIMUM_SWIPE_THRESHOLD = 40;
+    const FULL_OPACITY_THRESHOLD = 100;
 
-    // Only show overlay if swipe is actively happening
     const isActivelySwiping = isSwipeActive?.value ?? false;
+    const intensity = swipeIntensity?.value ?? 0;
 
     if (
       isActivelySwiping &&
       (absX > MINIMUM_SWIPE_THRESHOLD || absY > MINIMUM_SWIPE_THRESHOLD)
     ) {
-      if (absX > absY) {
+      // Determine primary direction with velocity consideration
+      if (absX > absY * 0.8) {
         currentDirection =
           translateX.value > 0 ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
-      } else {
+      } else if (absY > absX * 0.8) {
         currentDirection =
           translateY.value > 0 ? SwipeDirection.DOWN : SwipeDirection.UP;
       }
@@ -98,23 +103,31 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
             ? absX
             : absY;
 
-        // Only show overlay if threshold is met and this is the dominant direction
-        const dominanceRatio =
-          absX > absY ? absX / (absY + 1) : absY / (absX + 1);
-
-        if (threshold >= MINIMUM_SWIPE_THRESHOLD && dominanceRatio > 1.5) {
+        // Enhanced visibility calculation with intensity
+        if (threshold >= MINIMUM_SWIPE_THRESHOLD) {
           opacity = interpolate(
             threshold,
             [MINIMUM_SWIPE_THRESHOLD, FULL_OPACITY_THRESHOLD],
-            [0, 1],
+            [0.3, 0.95],
+            Extrapolate.CLAMP
+          );
+
+          // Dynamic scaling based on swipe intensity
+          scale = interpolate(
+            intensity,
+            [0, 0.5, 1],
+            [0.9, 1.0, 1.1],
             Extrapolate.CLAMP
           );
         }
       }
     }
 
-    return { opacity };
-  }, [translateX, translateY]);
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  }, [translateX, translateY, swipeIntensity]);
 
   const getOverlayStyle = () => {
     switch (config.position) {
@@ -165,7 +178,7 @@ const DirectionalOverlay: React.FC<DirectionalOverlayProps> = props => {
 };
 
 export const SwipeOverlay: React.FC<SwipeOverlayProps> = props => {
-  const { translateX, translateY, isSwipeActive } = props;
+  const { translateX, translateY, isSwipeActive, swipeIntensity } = props;
   return (
     <>
       <DirectionalOverlay
@@ -173,24 +186,28 @@ export const SwipeOverlay: React.FC<SwipeOverlayProps> = props => {
         translateX={translateX}
         translateY={translateY}
         isSwipeActive={isSwipeActive}
+        swipeIntensity={swipeIntensity}
       />
       <DirectionalOverlay
         direction={SwipeDirection.RIGHT}
         translateX={translateX}
         translateY={translateY}
         isSwipeActive={isSwipeActive}
+        swipeIntensity={swipeIntensity}
       />
       <DirectionalOverlay
         direction={SwipeDirection.UP}
         translateX={translateX}
         translateY={translateY}
         isSwipeActive={isSwipeActive}
+        swipeIntensity={swipeIntensity}
       />
       <DirectionalOverlay
         direction={SwipeDirection.DOWN}
         translateX={translateX}
         translateY={translateY}
         isSwipeActive={isSwipeActive}
+        swipeIntensity={swipeIntensity}
       />
     </>
   );
@@ -235,14 +252,17 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing[3],
-    borderWidth: 2,
-    borderColor: colors.neutral[200],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 
   overlayTitle: {

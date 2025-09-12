@@ -29,16 +29,6 @@ export const Container: React.FC<ContainerProps> = allProps => {
     dynamicStyles.push(style);
   }
 
-  // Debug logging to help identify rendering issues
-  if (__DEV__) {
-    console.log(
-      'Container rendering with variant:',
-      variant,
-      'styles:',
-      dynamicStyles
-    );
-  }
-
   return (
     <View style={dynamicStyles} {...props}>
       {children}

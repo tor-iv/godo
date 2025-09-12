@@ -1,10 +1,19 @@
 import React, { useMemo, memo, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { Calendar, CalendarProps } from 'react-native-calendars';
 import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { Event } from '../../types';
 import { colors, typography, spacing } from '../../design';
 import { Body, Caption } from '../../components/base';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface CalendarViewProps {
   events: Event[];
@@ -15,6 +24,22 @@ interface CalendarViewProps {
 
 export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
   const { events, selectedDate, onDateSelect, onEventPress } = props;
+
+  const handleDatePress = useCallback(
+    async (day: any) => {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onDateSelect?.(day.dateString);
+    },
+    [onDateSelect]
+  );
+
+  const handleEventPress = useCallback(
+    async (event: Event) => {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      onEventPress?.(event);
+    },
+    [onEventPress]
+  );
   const getCategoryColor = useCallback((category: string): string => {
     const categoryColors: Record<string, string> = {
       NETWORKING: colors.info[500],
@@ -81,45 +106,66 @@ export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
     return format(new Date(datetime), 'h:mm a');
   }, []);
 
-  const calendarTheme: CalendarProps['theme'] = {
-    backgroundColor: colors.neutral[0],
-    calendarBackground: colors.neutral[0],
-    textSectionTitleColor: colors.neutral[600],
-    textSectionTitleDisabledColor: colors.neutral[400],
-    selectedDayBackgroundColor: colors.primary[500],
-    selectedDayTextColor: colors.neutral[0], // White text on primary background - this is correct
-    todayTextColor: colors.primary[600],
-    dayTextColor: colors.neutral[800], // Dark text on white background - visible
-    textDisabledColor: colors.neutral[400], // Better contrast for disabled text
-    dotColor: colors.primary[500],
-    selectedDotColor: colors.neutral[0],
-    arrowColor: colors.primary[500],
-    disabledArrowColor: colors.neutral[400], // Better contrast
-    monthTextColor: colors.neutral[800], // Dark text on white background - visible
-    indicatorColor: colors.primary[500],
-    textDayFontFamily: typography.body1.fontFamily,
-    textMonthFontFamily: typography.h3.fontFamily,
-    textDayHeaderFontFamily: typography.label.fontFamily,
-    textDayFontWeight: '400',
-    textMonthFontWeight: '600',
-    textDayHeaderFontWeight: '600',
-    textDayFontSize: 16,
-    textMonthFontSize: 18,
-    textDayHeaderFontSize: 14,
-    // Hide the built-in month header to prevent duplicate display
-    'stylesheet.calendar.header': {
-      monthText: {
-        fontSize: 0,
-        height: 0,
-        lineHeight: 0,
+  // Responsive theme based on screen size
+  const calendarTheme: CalendarProps['theme'] = useMemo(() => {
+    const isSmallScreen = screenWidth < 375;
+    const baseFontSize = isSmallScreen ? 14 : 16;
+
+    return {
+      backgroundColor: colors.neutral[0],
+      calendarBackground: colors.neutral[0],
+      textSectionTitleColor: colors.neutral[600],
+      textSectionTitleDisabledColor: colors.neutral[400],
+      selectedDayBackgroundColor: colors.primary[500],
+      selectedDayTextColor: colors.neutral[0],
+      todayTextColor: colors.primary[600],
+      dayTextColor: colors.neutral[800],
+      textDisabledColor: colors.neutral[400],
+      dotColor: colors.primary[500],
+      selectedDotColor: colors.neutral[0],
+      arrowColor: colors.primary[500],
+      disabledArrowColor: colors.neutral[400],
+      monthTextColor: colors.neutral[800],
+      indicatorColor: colors.primary[500],
+      textDayFontFamily: typography.body1.fontFamily,
+      textMonthFontFamily: typography.h3.fontFamily,
+      textDayHeaderFontFamily: typography.label.fontFamily,
+      textDayFontWeight: '500',
+      textMonthFontWeight: '600',
+      textDayHeaderFontWeight: '600',
+      textDayFontSize: baseFontSize,
+      textMonthFontSize: baseFontSize + 2,
+      textDayHeaderFontSize: baseFontSize - 2,
+      // Enhanced touch targets for mobile
+      'stylesheet.day.basic': {
+        base: {
+          width: isSmallScreen ? 28 : 32,
+          height: isSmallScreen ? 28 : 32,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        text: {
+          marginTop: Platform.OS === 'android' ? 2 : 0,
+          fontSize: baseFontSize,
+          fontFamily: typography.body1.fontFamily,
+          fontWeight: '500',
+        },
       },
-      header: {
-        marginTop: 0,
-        marginBottom: 0,
-        height: 0,
+      // Hide built-in month header
+      'stylesheet.calendar.header': {
+        monthText: {
+          fontSize: 0,
+          height: 0,
+          lineHeight: 0,
+        },
+        header: {
+          marginTop: 0,
+          marginBottom: 0,
+          height: 0,
+        },
       },
-    },
-  };
+    };
+  }, [screenWidth]);
 
   // Debug logging for calendar rendering
   if (__DEV__) {
@@ -135,7 +181,7 @@ export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
     <View style={styles.container}>
       <Calendar
         markedDates={markedDates}
-        onDayPress={day => onDateSelect?.(day.dateString)}
+        onDayPress={handleDatePress}
         theme={calendarTheme}
         markingType="multi-dot"
         firstDay={1} // Start week on Monday
@@ -144,6 +190,13 @@ export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
         enableSwipeMonths={true}
         hideArrows={true}
         style={styles.calendar}
+        // Enhanced mobile accessibility
+        accessibilityElementsHidden={false}
+        accessibilityViewIsModal={false}
+        // Better mobile performance
+        initialDate={selectedDate}
+        minDate={'2024-01-01'}
+        maxDate={'2025-12-31'}
       />
 
       {/* Event List for Selected Date */}
@@ -168,11 +221,14 @@ export const CalendarView: React.FC<CalendarViewProps> = memo(props => {
                 <TouchableOpacity
                   key={event.id}
                   style={styles.eventItem}
-                  onPress={() => onEventPress?.(event)}
+                  onPress={() => handleEventPress(event)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`${event.title} at ${event.venue.name}`}
                   accessibilityHint={`Event at ${formatEventTime(event.datetime)}. Tap for details`}
+                  // Enhanced mobile touch feedback
+                  delayPressIn={0}
+                  delayPressOut={100}
                 >
                   <View style={styles.eventTimeContainer}>
                     <Caption style={styles.eventTime}>
@@ -241,6 +297,8 @@ const styles = StyleSheet.create({
   },
   calendar: {
     marginBottom: spacing[4],
+    // Enhanced mobile calendar styling
+    paddingHorizontal: Platform.OS === 'android' ? spacing[2] : 0,
   },
   eventList: {
     flex: 1,
@@ -289,7 +347,7 @@ const styles = StyleSheet.create({
   eventItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing[6],
+    paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     marginHorizontal: spacing[4],
     marginVertical: spacing[1],
@@ -297,6 +355,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.neutral[200],
+    // Enhanced mobile touch targets
+    minHeight: 64,
+    // Better mobile shadows
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   eventTimeContainer: {
     width: 70,
