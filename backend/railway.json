@@ -1,0 +1,29 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "services": [
+    {
+      "name": "web",
+      "type": "web",
+      "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2",
+      "healthcheckPath": "/health"
+    },
+    {
+      "name": "celery-worker",
+      "type": "worker",
+      "startCommand": "celery -A app.celery worker --loglevel=info --concurrency=2 --pool=solo"
+    },
+    {
+      "name": "celery-beat",
+      "type": "cron",
+      "startCommand": "celery -A app.celery beat --loglevel=info"
+    }
+  ]
+}

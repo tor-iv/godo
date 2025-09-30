@@ -234,14 +234,6 @@ import { ProfilePictureUpload } from '../components/profile';
 />
 ```
 
-## Coordination Integration
-
-The implementation includes proper hooks for swarm coordination:
-
-- **Pre-task**: `npx claude-flow@alpha hooks pre-task`
-- **Post-edit**: `npx claude-flow@alpha hooks post-edit --file [...] --memory-key [...]`
-- **Notification**: `npx claude-flow@alpha hooks notify --message [...]`
-- **Post-task**: `npx claude-flow@alpha hooks post-task --task-id [...]`
 
 ## Future Enhancements
 
