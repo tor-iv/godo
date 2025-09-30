@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
   },
   segmentSelected: {
     backgroundColor: colors.primary[500],
+    borderRightColor: colors.primary[500],
   },
   segmentText: {
     fontSize: 14,

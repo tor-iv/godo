@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  TouchableWithoutFeedback,
+  Pressable,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing } from '../../design';
 import { Caption, Body } from '../../components/base';
@@ -21,6 +28,7 @@ interface EventFilterToggleProps {
 export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
   const { currentFilter, onFilterChange, variant = 'dropdown' } = props;
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<View>(null);
 
   const filters: EventFilterType[] = ['all', 'private', 'public'];
   const filterIcons = {
@@ -63,8 +71,17 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
   // Render dropdown variant (new clean design)
   if (variant === 'dropdown') {
     return (
-      <View style={styles.dropdownContainer}>
-        <TouchableOpacity
+      <>
+        {/* Backdrop when dropdown is open */}
+        {isOpen && (
+          <Pressable
+            style={styles.fullScreenBackdrop}
+            onPress={() => setIsOpen(false)}
+          />
+        )}
+
+        <View style={styles.dropdownContainer} ref={containerRef}>
+          <TouchableOpacity
           style={[
             styles.dropdownButtonIconOnly,
             deviceInfo.size === 'small' && styles.dropdownButtonIconOnlySmall,
@@ -98,63 +115,68 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
             ]}
           >
             {filters.map(filter => {
-              const optionText = getResponsiveText(
-                filterLabels[filter],
-                deviceInfo.size === 'small' ? 120 : 140,
-                14,
-                'medium'
-              );
+                const optionText = getResponsiveText(
+                  filterLabels[filter],
+                  deviceInfo.size === 'small' ? 120 : 140,
+                  14,
+                  'medium'
+                );
 
-              return (
-                <TouchableOpacity
-                  key={filter}
-                  style={[
-                    styles.dropdownOption,
-                    currentFilter === filter && styles.dropdownOptionSelected,
-                  ]}
-                  onPress={() => {
-                    console.log('EventFilterToggle: Option clicked:', filter);
-                    handleFilterChange(filter);
-                  }}
-                  activeOpacity={0.7}
-                  accessibilityRole="menuitem"
-                  accessibilityLabel={`Filter by ${filterLabels[filter]}`}
-                  accessibilityState={{ selected: currentFilter === filter }}
-                >
-                  <Feather
-                    name={filterIcons[filter] as any}
-                    size={deviceInfo.size === 'small' ? 14 : 16}
-                    color={
-                      currentFilter === filter
-                        ? colors.primary[500]
-                        : colors.neutral[600]
-                    }
-                  />
-                  <Body
+                return (
+                  <TouchableOpacity
+                    key={filter}
                     style={[
-                      styles.dropdownOptionText,
+                      styles.dropdownOption,
                       currentFilter === filter &&
-                        styles.dropdownOptionTextSelected,
-                      deviceInfo.size === 'small' &&
-                        styles.dropdownOptionTextSmall,
+                        styles.dropdownOptionSelected,
                     ]}
-                    numberOfLines={1}
+                    onPress={() => {
+                      console.log(
+                        'EventFilterToggle: Option clicked:',
+                        filter
+                      );
+                      handleFilterChange(filter);
+                    }}
+                    activeOpacity={0.7}
+                    accessibilityRole="menuitem"
+                    accessibilityLabel={`Filter by ${filterLabels[filter]}`}
+                    accessibilityState={{ selected: currentFilter === filter }}
                   >
-                    {optionText}
-                  </Body>
-                  {currentFilter === filter && (
                     <Feather
-                      name="check"
+                      name={filterIcons[filter] as any}
                       size={deviceInfo.size === 'small' ? 14 : 16}
-                      color={colors.primary[500]}
+                      color={
+                        currentFilter === filter
+                          ? colors.primary[500]
+                          : colors.neutral[600]
+                      }
                     />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+                    <Body
+                      style={[
+                        styles.dropdownOptionText,
+                        currentFilter === filter &&
+                          styles.dropdownOptionTextSelected,
+                        deviceInfo.size === 'small' &&
+                          styles.dropdownOptionTextSmall,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {optionText}
+                    </Body>
+                    {currentFilter === filter && (
+                      <Feather
+                        name="check"
+                        size={deviceInfo.size === 'small' ? 14 : 16}
+                        color={colors.primary[500]}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
           </View>
         )}
-      </View>
+        </View>
+      </>
     );
   }
 
@@ -199,7 +221,10 @@ export const EventFilterToggle: React.FC<EventFilterToggleProps> = props => {
 };
 
 const styles = StyleSheet.create({
-  // Dropdown styles (new clean design)
+  fullScreenBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 998,
+  },
   dropdownContainer: {
     position: 'relative',
     zIndex: 1000,
