@@ -119,6 +119,12 @@ export enum SwipeDirection {
   DOWN = 'down', // Save for later
 }
 
+// Time filter types
+export enum TimeFilter {
+  HAPPENING_NOW = 'happening_now',
+  FUTURE = 'future',
+}
+
 // User types
 export interface User {
   id: string;

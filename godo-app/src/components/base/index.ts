@@ -12,3 +12,5 @@ export { Button } from './Button';
 export { LoadingSpinner } from './LoadingSpinner';
 export { ErrorBoundary } from './ErrorBoundary';
 export { EmptyState } from './EmptyState';
+export { SegmentedControl } from './SegmentedControl';
+export type { SegmentedControlOption } from './SegmentedControl';

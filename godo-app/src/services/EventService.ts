@@ -1,4 +1,4 @@
-import { Event, EventCategory, SwipeDirection } from '../types';
+import { Event, EventCategory, SwipeDirection, TimeFilter } from '../types';
 import { mockEvents } from '../data/mockEvents';
 
 export class EventService {
@@ -159,6 +159,62 @@ export class EventService {
         event.venue.neighborhood?.toLowerCase().includes(lowercaseQuery) ||
         event.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery))
     );
+  }
+
+  // Get events happening now (today or within next 6 hours)
+  public async getHappeningNowEvents(): Promise<Event[]> {
+    const now = new Date();
+    const allEvents = await this.getAllEvents();
+
+    return allEvents
+      .filter(event => {
+        const eventDate = new Date(event.datetime);
+
+        // Check if event is today
+        const isToday = eventDate.toDateString() === now.toDateString();
+
+        // Check if event is within next 6 hours
+        const hoursUntilEvent =
+          (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const isWithinSixHours = hoursUntilEvent >= 0 && hoursUntilEvent <= 6;
+
+        return isToday || isWithinSixHours;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+      );
+  }
+
+  // Get future events (more than 6 hours away)
+  public async getFutureEvents(): Promise<Event[]> {
+    const now = new Date();
+    const allEvents = await this.getAllEvents();
+
+    return allEvents
+      .filter(event => {
+        const eventDate = new Date(event.datetime);
+        const hoursUntilEvent =
+          (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+        return hoursUntilEvent > 6;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+      );
+  }
+
+  // Get unswiped events filtered by time
+  public async getUnswipedEventsByTime(
+    timeFilter: TimeFilter
+  ): Promise<Event[]> {
+    const filteredEvents =
+      timeFilter === TimeFilter.HAPPENING_NOW
+        ? await this.getHappeningNowEvents()
+        : await this.getFutureEvents();
+
+    return filteredEvents.filter(event => !this.swipedEvents.has(event.id));
   }
 
   // Get statistics

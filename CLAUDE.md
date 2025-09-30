@@ -132,7 +132,23 @@ The core interaction model uses directional swipes:
 - **Down**: "Maybe Later" (saves for future consideration)
 - **Long Press + Swipe**: Triggers friend invitation flow
 
-Implementation details in [ENHANCED_SWIPE_SYSTEM.md](ENHANCED_SWIPE_SYSTEM.md)
+Implementation details in [docs/features/ENHANCED_SWIPE_SYSTEM.md](docs/features/ENHANCED_SWIPE_SYSTEM.md)
+
+### Time-Based Discovery Toggle
+
+**NEW**: Discover screen features a toggle between two event modes:
+- **"Happening Now"**: Events within next 6 hours (immediate action)
+- **"Future Events"**: Events 6+ hours away (planning ahead)
+
+Implemented with:
+- `SegmentedControl` component ([godo-app/src/components/base/SegmentedControl.tsx](godo-app/src/components/base/SegmentedControl.tsx))
+- `TimeFilter` enum in types
+- Time-based filtering methods in `EventService`:
+  - `getHappeningNowEvents()` - Today or within 6 hours
+  - `getFutureEvents()` - More than 6 hours away
+  - `getUnswipedEventsByTime(filter)` - Filtered + unswiped
+
+See [docs/features/DISCOVER_TOGGLE_IMPLEMENTATION.md](docs/features/DISCOVER_TOGGLE_IMPLEMENTATION.md) for complete specification.
 
 ### Testing Architecture
 

@@ -1,13 +1,23 @@
 import { Event, EventCategory, EventSource } from '../types';
 
+// Helper to generate realistic event times
+const now = new Date();
+const in2Hours = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+const in4Hours = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+const in8Hours = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+const in2Days = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+const in5Days = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+
 export const mockEvents: Event[] = [
   {
     id: '1',
     title: 'Rooftop Networking at WeWork',
     description:
       'Connect with fellow professionals in tech, finance, and startups. Enjoy craft cocktails and stunning Manhattan views while building meaningful connections.',
-    date: '2024-08-22T18:30:00.000Z',
-    datetime: '2024-08-22T18:30:00.000Z',
+    date: in2Hours.toISOString(),
+    datetime: in2Hours.toISOString(),
     location: {
       name: 'WeWork Dumbo Heights',
       address: '81 Prospect St, Brooklyn, NY 11201',
@@ -34,8 +44,8 @@ export const mockEvents: Event[] = [
     title: 'MoMA After Dark: Contemporary Art',
     description:
       'Explore the museum after hours with exclusive access to new exhibitions, live music, and artisanal cocktails.',
-    date: '2024-08-23T19:00:00.000Z',
-    datetime: '2024-08-23T19:00:00.000Z',
+    date: in4Hours.toISOString(),
+    datetime: in4Hours.toISOString(),
     location: {
       name: 'Museum of Modern Art',
       address: '11 W 53rd St, New York, NY 10019',
@@ -62,8 +72,8 @@ export const mockEvents: Event[] = [
     title: 'Morning Yoga in Central Park',
     description:
       'Start your day with energizing vinyasa flow in the heart of Manhattan. All levels welcome.',
-    date: '2024-08-24T07:00:00.000Z',
-    datetime: '2024-08-24T07:00:00.000Z',
+    date: tomorrow.toISOString(),
+    datetime: tomorrow.toISOString(),
     location: {
       name: 'Sheep Meadow, Central Park',
       address: 'Central Park, New York, NY 10024',
@@ -90,8 +100,8 @@ export const mockEvents: Event[] = [
     title: "Chef's Table at Le Bernardin",
     description:
       'Exclusive 7-course tasting menu with wine pairings. Experience world-class French cuisine in an intimate setting.',
-    date: '2024-08-25T20:00:00.000Z',
-    datetime: '2024-08-25T20:00:00.000Z',
+    date: in8Hours.toISOString(),
+    datetime: in8Hours.toISOString(),
     location: {
       name: 'Le Bernardin',
       address: '155 W 51st St, New York, NY 10019',
@@ -118,8 +128,8 @@ export const mockEvents: Event[] = [
     title: 'Rooftop Cinema: Casablanca',
     description:
       'Classic film screening under the stars with city skyline views. Blankets and popcorn provided.',
-    date: '2024-08-26T20:30:00.000Z',
-    datetime: '2024-08-26T20:30:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'Rooftop Films at Industry City',
       address: '220 36th St, Brooklyn, NY 11232',
@@ -146,8 +156,8 @@ export const mockEvents: Event[] = [
     title: 'Brooklyn Bridge Sunrise Run',
     description:
       'Join fellow runners for a scenic 5K across the iconic Brooklyn Bridge at golden hour.',
-    date: '2024-08-27T06:00:00.000Z',
-    datetime: '2024-08-27T06:00:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'Brooklyn Bridge Park',
       address: '334 Furman St, Brooklyn, NY 11201',
@@ -174,8 +184,8 @@ export const mockEvents: Event[] = [
     title: 'Jazz at Lincoln Center: Late Night',
     description:
       'Intimate late-night jazz performance featuring emerging artists and established masters.',
-    date: '2024-08-28T22:30:00.000Z',
-    datetime: '2024-08-28T22:30:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: "Dizzy's Club",
       address: '10 Columbus Cir, New York, NY 10019',
@@ -202,8 +212,8 @@ export const mockEvents: Event[] = [
     title: 'High Line Urban Garden Workshop',
     description:
       'Learn sustainable gardening techniques in an urban environment. Take home your own planted container.',
-    date: '2024-08-29T14:00:00.000Z',
-    datetime: '2024-08-29T14:00:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'High Line Park',
       address: 'Gansevoort St & Washington St, New York, NY 10014',
@@ -230,8 +240,8 @@ export const mockEvents: Event[] = [
     title: 'Tech Startup Pitch Competition',
     description:
       'Watch innovative startups present their ideas to investors and industry experts. Network with entrepreneurs and VCs.',
-    date: '2024-08-30T18:00:00.000Z',
-    datetime: '2024-08-30T18:00:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'NYU Stern School of Business',
       address: '44 W 4th St, New York, NY 10012',
@@ -258,8 +268,8 @@ export const mockEvents: Event[] = [
     title: 'Williamsburg Food Truck Festival',
     description:
       'Taste the best street food from across the five boroughs. Live music and craft beer available.',
-    date: '2024-08-31T12:00:00.000Z',
-    datetime: '2024-08-31T12:00:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'East River State Park',
       address: '90 Kent Ave, Brooklyn, NY 11249',
@@ -286,8 +296,8 @@ export const mockEvents: Event[] = [
     title: 'Cocktail Making Masterclass',
     description:
       'Learn from award-winning mixologists. Create three signature cocktails and enjoy light appetizers.',
-    date: '2024-09-01T16:00:00.000Z',
-    datetime: '2024-09-01T16:00:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: "PDT (Please Don't Tell)",
       address: '113 St Marks Pl, New York, NY 10009',
@@ -314,8 +324,8 @@ export const mockEvents: Event[] = [
     title: 'Central Park Conservancy Concert',
     description:
       'Free outdoor concert featuring the New York Philharmonic. Bring a blanket and enjoy classical music under the stars.',
-    date: '2024-09-02T19:30:00.000Z',
-    datetime: '2024-09-02T19:30:00.000Z',
+    date: in2Days.toISOString(),
+    datetime: in2Days.toISOString(),
     location: {
       name: 'Great Lawn, Central Park',
       address: 'Central Park, New York, NY 10024',
