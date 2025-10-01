@@ -13,7 +13,8 @@ You want to do something, but you don't know what. You scroll through websites, 
 GoDo curates NYC events and activities into a Tinder-like swipe interface. Right swipe what you want to do, and it automatically goes on your calendar. No more decision paralysis. No more "I'll check that out later." Just swipe, commit, and go.
 
 ## Demo
-![Uploading ScreenRecording2025-09-29at8.58.14PM-ezgif.com-cut.gif…]()
+![ScreenRecording2025-09-29at8 58 14PM-ezgif com-cut](https://github.com/user-attachments/assets/29f5546c-2f88-4b86-8a2f-407a43c95053)
+
 
 ### How It Works
 
