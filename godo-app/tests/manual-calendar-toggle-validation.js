@@ -120,7 +120,7 @@ results.forEach((result, index) => {
       console.log('\n  📋 Component-specific fixes:');
       Object.entries(myEventsFixes).forEach(([fix, applied]) => {
         const status = applied ? '✅' : '❌';
-        console.log(`    ${status} ${fix.replace /([A-Z])/g, ' $1').toLowerCase()}`);
+        console.log(`    ${status} ${fix.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
       });
       break;
   }

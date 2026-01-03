@@ -8,13 +8,6 @@ export class EventService {
 
   private constructor() {
     this.events = [...mockEvents];
-
-    // Add some test swiped events for debugging
-    console.log('EventService: Adding test swipes for debugging...');
-    this.swipeEvent('1', SwipeDirection.RIGHT); // Private event
-    this.swipeEvent('2', SwipeDirection.UP); // Public event
-    this.swipeEvent('3', SwipeDirection.RIGHT); // Private event
-    this.swipeEvent('4', SwipeDirection.UP); // Public event
   }
 
   public static getInstance(): EventService {
@@ -90,24 +83,12 @@ export class EventService {
 
   // Get events for private calendar (right swipes)
   public getPrivateCalendarEvents(): Event[] {
-    const events = this.getSwipedEvents(SwipeDirection.RIGHT);
-    console.log(
-      'EventService: getPrivateCalendarEvents returning',
-      events.length,
-      'events'
-    );
-    return events;
+    return this.getSwipedEvents(SwipeDirection.RIGHT);
   }
 
   // Get events for public calendar (up swipes)
   public getPublicCalendarEvents(): Event[] {
-    const events = this.getSwipedEvents(SwipeDirection.UP);
-    console.log(
-      'EventService: getPublicCalendarEvents returning',
-      events.length,
-      'events'
-    );
-    return events;
+    return this.getSwipedEvents(SwipeDirection.UP);
   }
 
   // Get saved events (down swipes)

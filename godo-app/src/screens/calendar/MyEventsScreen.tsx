@@ -52,24 +52,15 @@ export const MyEventsScreen = () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('MyEventsScreen: Loading events...');
 
       const eventService = EventService.getInstance();
 
       // Get all calendar events (right + up swipes)
       const allCalendarEvents = eventService.getAllCalendarEvents();
-      console.log(
-        'MyEventsScreen: Calendar events loaded:',
-        allCalendarEvents.length
-      );
       setCalendarEvents(allCalendarEvents);
 
       // Get saved events (down swipes)
       const savedEventsList = eventService.getSavedEvents();
-      console.log(
-        'MyEventsScreen: Saved events loaded:',
-        savedEventsList.length
-      );
       setSavedEvents(savedEventsList);
 
       // Update hasUserSwipedEvents if user has events
@@ -81,7 +72,6 @@ export const MyEventsScreen = () => {
       console.error('MyEventsScreen: Error loading events:', err);
     } finally {
       setIsLoading(false);
-      console.log('MyEventsScreen: Loading complete');
     }
   }, []);
 
@@ -96,14 +86,16 @@ export const MyEventsScreen = () => {
     }, [loadEvents])
   );
 
-  const handleEventPress = useCallback((event: Event) => {
-    navigation.navigate('EventDetail', { event });
-  }, [navigation]);
+  const handleEventPress = useCallback(
+    (event: Event) => {
+      navigation.navigate('EventDetail', { event });
+    },
+    [navigation]
+  );
 
   const handleDateSelect = useCallback((date: string) => {
     setSelectedDate(date);
   }, []);
-
 
   const getStatsText = () => {
     const eventService = EventService.getInstance();
@@ -123,18 +115,12 @@ export const MyEventsScreen = () => {
 
   const getFilteredEvents = () => {
     const eventService = EventService.getInstance();
-    console.log('MyEventsScreen: Filtering events with filter:', eventFilter);
 
     if (eventFilter === 'private') {
-      const privateEvents = eventService.getPrivateCalendarEvents();
-      console.log('MyEventsScreen: Private events:', privateEvents.length);
-      return privateEvents;
+      return eventService.getPrivateCalendarEvents();
     } else if (eventFilter === 'public') {
-      const publicEvents = eventService.getPublicCalendarEvents();
-      console.log('MyEventsScreen: Public events:', publicEvents.length);
-      return publicEvents;
+      return eventService.getPublicCalendarEvents();
     }
-    console.log('MyEventsScreen: All events:', calendarEvents.length);
     return calendarEvents; // 'all'
   };
 
@@ -264,13 +250,7 @@ export const MyEventsScreen = () => {
               <View style={styles.filterToggleContainer}>
                 <EventFilterToggle
                   currentFilter={eventFilter}
-                  onFilterChange={filter => {
-                    console.log(
-                      'MyEventsScreen: Filter change received:',
-                      filter
-                    );
-                    setEventFilter(filter);
-                  }}
+                  onFilterChange={setEventFilter}
                   variant="dropdown"
                 />
               </View>
