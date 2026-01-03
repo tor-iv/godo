@@ -338,3 +338,7 @@ hive-mind-prompt-*.txt
 # Claude Flow metrics and cache files
 .claude-flow/metrics/
 .claude-flow/cache/
+
+# Demo videos
+docs/demo/*.mov
+docs/demo/*.mp4
