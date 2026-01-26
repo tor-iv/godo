@@ -342,3 +342,4 @@ hive-mind-prompt-*.txt
 # Demo videos
 docs/demo/*.mov
 docs/demo/*.mp4
+.worktrees/
