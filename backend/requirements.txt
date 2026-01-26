@@ -20,8 +20,8 @@ passlib[bcrypt]==1.7.4
 celery==5.3.4
 redis==5.0.1
 
-# HTTP Client
-httpx==0.25.2
+# HTTP Client (pinned for supabase compatibility)
+httpx==0.24.1
 
 # Environment Management
 python-dotenv==1.0.0
