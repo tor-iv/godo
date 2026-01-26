@@ -17,8 +17,12 @@ engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Redis client for caching and background jobs
-redis_client = redis.from_url(settings.redis_url, decode_responses=True)
+# Redis client for caching and background jobs (optional)
+try:
+    redis_client = redis.from_url(settings.redis_url, decode_responses=True)
+    redis_client.ping()  # Test connection
+except Exception:
+    redis_client = None  # Redis not available
 
 def get_supabase_client() -> Client:
     """Get Supabase client instance"""
@@ -36,8 +40,8 @@ def get_database() -> Generator:
     finally:
         db.close()
 
-def get_redis_client() -> redis.Redis:
-    """Get Redis client instance"""
+def get_redis_client() -> redis.Redis | None:
+    """Get Redis client instance (may be None if Redis unavailable)"""
     return redis_client
 
 class DatabaseManager:
@@ -54,19 +58,26 @@ class DatabaseManager:
             # Test Supabase connection
             result = self.supabase.table("users").select("id").limit(1).execute()
             supabase_status = "healthy" if result else "unhealthy"
-            
-            # Test Redis connection
-            redis_status = "healthy" if self.redis.ping() else "unhealthy"
-            
+
+            # Test Redis connection (optional)
+            if self.redis:
+                try:
+                    redis_status = "healthy" if self.redis.ping() else "unhealthy"
+                except Exception:
+                    redis_status = "unavailable"
+            else:
+                redis_status = "not_configured"
+
+            # Overall health based on Supabase only (Redis is optional)
             return {
                 "supabase": supabase_status,
                 "redis": redis_status,
-                "overall": "healthy" if all([supabase_status == "healthy", redis_status == "healthy"]) else "unhealthy"
+                "overall": "healthy" if supabase_status == "healthy" else "unhealthy"
             }
         except Exception as e:
             return {
                 "supabase": "unhealthy",
-                "redis": "unhealthy", 
+                "redis": "not_configured",
                 "overall": "unhealthy",
                 "error": str(e)
             }
@@ -83,15 +94,21 @@ class DatabaseManager:
     
     def cache_set(self, key: str, value: str, ttl: int = 300):
         """Set cache value with TTL"""
-        return self.redis.setex(key, ttl, value)
-    
+        if self.redis:
+            return self.redis.setex(key, ttl, value)
+        return None
+
     def cache_get(self, key: str):
         """Get cache value"""
-        return self.redis.get(key)
-    
+        if self.redis:
+            return self.redis.get(key)
+        return None
+
     def cache_delete(self, key: str):
         """Delete cache key"""
-        return self.redis.delete(key)
+        if self.redis:
+            return self.redis.delete(key)
+        return None
 
 # Global database manager instance
 db_manager = DatabaseManager()
