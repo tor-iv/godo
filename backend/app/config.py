@@ -7,15 +7,15 @@ class Settings(BaseSettings):
     app_name: str = "Godo Event Discovery API"
     debug: bool = False
     version: str = "1.0.0"
-    
-    # Database Configuration
-    database_url: str
-    supabase_url: str
-    supabase_key: str
-    supabase_service_key: str
-    
+
+    # Database Configuration (optional for startup, required for full functionality)
+    database_url: Optional[str] = None
+    supabase_url: Optional[str] = None
+    supabase_key: Optional[str] = None
+    supabase_service_key: Optional[str] = None
+
     # Authentication
-    jwt_secret: str
+    jwt_secret: str = "dev-secret-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
