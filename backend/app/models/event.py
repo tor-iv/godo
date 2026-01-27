@@ -19,6 +19,7 @@ class EventSource(str, Enum):
     OPENTABLE = "opentable"
     PARTIFUL = "partiful"
     NYC_PARKS = "nyc_parks"
+    NYC_OPEN_DATA = "nyc_open_data"
     NYC_CULTURAL = "nyc_cultural"
     MEETUP = "meetup"
     FACEBOOK_EVENTS = "facebook_events"
