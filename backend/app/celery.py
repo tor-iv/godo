@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 from app.config import settings
 
 # Create Celery instance
@@ -6,7 +7,7 @@ celery_app = Celery(
     "godo",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks"]
+    include=["app.tasks.scraper_tasks"]
 )
 
 # Celery configuration
@@ -14,7 +15,7 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
-    timezone="UTC",
+    timezone="America/New_York",
     enable_utc=True,
     result_expires=3600,
     task_track_started=True,
@@ -22,6 +23,7 @@ celery_app.conf.update(
         "app.tasks.event_discovery.*": {"queue": "events"},
         "app.tasks.notifications.*": {"queue": "notifications"},
         "app.tasks.ml_recommendations.*": {"queue": "ml"},
+        "app.tasks.scraper_tasks.*": {"queue": "scrapers"},
     },
     worker_prefetch_multiplier=1,
     task_acks_late=True,
@@ -32,20 +34,12 @@ celery_app.conf.update(
 
 # Periodic tasks
 celery_app.conf.beat_schedule = {
-    "discover-new-events": {
-        "task": "app.tasks.event_discovery.discover_events",
-        "schedule": 3600.0,  # Every hour
+    "scrape-nyc-parks-daily": {
+        "task": "app.tasks.scraper_tasks.scrape_nyc_parks",
+        "schedule": crontab(hour=6, minute=0),
     },
-    "cleanup-old-events": {
-        "task": "app.tasks.event_discovery.cleanup_old_events",
-        "schedule": 86400.0,  # Every day
-    },
-    "send-event-recommendations": {
-        "task": "app.tasks.ml_recommendations.send_daily_recommendations",
-        "schedule": 86400.0,  # Every day at midnight
-    },
-    "update-ml-models": {
-        "task": "app.tasks.ml_recommendations.update_models",
-        "schedule": 604800.0,  # Every week
+    "scrape-nyc-open-data-daily": {
+        "task": "app.tasks.scraper_tasks.scrape_nyc_open_data",
+        "schedule": crontab(hour=6, minute=30),
     },
 }
