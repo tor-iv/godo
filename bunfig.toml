@@ -1,0 +1,13 @@
+# Bun configuration for Godo project
+# https://bun.sh/docs/runtime/bunfig
+
+[run]
+# Silence Bun's file watcher logs for cleaner output
+silent = true
+
+[install]
+# Use exact versions for reproducibility
+exact = true
+
+# Prefer offline-first for faster installs when packages are cached
+prefer-offline = true
