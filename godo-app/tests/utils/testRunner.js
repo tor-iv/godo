@@ -1,12 +1,12 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * @fileoverview Test Runner and Coverage Reporter
  * @author Testing Team
  * @description Utility for running tests with proper coverage reporting and validation
+ *
+ * Now using Bun runtime for faster execution.
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
 const path = require('path');
 
 // Test configuration
@@ -35,7 +35,7 @@ const TEST_CONFIG = {
       },
     },
   },
-  
+
   // Test suites
   suites: {
     unit: {
@@ -79,22 +79,22 @@ function log(message, color = 'reset') {
 }
 
 function error(message) {
-  log(`❌ ${message}`, 'red');
+  log(`\u274C ${message}`, 'red');
 }
 
 function success(message) {
-  log(`✅ ${message}`, 'green');
+  log(`\u2705 ${message}`, 'green');
 }
 
 function warning(message) {
-  log(`⚠️  ${message}`, 'yellow');
+  log(`\u26A0\uFE0F  ${message}`, 'yellow');
 }
 
 function info(message) {
-  log(`ℹ️  ${message}`, 'blue');
+  log(`\u2139\uFE0F  ${message}`, 'blue');
 }
 
-// Test runner functions
+// Test runner functions using Bun.spawnSync
 function runJest(options = {}) {
   const {
     pattern = '',
@@ -106,8 +106,8 @@ function runJest(options = {}) {
     maxWorkers = undefined,
   } = options;
 
-  const args = ['jest'];
-  
+  const args = [];
+
   if (pattern) args.push(pattern);
   if (coverage) args.push('--coverage');
   if (watch) args.push('--watch');
@@ -115,20 +115,21 @@ function runJest(options = {}) {
   if (updateSnapshots) args.push('--updateSnapshot');
   if (bail) args.push('--bail');
   if (maxWorkers) args.push(`--maxWorkers=${maxWorkers}`);
-  
+
   // Always use colors and show progress
   args.push('--colors', '--progress');
-  
+
   try {
-    execSync(args.join(' '), { 
-      stdio: 'inherit',
-      env: { 
-        ...process.env, 
+    const result = Bun.spawnSync(['bunx', 'jest', ...args], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+      env: {
+        ...process.env,
         NODE_ENV: 'test',
         CI: process.env.CI || 'false',
-      }
+      },
+      cwd: process.cwd(),
     });
-    return true;
+    return result.exitCode === 0;
   } catch (err) {
     return false;
   }
@@ -142,21 +143,21 @@ function runTestSuite(suiteName) {
   }
 
   info(`Running ${suiteName} tests...`);
-  log('─'.repeat(60), 'blue');
+  log('\u2500'.repeat(60), 'blue');
 
-  const success = runJest({
+  const passed = runJest({
     pattern: suite.pattern,
     coverage: suite.coverage,
     verbose: true,
   });
 
-  if (success) {
+  if (passed) {
     success(`${suiteName} tests passed!`);
   } else {
     error(`${suiteName} tests failed!`);
   }
 
-  return success;
+  return passed;
 }
 
 function runAllTests() {
@@ -176,40 +177,48 @@ function runAllTests() {
   // Print summary
   log('='.repeat(60), 'cyan');
   info('Test Summary:');
-  
+
   for (const [suiteName, passed] of Object.entries(results)) {
-    const status = passed ? '✅ PASS' : '❌ FAIL';
+    const status = passed ? '\u2705 PASS' : '\u274C FAIL';
     const color = passed ? 'green' : 'red';
     log(`  ${suiteName}: ${status}`, color);
   }
 
   if (allPassed) {
-    success('All tests passed! 🎉');
+    success('All tests passed! \uD83C\uDF89');
   } else {
-    error('Some tests failed! 🚨');
+    error('Some tests failed! \uD83D\uDEA8');
   }
 
   return allPassed;
 }
 
-function generateCoverageReport() {
+async function generateCoverageReport() {
   info('Generating detailed coverage report...');
-  
+
   try {
     // Run tests with coverage
-    execSync('jest --coverage --coverageReporters=text --coverageReporters=html --coverageReporters=lcov', {
-      stdio: 'inherit',
-    });
-    
+    const result = Bun.spawnSync(
+      ['bunx', 'jest', '--coverage', '--coverageReporters=text', '--coverageReporters=html', '--coverageReporters=lcov'],
+      { stdio: ['inherit', 'inherit', 'inherit'], cwd: process.cwd() }
+    );
+
+    if (result.exitCode !== 0) {
+      error('Failed to generate coverage report');
+      return false;
+    }
+
     // Check if coverage directory exists
     const coverageDir = path.join(process.cwd(), 'coverage');
-    if (fs.existsSync(coverageDir)) {
-      const htmlReportPath = path.join(coverageDir, 'lcov-report', 'index.html');
-      if (fs.existsSync(htmlReportPath)) {
-        success(`Coverage report generated at: ${htmlReportPath}`);
-      }
+    const coverageDirFile = Bun.file(coverageDir);
+
+    const htmlReportPath = path.join(coverageDir, 'lcov-report', 'index.html');
+    const htmlReportFile = Bun.file(htmlReportPath);
+
+    if (await htmlReportFile.exists()) {
+      success(`Coverage report generated at: ${htmlReportPath}`);
     }
-    
+
     return true;
   } catch (err) {
     error('Failed to generate coverage report');
@@ -217,21 +226,23 @@ function generateCoverageReport() {
   }
 }
 
-function validateCoverage() {
+async function validateCoverage() {
   const coverageFile = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
-  
-  if (!fs.existsSync(coverageFile)) {
+  const file = Bun.file(coverageFile);
+
+  if (!(await file.exists())) {
     warning('Coverage report not found. Run tests with coverage first.');
     return false;
   }
 
   try {
-    const coverage = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
+    const coverageText = await file.text();
+    const coverage = JSON.parse(coverageText);
     const { total } = coverage;
     const thresholds = TEST_CONFIG.coverage.global;
 
     info('Coverage Validation:');
-    log('─'.repeat(40), 'blue');
+    log('\u2500'.repeat(40), 'blue');
 
     let allPassed = true;
     const metrics = ['branches', 'functions', 'lines', 'statements'];
@@ -240,18 +251,18 @@ function validateCoverage() {
       const actual = total[metric].pct;
       const required = thresholds[metric];
       const passed = actual >= required;
-      
+
       if (!passed) allPassed = false;
-      
-      const status = passed ? '✅' : '❌';
+
+      const status = passed ? '\u2705' : '\u274C';
       const color = passed ? 'green' : 'red';
       log(`  ${metric}: ${actual}% (required: ${required}%) ${status}`, color);
     }
 
     if (allPassed) {
-      success('Coverage requirements met! 📊');
+      success('Coverage requirements met! \uD83D\uDCCA');
     } else {
-      error('Coverage requirements not met! 📉');
+      error('Coverage requirements not met! \uD83D\uDCC9');
     }
 
     return allPassed;
@@ -264,7 +275,7 @@ function validateCoverage() {
 function watchTests(pattern) {
   info('Starting test watcher...');
   log('Press "a" to run all tests, "q" to quit', 'yellow');
-  
+
   runJest({
     pattern,
     watch: true,
@@ -274,8 +285,8 @@ function watchTests(pattern) {
 
 function debugTests(pattern) {
   info('Starting tests in debug mode...');
-  
-  runJest({
+
+  return runJest({
     pattern,
     verbose: true,
     bail: true,
@@ -285,45 +296,45 @@ function debugTests(pattern) {
 
 function updateSnapshots() {
   info('Updating Jest snapshots...');
-  
-  const success = runJest({
+
+  const passed = runJest({
     updateSnapshots: true,
   });
-  
-  if (success) {
+
+  if (passed) {
     success('Snapshots updated successfully!');
   } else {
     error('Failed to update snapshots!');
   }
-  
-  return success;
+
+  return passed;
 }
 
 // CLI interface
 function showHelp() {
   log('Test Runner Usage:', 'cyan');
-  log('─'.repeat(50), 'blue');
-  log('npm test                    Run all tests');
-  log('npm test unit              Run unit tests');
-  log('npm test integration       Run integration tests');
-  log('npm test accessibility     Run accessibility tests');
-  log('npm test validation        Run validation tests');
-  log('npm test e2e              Run end-to-end tests');
-  log('npm test coverage         Generate coverage report');
-  log('npm test validate         Validate coverage requirements');
-  log('npm test watch [pattern]  Watch for changes and re-run tests');
-  log('npm test debug [pattern]  Run tests in debug mode');
-  log('npm test update           Update Jest snapshots');
-  log('npm test help             Show this help');
+  log('\u2500'.repeat(50), 'blue');
+  log('bun run test                    Run all tests');
+  log('bun run test unit              Run unit tests');
+  log('bun run test integration       Run integration tests');
+  log('bun run test accessibility     Run accessibility tests');
+  log('bun run test validation        Run validation tests');
+  log('bun run test e2e              Run end-to-end tests');
+  log('bun run test coverage         Generate coverage report');
+  log('bun run test validate         Validate coverage requirements');
+  log('bun run test watch [pattern]  Watch for changes and re-run tests');
+  log('bun run test debug [pattern]  Run tests in debug mode');
+  log('bun run test update           Update Jest snapshots');
+  log('bun run test help             Show this help');
   log('');
   log('Examples:', 'yellow');
-  log('npm test unit -- --watch');
-  log('npm test "UserProfile.test"');
-  log('npm test coverage && npm test validate');
+  log('bun run test unit -- --watch');
+  log('bun run test "UserProfile.test"');
+  log('bun run test coverage && bun run test validate');
 }
 
 // Main CLI handler
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const command = args[0] || 'all';
   const pattern = args[1];
@@ -331,58 +342,44 @@ function main() {
   switch (command) {
     case 'all':
       return runAllTests() ? 0 : 1;
-      
+
     case 'unit':
     case 'integration':
     case 'accessibility':
     case 'validation':
     case 'e2e':
       return runTestSuite(command) ? 0 : 1;
-      
+
     case 'coverage':
-      return generateCoverageReport() ? 0 : 1;
-      
+      return (await generateCoverageReport()) ? 0 : 1;
+
     case 'validate':
-      return validateCoverage() ? 0 : 1;
-      
+      return (await validateCoverage()) ? 0 : 1;
+
     case 'watch':
       watchTests(pattern);
       return 0;
-      
+
     case 'debug':
       return debugTests(pattern) ? 0 : 1;
-      
+
     case 'update':
       return updateSnapshots() ? 0 : 1;
-      
+
     case 'help':
       showHelp();
       return 0;
-      
+
     default:
       // Treat unknown commands as test patterns
-      const success = runJest({
+      const passed = runJest({
         pattern: command,
         verbose: true,
       });
-      return success ? 0 : 1;
+      return passed ? 0 : 1;
   }
 }
 
 // Run if called directly
-if (require.main === module) {
-  const exitCode = main();
-  process.exit(exitCode);
-}
-
-module.exports = {
-  runJest,
-  runTestSuite,
-  runAllTests,
-  generateCoverageReport,
-  validateCoverage,
-  watchTests,
-  debugTests,
-  updateSnapshots,
-  TEST_CONFIG,
-};
+const exitCode = await main();
+process.exit(exitCode);

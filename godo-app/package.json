@@ -14,14 +14,14 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "test": "node tests/utils/testRunner.js",
+    "test": "bun tests/utils/testRunner.js",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
     "test:accessibility": "jest tests/unit/accessibility",
     "test:validation": "jest tests/unit/validation",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:coverage:validate": "node tests/utils/testRunner.js validate"
+    "test:coverage:validate": "bun tests/utils/testRunner.js validate"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
