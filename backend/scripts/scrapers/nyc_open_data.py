@@ -90,8 +90,10 @@ class NYCOpenDataScraper(BaseScraper):
         }
 
         # Add app token if available (optional, increases rate limits)
-        if settings.nyc_open_data_api_key:
-            params["$$app_token"] = settings.nyc_open_data_api_key
+        # Skip placeholder values
+        api_key = settings.nyc_open_data_api_key
+        if api_key and not api_key.startswith("your-"):
+            params["$$app_token"] = api_key
 
         response = await self.client.get(self.api_url, params=params)
         response.raise_for_status()

@@ -194,10 +194,10 @@ class EventCapacityUpdate(BaseModel):
     capacity: Optional[int] = None
     last_updated: datetime = Field(default_factory=datetime.utcnow)
 
-class EventSource(BaseModel):
+class EventSourceTracker(BaseModel):
     """Event source tracking for background jobs"""
     id: UUID4
-    source_name: EventSource
+    source_name: str
     last_sync: Optional[datetime] = None
     next_sync: Optional[datetime] = None
     sync_frequency: str = "4 hours"  # PostgreSQL interval format

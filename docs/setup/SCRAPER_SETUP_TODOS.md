@@ -4,7 +4,7 @@ Manual setup tasks required to get the event scrapers running in production.
 
 ## 1. Environment Variables
 
-Add these to your `.env` file (and Railway/production environment):
+Add these to your `backend/.env` file (and Railway/production environment):
 
 ```bash
 # Required for Ticketmaster scraper
@@ -25,37 +25,53 @@ NYC_OPEN_DATA_API_KEY=your_key_here
 
 ## 2. Database Migration
 
-Run the `event_sources` table migration in Supabase:
+**CRITICAL:** The `events` table's `source` column needs the new enum values.
 
+Run these SQL commands in Supabase SQL Editor:
+
+```sql
+-- Add new event source enum values (if using enum type)
+-- First check your current enum:
+SELECT unnest(enum_range(NULL::event_source)) as source;
+
+-- If nyc_parks, nyc_open_data, ticketmaster are missing, add them:
+ALTER TYPE event_source ADD VALUE IF NOT EXISTS 'nyc_parks';
+ALTER TYPE event_source ADD VALUE IF NOT EXISTS 'nyc_open_data';
+ALTER TYPE event_source ADD VALUE IF NOT EXISTS 'ticketmaster';
+```
+
+Then run the event_sources tracking table migration:
 ```sql
 -- Copy contents of: backend/database/migrations/004_add_event_sources.sql
 -- Run in Supabase SQL Editor
-```
-
-Or run via Supabase CLI:
-```bash
-supabase db push
 ```
 
 ---
 
 ## 3. Test Scrapers Locally
 
+**Via Docker (recommended):**
+```bash
+npm run backend:up
+docker-compose exec godo-backend python -m scripts.scrapers.cli nyc_parks --dry-run --verbose
+```
+
+**Or via local Python (requires all dependencies):**
 ```bash
 cd backend
-
-# Test NYC Parks (no API key needed)
 python -m scripts.scrapers.cli nyc_parks --dry-run --verbose
-
-# Test NYC Open Data (no API key needed, but optional token helps)
 python -m scripts.scrapers.cli nyc_open_data --dry-run --verbose
-
-# Test Ticketmaster (requires API key)
-python -m scripts.scrapers.cli ticketmaster --dry-run --verbose
-
-# Run all scrapers for real (writes to database)
+python -m scripts.scrapers.cli ticketmaster --dry-run --verbose  # requires API key
 python -m scripts.scrapers.cli all --verbose
 ```
+
+### Expected Results
+
+| Scraper | Without API Key | With API Key |
+|---------|----------------|--------------|
+| NYC Parks | ✅ Works (~400+ events) | N/A |
+| NYC Open Data | ✅ Works (~300+ events) | ✅ Higher rate limits |
+| Ticketmaster | ❌ Fails with clear error | ✅ Works |
 
 ---
 
@@ -135,10 +151,11 @@ ORDER BY last_sync_at DESC;
 
 ## Quick Checklist
 
-- [ ] Add `TICKETMASTER_API_KEY` to `.env`
-- [ ] (Optional) Add `NYC_OPEN_DATA_API_KEY` to `.env`
+- [ ] Add `TICKETMASTER_API_KEY` to `backend/.env`
+- [ ] (Optional) Add `NYC_OPEN_DATA_API_KEY` to `backend/.env`
+- [ ] Run SQL to add enum values: `nyc_parks`, `nyc_open_data`, `ticketmaster`
 - [ ] Run `004_add_event_sources.sql` migration in Supabase
 - [ ] Test scrapers locally with `--dry-run`
 - [ ] Run scrapers for real to populate database
-- [ ] Set up Celery worker + beat for scheduled runs
+- [ ] Set up Celery worker + beat for scheduled runs (or Redis + Celery on Railway)
 - [ ] (Optional) Register for Ticketmaster affiliate program
