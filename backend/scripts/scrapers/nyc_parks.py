@@ -45,7 +45,7 @@ class NYCParksScraper(BaseScraper):
 
     source = EventSource.NYC_PARKS
     base_url = "https://www.nycgovparks.org"
-    events_url = "https://www.nycgovparks.org/bigapps/events.json"
+    events_url = "https://www.nycgovparks.org/xml/events_300_rss.json"
 
     async def fetch(self) -> List[Dict[str, Any]]:
         """
@@ -266,7 +266,8 @@ class NYCParksScraper(BaseScraper):
 
         Tries:
         1. "borough" field directly
-        2. Extract from park name (e.g., "Central Park, Manhattan")
+        2. parkids first character (M=Manhattan, B=Brooklyn, Q=Queens, X=Bronx, R=Staten Island)
+        3. Extract from park name (e.g., "Central Park, Manhattan")
 
         Args:
             event: Raw event dictionary
@@ -278,6 +279,24 @@ class NYCParksScraper(BaseScraper):
         borough = event.get("borough")
         if borough:
             return borough.strip()
+
+        # Try parkids - first character indicates borough
+        parkids = event.get("parkids") or event.get("parkid")
+        if parkids:
+            # parkids can be a string like "M010" or list
+            if isinstance(parkids, list):
+                parkids = parkids[0] if parkids else ""
+            if parkids:
+                borough_code = parkids[0].upper()
+                borough_map = {
+                    "M": "Manhattan",
+                    "B": "Brooklyn",
+                    "Q": "Queens",
+                    "X": "Bronx",
+                    "R": "Staten Island",
+                }
+                if borough_code in borough_map:
+                    return borough_map[borough_code]
 
         # Try to extract from park name
         park_name = event.get("parknames") or event.get("park_name") or event.get("location")

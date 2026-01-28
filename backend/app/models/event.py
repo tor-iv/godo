@@ -139,7 +139,7 @@ class EventAttendance(BaseModel):
     user_id: UUID4
     event_id: UUID4
     status: AttendanceStatus
-    visibility: str = Field(..., regex="^(private|friends|public)$")
+    visibility: str = Field(..., pattern="^(private|friends|public)$")
     group_id: Optional[UUID4] = None
     notes: Optional[str] = None
     created_at: datetime
@@ -152,14 +152,14 @@ class EventAttendanceCreate(BaseModel):
     """Create event attendance"""
     event_id: UUID4
     status: AttendanceStatus
-    visibility: str = Field("private", regex="^(private|friends|public)$")
+    visibility: str = Field("private", pattern="^(private|friends|public)$")
     group_id: Optional[UUID4] = None
     notes: Optional[str] = None
 
 class EventAttendanceUpdate(BaseModel):
     """Update event attendance"""
     status: Optional[AttendanceStatus] = None
-    visibility: Optional[str] = Field(None, regex="^(private|friends|public)$")
+    visibility: Optional[str] = Field(None, pattern="^(private|friends|public)$")
     notes: Optional[str] = None
 
 class EventSearch(BaseModel):
@@ -176,8 +176,8 @@ class EventSearch(BaseModel):
     radius_km: Optional[float] = Field(None, gt=0, le=50)
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
-    sort_by: str = Field("date_time", regex="^(date_time|popularity|distance|created_at)$")
-    sort_order: str = Field("asc", regex="^(asc|desc)$")
+    sort_by: str = Field("date_time", pattern="^(date_time|popularity|distance|created_at)$")
+    sort_order: str = Field("asc", pattern="^(asc|desc)$")
 
 class EventRecommendation(BaseModel):
     """Event recommendation with score"""

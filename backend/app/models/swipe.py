@@ -190,15 +190,15 @@ class CalendarEvent(BaseModel):
 
 class CalendarEventUpdate(BaseModel):
     """Update calendar event model"""
-    attendance_status: Optional[str] = Field(None, regex="^(going|maybe|not_going)$")
+    attendance_status: Optional[str] = Field(None, pattern="^(going|maybe|not_going)$")
     calendar_type: Optional[CalendarType] = None
     visibility: Optional[VisibilityLevel] = None
     notes: Optional[str] = Field(None, max_length=500)
     
 class CalendarFilters(BaseModel):
     """Calendar filtering options"""
-    calendar_type: Optional[str] = Field(None, regex="^(private|shared|public|all)$")
-    status: Optional[str] = Field(None, regex="^(going|maybe|saved|all)$")
+    calendar_type: Optional[str] = Field(None, pattern="^(private|shared|public|all)$")
+    status: Optional[str] = Field(None, pattern="^(going|maybe|saved|all)$")
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     limit: int = Field(50, ge=1, le=100)

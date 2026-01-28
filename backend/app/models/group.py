@@ -105,7 +105,7 @@ class GroupEventPlanning(BaseModel):
     group_id: UUID4
     event_id: UUID4
     planned_by: UUID4
-    planning_status: str = Field(..., regex="^(proposed|voting|confirmed|cancelled)$")
+    planning_status: str = Field(..., pattern="^(proposed|voting|confirmed|cancelled)$")
     votes_for: int = 0
     votes_against: int = 0
     votes_maybe: int = 0
@@ -121,7 +121,7 @@ class GroupEventPlanning(BaseModel):
 class GroupEventVote(BaseModel):
     """Group event vote model"""
     planning_id: UUID4
-    vote: str = Field(..., regex="^(for|against|maybe)$")
+    vote: str = Field(..., pattern="^(for|against|maybe)$")
     notes: Optional[str] = Field(None, max_length=200)
 
 class GroupActivity(BaseModel):
@@ -148,7 +148,7 @@ class GroupChat(BaseModel):
     group_id: UUID4
     sender_id: UUID4
     message: str = Field(..., max_length=1000)
-    message_type: str = Field("text", regex="^(text|event_share|image|system)$")
+    message_type: str = Field("text", pattern="^(text|event_share|image|system)$")
     event_id: Optional[UUID4] = None  # If sharing an event
     image_url: Optional[str] = None
     created_at: datetime
@@ -163,7 +163,7 @@ class GroupChat(BaseModel):
 class GroupChatCreate(BaseModel):
     """Create group chat message"""
     message: str = Field(..., min_length=1, max_length=1000)
-    message_type: str = Field("text", regex="^(text|event_share|image)$")
+    message_type: str = Field("text", pattern="^(text|event_share|image)$")
     event_id: Optional[UUID4] = None
     image_url: Optional[str] = None
 
@@ -175,8 +175,8 @@ class GroupDiscovery(BaseModel):
     privacy_level: Optional[GroupPrivacyLevel] = None
     min_members: Optional[int] = Field(None, ge=2)
     max_members: Optional[int] = Field(None, le=100)
-    sort_by: str = Field("activity", regex="^(activity|members|created|name)$")
-    sort_order: str = Field("desc", regex="^(asc|desc)$")
+    sort_by: str = Field("activity", pattern="^(activity|members|created|name)$")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$")
     limit: int = Field(20, ge=1, le=50)
     offset: int = Field(0, ge=0)
 
@@ -187,7 +187,7 @@ class GroupSuggestion(BaseModel):
     suggestion_reasons: List[str] = []
     mutual_members: List[GroupMember] = []
     common_interests: List[str] = []
-    recent_activity_level: str = Field(..., regex="^(high|medium|low)$")
+    recent_activity_level: str = Field(..., pattern="^(high|medium|low)$")
 
 class GroupStats(BaseModel):
     """Group statistics"""
@@ -207,11 +207,11 @@ class GroupFilters(BaseModel):
     privacy_level: Optional[GroupPrivacyLevel] = None
     member_count_min: Optional[int] = None
     member_count_max: Optional[int] = None
-    activity_level: Optional[str] = Field(None, regex="^(high|medium|low)$")
+    activity_level: Optional[str] = Field(None, pattern="^(high|medium|low)$")
     created_after: Optional[datetime] = None
     has_upcoming_events: Optional[bool] = None
-    sort_by: str = Field("activity", regex="^(activity|members|created|name)$")
-    sort_order: str = Field("desc", regex="^(asc|desc)$")
+    sort_by: str = Field("activity", pattern="^(activity|members|created|name)$")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$")
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
 

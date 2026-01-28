@@ -19,7 +19,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """User creation model"""
     password: str = Field(..., min_length=8, max_length=128)
-    phone_number: Optional[str] = Field(None, regex=r'^\+?1?[2-9]\d{2}[2-9]\d{2}\d{4}$')
+    phone_number: Optional[str] = Field(None, pattern=r'^\+?1?[2-9]\d{2}[2-9]\d{2}\d{4}$')
     
     @validator('password')
     def validate_password(cls, v):

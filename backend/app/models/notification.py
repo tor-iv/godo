@@ -168,8 +168,8 @@ class NotificationFilters(BaseModel):
     date_to: Optional[datetime] = None
     limit: int = Field(50, ge=1, le=100)
     offset: int = Field(0, ge=0)
-    sort_by: str = Field("created_at", regex="^(created_at|priority|is_read)$")
-    sort_order: str = Field("desc", regex="^(asc|desc)$")
+    sort_by: str = Field("created_at", pattern="^(created_at|priority|is_read)$")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$")
 
 class NotificationStats(BaseModel):
     """Notification statistics"""
@@ -205,7 +205,7 @@ class NotificationDeliveryStatus(BaseModel):
     """Notification delivery status"""
     notification_id: UUID4
     channel: NotificationChannel
-    status: str = Field(..., regex="^(pending|sent|delivered|failed|bounced)$")
+    status: str = Field(..., pattern="^(pending|sent|delivered|failed|bounced)$")
     external_id: Optional[str] = None  # Provider's tracking ID
     error_message: Optional[str] = None
     delivered_at: Optional[datetime] = None

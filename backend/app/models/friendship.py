@@ -106,8 +106,8 @@ class FriendListFilters(BaseModel):
     neighborhood: Optional[str] = None
     recent_activity_days: Optional[int] = Field(None, ge=1, le=365)
     shared_categories: Optional[List[str]] = []
-    sort_by: str = Field("name", regex="^(name|recent_activity|mutual_friends|joined_date)$")
-    sort_order: str = Field("asc", regex="^(asc|desc)$")
+    sort_by: str = Field("name", pattern="^(name|recent_activity|mutual_friends|joined_date)$")
+    sort_order: str = Field("asc", pattern="^(asc|desc)$")
     limit: int = Field(50, ge=1, le=100)
     offset: int = Field(0, ge=0)
 
