@@ -1,14 +1,14 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 /**
  * Comprehensive DateNavigation Responsive Text Testing Suite
- * 
+ *
  * This script runs all DateNavigation responsive text tests and generates
  * a comprehensive report on the functionality, performance, and accessibility.
+ *
+ * Now using Bun runtime for faster execution.
  */
 
-const { execSync, spawn } = require('child_process');
-const fs = require('fs');
 const path = require('path');
 
 class DateNavigationTestRunner {
@@ -24,44 +24,52 @@ class DateNavigationTestRunner {
 
   log(message, level = 'info') {
     const timestamp = new Date().toISOString();
-    const prefix = {
-      info: '📘',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      test: '🧪',
-    }[level] || '📘';
-    
+    const prefix =
+      {
+        info: '\uD83D\uDCD8',
+        success: '\u2705',
+        warning: '\u26A0\uFE0F',
+        error: '\u274C',
+        test: '\uD83E\uDDEA',
+      }[level] || '\uD83D\uDCD8';
+
     console.log(`${prefix} [${timestamp}] ${message}`);
   }
 
   async runJestTests() {
     this.log('Running Jest test suites...', 'test');
-    
+
     const testFiles = [
       'date-navigation-responsive-text.test.tsx',
       'date-navigation-accessibility-text.test.tsx',
-      'date-navigation-performance-regression.test.tsx'
+      'date-navigation-performance-regression.test.tsx',
     ];
 
     for (const testFile of testFiles) {
       this.log(`Running ${testFile}...`, 'test');
-      
+
       try {
-        const result = execSync(
-          `npx jest ${path.join(__dirname, testFile)} --json --outputFile=/tmp/${testFile}.json`,
-          { 
+        const outputPath = `/tmp/${testFile}.json`;
+        const result = Bun.spawnSync(
+          ['bunx', 'jest', path.join(__dirname, testFile), '--json', `--outputFile=${outputPath}`],
+          {
             cwd: path.join(__dirname, '..'),
-            encoding: 'utf8',
+            stdio: ['pipe', 'pipe', 'pipe'],
             timeout: 30000,
-            stdio: 'pipe'
           }
         );
 
-        // Parse Jest results
-        const resultData = JSON.parse(fs.readFileSync(`/tmp/${testFile}.json`, 'utf8'));
-        this.parseJestResults(testFile, resultData);
-        
+        if (result.exitCode === 0) {
+          // Parse Jest results
+          const outputFile = Bun.file(outputPath);
+          if (await outputFile.exists()) {
+            const resultData = JSON.parse(await outputFile.text());
+            this.parseJestResults(testFile, resultData);
+          }
+        } else {
+          this.log(`Test failed: ${testFile}`, 'error');
+          this.recordTestFailure(testFile, result.stderr?.toString() || 'Test execution failed');
+        }
       } catch (error) {
         this.log(`Test failed: ${testFile} - ${error.message}`, 'error');
         this.recordTestFailure(testFile, error.message);
@@ -72,18 +80,18 @@ class DateNavigationTestRunner {
   parseJestResults(testFile, resultData) {
     const category = this.getTestCategory(testFile);
     const suite = resultData.testResults[0];
-    
+
     if (suite) {
-      suite.assertionResults.forEach(test => {
+      suite.assertionResults.forEach((test) => {
         this.results[category].total++;
-        
+
         if (test.status === 'passed') {
           this.results[category].passed++;
         } else {
           this.results[category].failed++;
           this.results[category].details.push({
             name: test.fullName,
-            error: test.failureMessages.join(', ')
+            error: test.failureMessages.join(', '),
           });
         }
       });
@@ -103,26 +111,30 @@ class DateNavigationTestRunner {
     this.results[category].total++;
     this.results[category].details.push({
       name: testFile,
-      error: error
+      error: error,
     });
   }
 
   async runValidationScript() {
     this.log('Running responsive text validation script...', 'test');
-    
+
     try {
       const validationPath = path.join(__dirname, 'date-navigation-text-validation-runner.ts');
-      
-      // Compile TypeScript and run
-      execSync(`npx tsx ${validationPath}`, {
+
+      // Compile TypeScript and run with Bun
+      const result = Bun.spawnSync(['bunx', 'tsx', validationPath], {
         cwd: path.join(__dirname, '..'),
-        stdio: 'pipe',
-        timeout: 15000
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 15000,
       });
-      
-      this.results.validation.passed = true;
-      this.results.validation.details.push('All validation scenarios passed');
-      
+
+      if (result.exitCode === 0) {
+        this.results.validation.passed = true;
+        this.results.validation.details.push('All validation scenarios passed');
+      } else {
+        this.results.validation.passed = false;
+        this.results.validation.details.push(`Validation failed: ${result.stderr?.toString() || 'Unknown error'}`);
+      }
     } catch (error) {
       this.results.validation.passed = false;
       this.results.validation.details.push(`Validation failed: ${error.message}`);
@@ -131,7 +143,7 @@ class DateNavigationTestRunner {
 
   generateReport() {
     this.log('Generating comprehensive test report...', 'test');
-    
+
     const duration = Date.now() - this.startTime;
     const totalTests = Object.values(this.results).reduce((sum, category) => {
       return sum + (category.total || 0);
@@ -148,38 +160,44 @@ class DateNavigationTestRunner {
         totalFailed,
         passRate: totalTests > 0 ? ((totalPassed / totalTests) * 100).toFixed(1) : '0.0',
         duration: `${(duration / 1000).toFixed(2)}s`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       categories: {
         'Responsive Text Formatting': {
           passed: this.results.responsive.passed,
           failed: this.results.responsive.failed,
           total: this.results.responsive.total,
-          passRate: this.results.responsive.total > 0 ? 
-            ((this.results.responsive.passed / this.results.responsive.total) * 100).toFixed(1) : '0.0'
+          passRate:
+            this.results.responsive.total > 0
+              ? ((this.results.responsive.passed / this.results.responsive.total) * 100).toFixed(1)
+              : '0.0',
         },
         'Accessibility & Screen Reader': {
           passed: this.results.accessibility.passed,
           failed: this.results.accessibility.failed,
           total: this.results.accessibility.total,
-          passRate: this.results.accessibility.total > 0 ? 
-            ((this.results.accessibility.passed / this.results.accessibility.total) * 100).toFixed(1) : '0.0'
+          passRate:
+            this.results.accessibility.total > 0
+              ? ((this.results.accessibility.passed / this.results.accessibility.total) * 100).toFixed(1)
+              : '0.0',
         },
         'Performance & Regression': {
           passed: this.results.performance.passed,
           failed: this.results.performance.failed,
           total: this.results.performance.total,
-          passRate: this.results.performance.total > 0 ? 
-            ((this.results.performance.passed / this.results.performance.total) * 100).toFixed(1) : '0.0'
+          passRate:
+            this.results.performance.total > 0
+              ? ((this.results.performance.passed / this.results.performance.total) * 100).toFixed(1)
+              : '0.0',
         },
         'Text Validation': {
           passed: this.results.validation.passed ? 1 : 0,
           failed: this.results.validation.passed ? 0 : 1,
           total: 1,
-          passRate: this.results.validation.passed ? '100.0' : '0.0'
-        }
+          passRate: this.results.validation.passed ? '100.0' : '0.0',
+        },
       },
-      failures: this.collectFailures()
+      failures: this.collectFailures(),
     };
 
     return report;
@@ -187,15 +205,15 @@ class DateNavigationTestRunner {
 
   collectFailures() {
     const failures = [];
-    
+
     Object.entries(this.results).forEach(([category, data]) => {
       if (data.details && Array.isArray(data.details)) {
-        data.details.forEach(detail => {
+        data.details.forEach((detail) => {
           if (detail.error) {
             failures.push({
               category,
               test: detail.name,
-              error: detail.error
+              error: detail.error,
             });
           }
         });
@@ -207,11 +225,11 @@ class DateNavigationTestRunner {
 
   printReport(report) {
     console.log('\n' + '='.repeat(80));
-    console.log('📊 DATENAVIGATION RESPONSIVE TEXT TEST REPORT');
+    console.log('\uD83D\uDCCA DATENAVIGATION RESPONSIVE TEXT TEST REPORT');
     console.log('='.repeat(80));
-    
+
     // Summary
-    console.log('\n📈 SUMMARY');
+    console.log('\n\uD83D\uDCC8 SUMMARY');
     console.log('-'.repeat(40));
     console.log(`Total Tests: ${report.summary.totalTests}`);
     console.log(`Passed: ${report.summary.totalPassed}`);
@@ -221,13 +239,13 @@ class DateNavigationTestRunner {
     console.log(`Timestamp: ${report.summary.timestamp}`);
 
     // Categories
-    console.log('\n📋 CATEGORIES');
+    console.log('\n\uD83D\uDCCB CATEGORIES');
     console.log('-'.repeat(40));
     Object.entries(report.categories).forEach(([name, stats]) => {
-      const status = stats.failed === 0 ? '✅' : '❌';
+      const status = stats.failed === 0 ? '\u2705' : '\u274C';
       console.log(`${status} ${name}:`);
       console.log(`   Passed: ${stats.passed}/${stats.total} (${stats.passRate}%)`);
-      
+
       if (stats.failed > 0) {
         console.log(`   Failed: ${stats.failed}`);
       }
@@ -235,7 +253,7 @@ class DateNavigationTestRunner {
 
     // Failures
     if (report.failures.length > 0) {
-      console.log('\n❌ FAILURES');
+      console.log('\n\u274C FAILURES');
       console.log('-'.repeat(40));
       report.failures.forEach((failure, index) => {
         console.log(`${index + 1}. [${failure.category}] ${failure.test}`);
@@ -245,9 +263,9 @@ class DateNavigationTestRunner {
     }
 
     // Test Coverage Analysis
-    console.log('\n🎯 TEST COVERAGE ANALYSIS');
+    console.log('\n\uD83C\uDFAF TEST COVERAGE ANALYSIS');
     console.log('-'.repeat(40));
-    
+
     const coverageAreas = [
       'Ultra compact text (< 280px width)',
       'Compact text (280-375px width)',
@@ -261,36 +279,37 @@ class DateNavigationTestRunner {
       'Memory management',
     ];
 
+    const totalTests = report.summary.totalTests;
     coverageAreas.forEach((area, index) => {
-      const covered = report.summary.totalTests > (index * 2); // Simple heuristic
-      const status = covered ? '✅' : '⚠️';
+      const covered = totalTests > index * 2; // Simple heuristic
+      const status = covered ? '\u2705' : '\u26A0\uFE0F';
       console.log(`${status} ${area}`);
     });
 
     // Recommendations
-    console.log('\n💡 RECOMMENDATIONS');
+    console.log('\n\uD83D\uDCA1 RECOMMENDATIONS');
     console.log('-'.repeat(40));
-    
+
     if (report.summary.totalFailed === 0) {
-      console.log('✅ All tests passed! The responsive text formatting is working correctly.');
-      console.log('✅ Text adapts properly across different screen sizes.');
-      console.log('✅ Accessibility features are functioning as expected.');
-      console.log('✅ Performance is within acceptable bounds.');
+      console.log('\u2705 All tests passed! The responsive text formatting is working correctly.');
+      console.log('\u2705 Text adapts properly across different screen sizes.');
+      console.log('\u2705 Accessibility features are functioning as expected.');
+      console.log('\u2705 Performance is within acceptable bounds.');
     } else {
-      console.log('⚠️  Some tests failed. Consider the following actions:');
-      
+      console.log('\u26A0\uFE0F  Some tests failed. Consider the following actions:');
+
       if (report.categories['Responsive Text Formatting'].failed > 0) {
         console.log('   - Review responsive text calculation logic');
         console.log('   - Check screen width breakpoints');
         console.log('   - Validate text truncation behavior');
       }
-      
+
       if (report.categories['Accessibility & Screen Reader'].failed > 0) {
         console.log('   - Improve accessibility labels');
         console.log('   - Ensure screen reader compatibility');
         console.log('   - Check focus management');
       }
-      
+
       if (report.categories['Performance & Regression'].failed > 0) {
         console.log('   - Optimize text calculation algorithms');
         console.log('   - Review memoization implementation');
@@ -299,12 +318,12 @@ class DateNavigationTestRunner {
     }
 
     // Quality Metrics
-    console.log('\n📏 QUALITY METRICS');
+    console.log('\n\uD83D\uDCCF QUALITY METRICS');
     console.log('-'.repeat(40));
-    
+
     const qualityScore = parseFloat(report.summary.passRate);
     let qualityGrade = 'F';
-    
+
     if (qualityScore >= 95) qualityGrade = 'A+';
     else if (qualityScore >= 90) qualityGrade = 'A';
     else if (qualityScore >= 85) qualityGrade = 'B+';
@@ -316,7 +335,9 @@ class DateNavigationTestRunner {
     console.log(`Quality Grade: ${qualityGrade} (${qualityScore}%)`);
     console.log(`Test Comprehensiveness: ${totalTests > 50 ? 'High' : totalTests > 25 ? 'Medium' : 'Low'}`);
     console.log(`Performance Coverage: ${report.categories['Performance & Regression'].total > 0 ? 'Yes' : 'No'}`);
-    console.log(`Accessibility Coverage: ${report.categories['Accessibility & Screen Reader'].total > 0 ? 'Yes' : 'No'}`);
+    console.log(
+      `Accessibility Coverage: ${report.categories['Accessibility & Screen Reader'].total > 0 ? 'Yes' : 'No'}`
+    );
 
     console.log('\n' + '='.repeat(80));
   }
@@ -324,14 +345,14 @@ class DateNavigationTestRunner {
   async saveReport(report) {
     const reportPath = path.join(__dirname, 'date-navigation-comprehensive-test-report.json');
     const htmlReportPath = path.join(__dirname, 'date-navigation-test-report.html');
-    
+
     // Save JSON report
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    await Bun.write(reportPath, JSON.stringify(report, null, 2));
     this.log(`Report saved to: ${reportPath}`, 'success');
 
     // Generate HTML report
     const htmlReport = this.generateHtmlReport(report);
-    fs.writeFileSync(htmlReportPath, htmlReport);
+    await Bun.write(htmlReportPath, htmlReport);
     this.log(`HTML report saved to: ${htmlReportPath}`, 'success');
   }
 
@@ -359,7 +380,7 @@ class DateNavigationTestRunner {
 </head>
 <body>
     <div class="header">
-        <h1>📱 DateNavigation Responsive Text Test Report</h1>
+        <h1>\uD83D\uDCF1 DateNavigation Responsive Text Test Report</h1>
         <p class="timestamp">Generated: ${report.summary.timestamp}</p>
     </div>
 
@@ -382,32 +403,44 @@ class DateNavigationTestRunner {
         </div>
     </div>
 
-    ${Object.entries(report.categories).map(([name, stats]) => `
+    ${Object.entries(report.categories)
+      .map(
+        ([name, stats]) => `
         <div class="category">
             <div class="category-header">
-                <h3>${stats.failed === 0 ? '✅' : '❌'} ${name}</h3>
+                <h3>${stats.failed === 0 ? '\u2705' : '\u274C'} ${name}</h3>
             </div>
             <div class="category-content">
                 <p><strong>Results:</strong> ${stats.passed} passed, ${stats.failed} failed (${stats.passRate}% pass rate)</p>
             </div>
         </div>
-    `).join('')}
+    `
+      )
+      .join('')}
 
-    ${report.failures.length > 0 ? `
+    ${
+      report.failures.length > 0
+        ? `
         <div class="category">
             <div class="category-header">
-                <h3>❌ Test Failures</h3>
+                <h3>\u274C Test Failures</h3>
             </div>
             <div class="category-content">
-                ${report.failures.map(failure => `
+                ${report.failures
+                  .map(
+                    (failure) => `
                     <div class="failure">
                         <strong>[${failure.category}] ${failure.test}</strong><br>
                         ${failure.error}
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
             </div>
         </div>
-    ` : ''}
+    `
+        : ''
+    }
 
 </body>
 </html>`;
@@ -415,19 +448,18 @@ class DateNavigationTestRunner {
 
   async run() {
     this.log('Starting DateNavigation Responsive Text Testing Suite...', 'test');
-    
+
     try {
       await this.runJestTests();
       await this.runValidationScript();
-      
+
       const report = this.generateReport();
       this.printReport(report);
       await this.saveReport(report);
-      
+
       // Exit with appropriate code
       const hasFailures = report.summary.totalFailed > 0;
       process.exit(hasFailures ? 1 : 0);
-      
     } catch (error) {
       this.log(`Test suite failed: ${error.message}`, 'error');
       console.error(error);
@@ -437,9 +469,7 @@ class DateNavigationTestRunner {
 }
 
 // Run the test suite
-if (require.main === module) {
-  const runner = new DateNavigationTestRunner();
-  runner.run().catch(console.error);
-}
+const runner = new DateNavigationTestRunner();
+await runner.run();
 
-module.exports = DateNavigationTestRunner;
+export default DateNavigationTestRunner;
