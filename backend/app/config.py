@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     
     # External APIs
     eventbrite_api_key: Optional[str] = None
+    ticketmaster_api_key: Optional[str] = None
     google_maps_api_key: Optional[str] = None
     nyc_open_data_api_key: Optional[str] = None
     

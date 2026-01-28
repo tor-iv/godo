@@ -32,7 +32,7 @@ celery_app.conf.update(
     task_max_retries=3,
 )
 
-# Periodic tasks
+# Periodic tasks - daily scraping at 6am EST
 celery_app.conf.beat_schedule = {
     "scrape-nyc-parks-daily": {
         "task": "app.tasks.scraper_tasks.scrape_nyc_parks",
@@ -41,5 +41,9 @@ celery_app.conf.beat_schedule = {
     "scrape-nyc-open-data-daily": {
         "task": "app.tasks.scraper_tasks.scrape_nyc_open_data",
         "schedule": crontab(hour=6, minute=30),
+    },
+    "scrape-ticketmaster-daily": {
+        "task": "app.tasks.scraper_tasks.scrape_ticketmaster",
+        "schedule": crontab(hour=7, minute=0),  # Run at 7am to stagger with free sources
     },
 }

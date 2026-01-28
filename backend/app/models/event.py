@@ -15,6 +15,7 @@ class EventCategory(str, Enum):
 
 class EventSource(str, Enum):
     EVENTBRITE = "eventbrite"
+    TICKETMASTER = "ticketmaster"
     RESY = "resy"
     OPENTABLE = "opentable"
     PARTIFUL = "partiful"

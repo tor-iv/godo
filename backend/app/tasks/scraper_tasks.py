@@ -113,6 +113,30 @@ def scrape_nyc_open_data(self):
     return run_async(_run())
 
 
+@celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_ticketmaster")
+def scrape_ticketmaster(self):
+    """Scrape Ticketmaster events."""
+    # Import inside task to avoid circular imports
+    from scripts.scrapers.ticketmaster import TicketmasterScraper
+
+    logger.info("Starting Ticketmaster scrape task")
+
+    async def _run():
+        async with TicketmasterScraper() as scraper:
+            result = await scraper.run()
+            await _log_scraper_run(scraper.source.value, result)
+            return {
+                "source": result.source,
+                "events_found": result.events_found,
+                "events_new": result.events_new,
+                "events_updated": result.events_updated,
+                "events_failed": result.events_failed,
+                "error": result.error_message,
+            }
+
+    return run_async(_run())
+
+
 @celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_all")
 def scrape_all(self):
     """
@@ -145,6 +169,18 @@ def scrape_all(self):
         logger.error(f"NYC Open Data scraper failed: {e}")
         results.append({
             "source": "nyc_open_data",
+            "error": str(e),
+        })
+
+    # Run Ticketmaster scraper
+    try:
+        ticketmaster_result = scrape_ticketmaster.delay().get()
+        results.append(ticketmaster_result)
+        logger.info(f"Ticketmaster scraper completed: {ticketmaster_result}")
+    except Exception as e:
+        logger.error(f"Ticketmaster scraper failed: {e}")
+        results.append({
+            "source": "ticketmaster",
             "error": str(e),
         })
 
