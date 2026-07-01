@@ -23,6 +23,7 @@ class EventSource(str, Enum):
     NYC_OPEN_DATA = "nyc_open_data"
     NYC_CULTURAL = "nyc_cultural"
     MEETUP = "meetup"
+    BANDSINTOWN = "bandsintown"
     FACEBOOK_EVENTS = "facebook_events"
     USER_GENERATED = "user_generated"
     MANUAL = "manual"

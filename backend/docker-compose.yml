@@ -1,127 +1,165 @@
-version: '3.8'
-
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - DEBUG=false
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - REDIS_URL=redis://redis:6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./logs:/app/logs
-      - ml_models:/tmp/ml_models
+  caddy:
+    image: caddy:2-alpine
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
 
   postgres:
-    image: postgres:15-alpine
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/migrations:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    # Port intentionally not published -- Postgres is internal-only, reached
+    # via the `postgres` service name on the compose network.
 
   redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    image: redis:alpine
+    restart: unless-stopped
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
+    # Port intentionally not published -- internal-only, reached via `redis`.
 
+  # One-shot schema bootstrap. Applies the self-host schema/index SQL the DAL
+  # migration team produced (backend/database/selfhost/*.sql) the first time
+  # the stack comes up. Those files are raw CREATE statements (not idempotent
+  # migrations), so this guards on whether the schema already exists before
+  # re-applying -- without that guard, every subsequent `docker compose up
+  # -d --build` (i.e. every CI deploy) would recreate this container and fail
+  # on "relation already exists".
+  migrate:
+    image: postgres:16-alpine
+    restart: "no"
+    volumes:
+      - ./database/selfhost:/migrations:ro
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -e
+        if [ "$(psql -tAc "SELECT to_regclass('public.users')")" = "users" ]; then
+          echo "Schema already applied, skipping migrate."
+        else
+          echo "Applying 001_schema.sql..."
+          psql -v ON_ERROR_STOP=1 -f /migrations/001_schema.sql
+          echo "Applying 002_indexes.sql..."
+          psql -v ON_ERROR_STOP=1 -f /migrations/002_indexes.sql
+        fi
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
+      NYC_OPEN_DATA_API_KEY: ${NYC_OPEN_DATA_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # Concurrency capped at 1: this box runs headless Chromium via Playwright
+  # for scraping, and we don't want more than one browser instance resident
+  # in memory at a time.
   celery-worker:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A app.celery worker --loglevel=info
-    environment:
-      - DEBUG=false
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./logs:/app/logs
-      - ml_models:/tmp/ml_models
+    command: celery -A app.celery worker --loglevel=info -Q scrapers --concurrency=1
     restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
+      NYC_OPEN_DATA_API_KEY: ${NYC_OPEN_DATA_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   celery-beat:
     build:
       context: .
       dockerfile: Dockerfile
     command: celery -A app.celery beat --loglevel=info
+    restart: unless-stopped
     environment:
-      - DEBUG=false
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
+      NYC_OPEN_DATA_API_KEY: ${NYC_OPEN_DATA_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
     depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/ssl/certs
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - backend
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
-  postgres_data:
+  pgdata:
   redis_data:
-  ml_models:
-
-networks:
-  default:
-    driver: bridge
+  caddy_data:
+  caddy_config:

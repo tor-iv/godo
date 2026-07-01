@@ -152,7 +152,7 @@ async def root():
     }
 
 # Import and include routers
-from app.routers import auth, users, events, swipes
+from app.routers import auth, users, events, swipes, integrations
 # TODO: Import additional routers as they are implemented
 # from app.routers import groups, notifications
 
@@ -160,6 +160,7 @@ app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1", tags=["Users"])
 app.include_router(events.router, prefix="/api/v1/events", tags=["Events"])
 app.include_router(swipes.router, prefix="/api/v1/swipes", tags=["Swipes"])
+app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
 # TODO: Include additional routers
 # app.include_router(groups.router, prefix="/api/v1", tags=["Groups"])
 # app.include_router(notifications.router, prefix="/api/v1", tags=["Notifications"])

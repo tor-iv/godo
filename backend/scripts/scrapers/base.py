@@ -13,7 +13,7 @@ import logging
 import httpx
 
 from app.models.event import EventCreate, EventSource as EventSourceEnum, EventCategory
-from app.database import db_manager
+from app.database import acquire, to_point
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class BaseScraper(ABC):
 
     async def load(self, events: List[EventCreate]) -> tuple[int, int, int]:
         """
-        Load events into Supabase via upsert.
+        Load events into Postgres via upsert.
 
         Checks if event exists by source + external_id:
         - If exists: update
@@ -140,23 +140,28 @@ class BaseScraper(ABC):
         updated_count = 0
         failed_count = 0
 
-        supabase = db_manager.supabase_admin
-        if supabase is None and not self.dry_run:
-            logger.error("Supabase admin client not available")
-            return 0, 0, len(events)
+        if not self.dry_run:
+            try:
+                async with acquire():
+                    pass
+            except Exception as e:
+                logger.error(f"Database not available: {e}")
+                return 0, 0, len(events)
 
         for event in events:
             try:
-                # Build event data dict for Supabase
+                # Build event data tuple for the events table. Note: events has
+                # no latitude/longitude columns -- location is stored as a
+                # PostGIS GEOGRAPHY(POINT) column built via to_point()/ST_GeogFromText.
+                location_point = to_point(event.latitude, event.longitude)
                 event_data = {
                     "title": event.title,
                     "description": event.description,
-                    "date_time": event.date_time.isoformat(),
-                    "end_time": event.end_time.isoformat() if event.end_time else None,
+                    "date_time": event.date_time,
+                    "end_time": event.end_time,
                     "location_name": event.location_name,
                     "location_address": event.location_address,
-                    "latitude": event.latitude,
-                    "longitude": event.longitude,
+                    "location_point": location_point,
                     "neighborhood": event.neighborhood,
                     "category": event.category.value,
                     "price_min": event.price_min,
@@ -173,52 +178,130 @@ class BaseScraper(ABC):
                     "moderation_status": "approved",  # Scraped events are auto-approved
                 }
 
-                if self.dry_run:
-                    # Check if event exists (for logging purposes)
-                    existing = supabase.table("events").select("id").eq(
-                        "source", event.source.value
-                    ).eq(
-                        "external_id", event.external_id
-                    ).execute() if supabase else None
+                async with acquire() as conn:
+                    # Check if event already exists (also used for dry-run logging)
+                    existing = await conn.fetchrow(
+                        "SELECT id FROM events WHERE source = $1 AND external_id = $2",
+                        event.source.value,
+                        event.external_id,
+                    )
 
-                    exists = existing and existing.data and len(existing.data) > 0
-                    action = "UPDATE" if exists else "INSERT"
-                    logger.info(f"[DRY RUN] Would {action}: {event.title} ({event.external_id})")
+                    if self.dry_run:
+                        exists = existing is not None
+                        action = "UPDATE" if exists else "INSERT"
+                        logger.info(f"[DRY RUN] Would {action}: {event.title} ({event.external_id})")
 
-                    if exists:
-                        updated_count += 1
+                        if exists:
+                            updated_count += 1
+                        else:
+                            new_count += 1
                     else:
-                        new_count += 1
-                else:
-                    # Check if event already exists
-                    existing = supabase.table("events").select("id").eq(
-                        "source", event.source.value
-                    ).eq(
-                        "external_id", event.external_id
-                    ).execute()
+                        if existing is not None:
+                            # Update existing event
+                            event_id = existing["id"]
 
-                    if existing.data and len(existing.data) > 0:
-                        # Update existing event
-                        event_id = existing.data[0]["id"]
-                        event_data["updated_at"] = datetime.utcnow().isoformat()
+                            await conn.execute(
+                                """
+                                UPDATE events SET
+                                    title = $1,
+                                    description = $2,
+                                    date_time = $3,
+                                    end_time = $4,
+                                    location_name = $5,
+                                    location_address = $6,
+                                    location_point = ST_GeogFromText($7),
+                                    neighborhood = $8,
+                                    category = $9,
+                                    price_min = $10,
+                                    price_max = $11,
+                                    capacity = $12,
+                                    source = $13,
+                                    external_id = $14,
+                                    external_url = $15,
+                                    image_url = $16,
+                                    metadata = $17,
+                                    accessibility_info = $18,
+                                    tags = $19,
+                                    is_active = $20,
+                                    moderation_status = $21,
+                                    updated_at = $22
+                                WHERE id = $23
+                                """,
+                                event_data["title"],
+                                event_data["description"],
+                                event_data["date_time"],
+                                event_data["end_time"],
+                                event_data["location_name"],
+                                event_data["location_address"],
+                                event_data["location_point"],
+                                event_data["neighborhood"],
+                                event_data["category"],
+                                event_data["price_min"],
+                                event_data["price_max"],
+                                event_data["capacity"],
+                                event_data["source"],
+                                event_data["external_id"],
+                                event_data["external_url"],
+                                event_data["image_url"],
+                                event_data["metadata"],
+                                event_data["accessibility_info"],
+                                event_data["tags"],
+                                event_data["is_active"],
+                                event_data["moderation_status"],
+                                datetime.utcnow(),
+                                event_id,
+                            )
 
-                        supabase.table("events").update(event_data).eq(
-                            "id", event_id
-                        ).execute()
+                            updated_count += 1
+                            if self.verbose:
+                                logger.debug(f"Updated event: {event.title} ({event.external_id})")
+                        else:
+                            # Insert new event
+                            now = datetime.utcnow()
 
-                        updated_count += 1
-                        if self.verbose:
-                            logger.debug(f"Updated event: {event.title} ({event.external_id})")
-                    else:
-                        # Insert new event
-                        event_data["created_at"] = datetime.utcnow().isoformat()
-                        event_data["updated_at"] = datetime.utcnow().isoformat()
+                            await conn.execute(
+                                """
+                                INSERT INTO events (
+                                    title, description, date_time, end_time,
+                                    location_name, location_address, location_point,
+                                    neighborhood, category, price_min, price_max,
+                                    capacity, source, external_id, external_url,
+                                    image_url, metadata, accessibility_info, tags,
+                                    is_active, moderation_status, created_at, updated_at
+                                ) VALUES (
+                                    $1, $2, $3, $4, $5, $6, ST_GeogFromText($7), $8, $9,
+                                    $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                                    $20, $21, $22, $23
+                                )
+                                """,
+                                event_data["title"],
+                                event_data["description"],
+                                event_data["date_time"],
+                                event_data["end_time"],
+                                event_data["location_name"],
+                                event_data["location_address"],
+                                event_data["location_point"],
+                                event_data["neighborhood"],
+                                event_data["category"],
+                                event_data["price_min"],
+                                event_data["price_max"],
+                                event_data["capacity"],
+                                event_data["source"],
+                                event_data["external_id"],
+                                event_data["external_url"],
+                                event_data["image_url"],
+                                event_data["metadata"],
+                                event_data["accessibility_info"],
+                                event_data["tags"],
+                                event_data["is_active"],
+                                event_data["moderation_status"],
+                                now,
+                                now,
+                            )
 
-                        supabase.table("events").insert(event_data).execute()
-
-                        new_count += 1
-                        if self.verbose:
-                            logger.debug(f"Inserted event: {event.title} ({event.external_id})")
+                            new_count += 1
+                            if self.verbose:
+                                logger.debug(f"Inserted event: {event.title} ({event.external_id})")
 
             except Exception as e:
                 failed_count += 1

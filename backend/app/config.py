@@ -10,9 +10,6 @@ class Settings(BaseSettings):
 
     # Database Configuration (optional for startup, required for full functionality)
     database_url: Optional[str] = None
-    supabase_url: Optional[str] = None
-    supabase_key: Optional[str] = None
-    supabase_service_key: Optional[str] = None
 
     # Authentication
     jwt_secret: str = "dev-secret-change-in-production"
@@ -27,6 +24,12 @@ class Settings(BaseSettings):
     ticketmaster_api_key: Optional[str] = None
     google_maps_api_key: Optional[str] = None
     nyc_open_data_api_key: Optional[str] = None
+    deepseek_api_key: Optional[str] = None
+
+    # Google Calendar integration (optional "Connect Google Calendar" feature)
+    google_client_id: Optional[str] = None
+    google_client_secret: Optional[str] = None
+    google_redirect_uri: Optional[str] = None
     
     # Rate Limiting
     rate_limit_per_minute: int = 100

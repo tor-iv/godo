@@ -58,8 +58,10 @@ class UserProfile(BaseModel):
         from_attributes = True
 
 class User(UserBase):
-    """Full user model"""
+    """Full user model (internal -- includes password_hash, never returned
+    directly from an endpoint; public-facing responses use UserProfile)"""
     id: UUID4
+    password_hash: str
     preferences: Dict[str, Any] = {}
     ml_preference_vector: List[float] = []
     phone_hash: Optional[str] = None

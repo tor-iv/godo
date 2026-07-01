@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 
 from app.celery import celery_app
-from app.database import db_manager
+from app.database import acquire
 
 logger = logging.getLogger(__name__)
 
@@ -33,30 +33,36 @@ async def _log_scraper_run(source_name: str, result) -> None:
         result: ScraperResult from the scraper run
     """
     try:
-        supabase = db_manager.supabase_admin
-        if supabase is None:
-            logger.warning("Supabase admin client not available for logging scraper run")
-            return
-
         # Determine sync status
         sync_status = "success" if result.error_message is None else "failed"
 
-        # Upsert record by source_name
-        record = {
-            "source_name": source_name,
-            "last_sync_at": datetime.utcnow().isoformat(),
-            "last_sync_status": sync_status,
-            "events_found": result.events_found,
-            "events_new": result.events_new,
-            "events_updated": result.events_updated,
-            "error_message": result.error_message,
-            "is_enabled": True,
-        }
-
-        supabase.table("event_sources").upsert(
-            record,
-            on_conflict="source_name"
-        ).execute()
+        # Upsert record by source_name (source_name has a UNIQUE constraint)
+        async with acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO event_sources (
+                    source_name, last_sync_at, last_sync_status,
+                    events_found, events_new, events_updated,
+                    error_message, is_enabled
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (source_name) DO UPDATE SET
+                    last_sync_at = EXCLUDED.last_sync_at,
+                    last_sync_status = EXCLUDED.last_sync_status,
+                    events_found = EXCLUDED.events_found,
+                    events_new = EXCLUDED.events_new,
+                    events_updated = EXCLUDED.events_updated,
+                    error_message = EXCLUDED.error_message,
+                    is_enabled = EXCLUDED.is_enabled
+                """,
+                source_name,
+                datetime.utcnow(),
+                sync_status,
+                result.events_found,
+                result.events_new,
+                result.events_updated,
+                result.error_message,
+                True,
+            )
 
         logger.info(f"Logged scraper run for {source_name}: {sync_status}")
 
@@ -137,6 +143,102 @@ def scrape_ticketmaster(self):
     return run_async(_run())
 
 
+@celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_eventbrite")
+def scrape_eventbrite(self):
+    """Scrape Eventbrite events."""
+    # Import inside task to avoid circular imports
+    from scripts.scrapers.eventbrite import EventbriteScraper
+
+    logger.info("Starting Eventbrite scrape task")
+
+    async def _run():
+        async with EventbriteScraper() as scraper:
+            result = await scraper.run()
+            await _log_scraper_run(scraper.source.value, result)
+            return {
+                "source": result.source,
+                "events_found": result.events_found,
+                "events_new": result.events_new,
+                "events_updated": result.events_updated,
+                "events_failed": result.events_failed,
+                "error": result.error_message,
+            }
+
+    return run_async(_run())
+
+
+@celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_meetup")
+def scrape_meetup(self):
+    """Scrape Meetup events."""
+    # Import inside task to avoid circular imports
+    from scripts.scrapers.meetup import MeetupScraper
+
+    logger.info("Starting Meetup scrape task")
+
+    async def _run():
+        async with MeetupScraper() as scraper:
+            result = await scraper.run()
+            await _log_scraper_run(scraper.source.value, result)
+            return {
+                "source": result.source,
+                "events_found": result.events_found,
+                "events_new": result.events_new,
+                "events_updated": result.events_updated,
+                "events_failed": result.events_failed,
+                "error": result.error_message,
+            }
+
+    return run_async(_run())
+
+
+@celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_bandsintown")
+def scrape_bandsintown(self):
+    """Scrape Bandsintown concert listings."""
+    # Import inside task to avoid circular imports
+    from scripts.scrapers.bandsintown import BandsintownScraper
+
+    logger.info("Starting Bandsintown scrape task")
+
+    async def _run():
+        async with BandsintownScraper() as scraper:
+            result = await scraper.run()
+            await _log_scraper_run(scraper.source.value, result)
+            return {
+                "source": result.source,
+                "events_found": result.events_found,
+                "events_new": result.events_new,
+                "events_updated": result.events_updated,
+                "events_failed": result.events_failed,
+                "error": result.error_message,
+            }
+
+    return run_async(_run())
+
+
+@celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_opentable")
+def scrape_opentable(self):
+    """Scrape OpenTable restaurant reservation availability."""
+    # Import inside task to avoid circular imports
+    from scripts.scrapers.opentable import OpenTableScraper
+
+    logger.info("Starting OpenTable scrape task")
+
+    async def _run():
+        async with OpenTableScraper() as scraper:
+            result = await scraper.run()
+            await _log_scraper_run(scraper.source.value, result)
+            return {
+                "source": result.source,
+                "events_found": result.events_found,
+                "events_new": result.events_new,
+                "events_updated": result.events_updated,
+                "events_failed": result.events_failed,
+                "error": result.error_message,
+            }
+
+    return run_async(_run())
+
+
 @celery_app.task(bind=True, name="app.tasks.scraper_tasks.scrape_all")
 def scrape_all(self):
     """
@@ -181,6 +283,54 @@ def scrape_all(self):
         logger.error(f"Ticketmaster scraper failed: {e}")
         results.append({
             "source": "ticketmaster",
+            "error": str(e),
+        })
+
+    # Run Eventbrite scraper
+    try:
+        eventbrite_result = scrape_eventbrite.delay().get()
+        results.append(eventbrite_result)
+        logger.info(f"Eventbrite scraper completed: {eventbrite_result}")
+    except Exception as e:
+        logger.error(f"Eventbrite scraper failed: {e}")
+        results.append({
+            "source": "eventbrite",
+            "error": str(e),
+        })
+
+    # Run Meetup scraper
+    try:
+        meetup_result = scrape_meetup.delay().get()
+        results.append(meetup_result)
+        logger.info(f"Meetup scraper completed: {meetup_result}")
+    except Exception as e:
+        logger.error(f"Meetup scraper failed: {e}")
+        results.append({
+            "source": "meetup",
+            "error": str(e),
+        })
+
+    # Run Bandsintown scraper
+    try:
+        bandsintown_result = scrape_bandsintown.delay().get()
+        results.append(bandsintown_result)
+        logger.info(f"Bandsintown scraper completed: {bandsintown_result}")
+    except Exception as e:
+        logger.error(f"Bandsintown scraper failed: {e}")
+        results.append({
+            "source": "bandsintown",
+            "error": str(e),
+        })
+
+    # Run OpenTable scraper
+    try:
+        opentable_result = scrape_opentable.delay().get()
+        results.append(opentable_result)
+        logger.info(f"OpenTable scraper completed: {opentable_result}")
+    except Exception as e:
+        logger.error(f"OpenTable scraper failed: {e}")
+        results.append({
+            "source": "opentable",
             "error": str(e),
         })
 

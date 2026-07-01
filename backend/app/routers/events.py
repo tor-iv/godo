@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
-from app.database import db_manager
+from app.database import acquire, LOCATION_POINT_SELECT
 from app.models.event import Event, EventSearch, EventRecommendation
 from app.models.common import ErrorResponse
 from app.middleware.auth import get_auth_middleware
@@ -23,22 +23,25 @@ async def get_event_feed(
     """
     # For now, we'll return a simple list of events from the DB
     # In a real implementation, this would call the ML recommendation service
-    
-    # This is a placeholder query. You'll need to adjust based on your actual DB schema and Supabase client
-    response = await db_manager.supabase.table("events").select("*").limit(limit).execute()
-    
-    if hasattr(response, 'error') and response.error:
+
+    # This is a placeholder query. You'll need to adjust based on your actual DB schema
+    try:
+        async with acquire() as conn:
+            rows = await conn.fetch(
+                f"SELECT *, {LOCATION_POINT_SELECT} FROM events LIMIT $1",
+                limit,
+            )
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database error: {response.error.message}"
+            detail=f"Database error: {e}"
         )
-        
-    events_data = response.data
+
     recommendations = []
-    
-    for event_data in events_data:
+
+    for row in rows:
         # Wrap in EventRecommendation
-        event = Event(**event_data)
+        event = Event(**dict(row))
         recommendations.append(
             EventRecommendation(
                 event=event,
@@ -46,7 +49,7 @@ async def get_event_feed(
                 recommendation_reasons=["Popular in your area"]
             )
         )
-        
+
     return recommendations
 
 @router.get("/{event_id}", response_model=Event)
@@ -57,12 +60,22 @@ async def get_event_details(
     """
     Get details for a specific event.
     """
-    response = await db_manager.supabase.table("events").select("*").eq("id", str(event_id)).single().execute()
-    
-    if hasattr(response, 'error') and response.error:
+    try:
+        async with acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT *, {LOCATION_POINT_SELECT} FROM events WHERE id = $1",
+                event_id,
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {e}"
+        )
+
+    if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found"
         )
-        
-    return Event(**response.data)
+
+    return Event(**dict(row))

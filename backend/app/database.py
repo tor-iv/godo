@@ -1,66 +1,74 @@
-from supabase import create_client, Client
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from typing import Generator, Optional
-import redis
+import asyncio
+import asyncpg
+import json
 import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator, Optional
+
+import redis
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Lazy-initialized clients (avoid crashes at import time)
-_supabase: Optional[Client] = None
-_supabase_admin: Optional[Client] = None
-_engine = None
-_SessionLocal = None
+_pool: Optional[asyncpg.Pool] = None
+_pool_loop: Optional[asyncio.AbstractEventLoop] = None
 _redis_client: Optional[redis.Redis] = None
 _redis_checked = False
 
-Base = declarative_base()
+
+async def _init_connection(conn: asyncpg.Connection) -> None:
+    """Per-connection setup: decode JSON/JSONB columns to dict/list instead of
+    raw text, matching the behavior callers previously got from supabase-py."""
+    await conn.set_type_codec(
+        "jsonb",
+        encoder=json.dumps,
+        decoder=json.loads,
+        schema="pg_catalog",
+    )
+    await conn.set_type_codec(
+        "json",
+        encoder=json.dumps,
+        decoder=json.loads,
+        schema="pg_catalog",
+    )
 
 
-def _get_supabase() -> Optional[Client]:
-    """Lazily initialize Supabase client"""
-    global _supabase
-    if _supabase is None:
-        if not settings.supabase_url or not settings.supabase_key:
-            logger.warning("Supabase URL or key not configured")
-            return None
-        try:
-            _supabase = create_client(settings.supabase_url, settings.supabase_key)
-        except Exception as e:
-            logger.error(f"Failed to initialize Supabase client: {e}")
-    return _supabase
+async def get_pool() -> asyncpg.Pool:
+    """Lazily initialize the shared asyncpg connection pool.
 
-
-def _get_supabase_admin() -> Optional[Client]:
-    """Lazily initialize Supabase admin client"""
-    global _supabase_admin
-    if _supabase_admin is None:
-        if not settings.supabase_url or not settings.supabase_service_key:
-            logger.warning("Supabase URL or service key not configured")
-            return None
-        try:
-            _supabase_admin = create_client(settings.supabase_url, settings.supabase_service_key)
-        except Exception as e:
-            logger.error(f"Failed to initialize Supabase admin client: {e}")
-    return _supabase_admin
-
-
-def _get_engine():
-    """Lazily initialize SQLAlchemy engine"""
-    global _engine, _SessionLocal
-    if _engine is None:
+    asyncpg pools are bound to the event loop that created them. The FastAPI
+    process has one long-lived loop, so this is a non-issue there -- but
+    Celery's `run_async()` helper (app/tasks/scraper_tasks.py) creates and
+    closes a fresh event loop per task. A pool created on a now-closed loop
+    is unusable, so detect that case and transparently recreate the pool on
+    the current loop rather than erroring on the second+ scraper task in a
+    worker process.
+    """
+    global _pool, _pool_loop
+    current_loop = asyncio.get_running_loop()
+    if _pool is not None and _pool_loop is not current_loop:
+        logger.info("Event loop changed (new Celery task) -- recreating asyncpg pool")
+        _pool = None
+    if _pool is None:
         if not settings.database_url:
-            logger.warning("Database URL not configured")
-            return None
-        try:
-            _engine = create_engine(settings.database_url)
-            _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
-        except Exception as e:
-            logger.error(f"Failed to initialize SQLAlchemy engine: {e}")
-    return _engine
+            raise RuntimeError("DATABASE_URL not configured")
+        _pool = await asyncpg.create_pool(
+            settings.database_url,
+            min_size=2,
+            max_size=10,
+            init=_init_connection,
+        )
+        _pool_loop = current_loop
+    return _pool
+
+
+@asynccontextmanager
+async def acquire() -> AsyncGenerator[asyncpg.Connection, None]:
+    """Acquire a connection from the pool. Usage: `async with acquire() as conn:`"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        yield conn
 
 
 def _get_redis() -> Optional[redis.Redis]:
@@ -76,42 +84,30 @@ def _get_redis() -> Optional[redis.Redis]:
             _redis_client = None
     return _redis_client
 
-def get_supabase_client() -> Optional[Client]:
-    """Get Supabase client instance"""
-    return _get_supabase()
-
-
-def get_supabase_admin_client() -> Optional[Client]:
-    """Get Supabase admin client for privileged operations"""
-    return _get_supabase_admin()
-
-
-def get_database() -> Generator:
-    """Get database session (for SQLAlchemy if needed)"""
-    _get_engine()  # Ensure engine is initialized
-    if _SessionLocal is None:
-        raise RuntimeError("Database not available")
-    db = _SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 
 def get_redis_client() -> Optional[redis.Redis]:
     """Get Redis client instance (may be None if Redis unavailable)"""
     return _get_redis()
 
+
+def to_point(latitude: Optional[float], longitude: Optional[float]) -> Optional[str]:
+    """Build a PostGIS ST_GeogFromText literal for events.location_point from
+    lat/lng, or None if either is missing. Pass the result as a query parameter
+    cast with `::geography` is not needed -- ST_GeogFromText already returns
+    geography."""
+    if latitude is None or longitude is None:
+        return None
+    return f"POINT({longitude} {latitude})"
+
+
+LOCATION_POINT_SELECT = (
+    "ST_Y(location_point::geometry) AS latitude, "
+    "ST_X(location_point::geometry) AS longitude"
+)
+
+
 class DatabaseManager:
     """Database operations manager"""
-
-    @property
-    def supabase(self) -> Optional[Client]:
-        return get_supabase_client()
-
-    @property
-    def supabase_admin(self) -> Optional[Client]:
-        return get_supabase_admin_client()
 
     @property
     def redis(self) -> Optional[redis.Redis]:
@@ -119,19 +115,15 @@ class DatabaseManager:
 
     async def health_check(self) -> dict:
         """Check database connectivity"""
-        # Test Supabase connection
-        supabase_client = self.supabase
-        if supabase_client is None:
-            supabase_status = "not_configured"
-        else:
-            try:
-                result = supabase_client.table("users").select("id").limit(1).execute()
-                supabase_status = "healthy" if result else "unhealthy"
-            except Exception as e:
-                logger.error(f"Supabase health check failed: {e}")
-                supabase_status = "unhealthy"
+        try:
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            db_status = "healthy"
+        except Exception as e:
+            logger.error(f"Database health check failed: {e}")
+            db_status = "unhealthy"
 
-        # Test Redis connection (optional)
         redis_client = self.redis
         if redis_client is None:
             redis_status = "not_configured"
@@ -141,34 +133,14 @@ class DatabaseManager:
             except Exception:
                 redis_status = "unavailable"
 
-        # Overall health - app can start without database for basic endpoints
-        # but mark as degraded if Supabase isn't available
-        if supabase_status == "healthy":
-            overall = "healthy"
-        elif supabase_status == "not_configured":
-            overall = "degraded"
-        else:
-            overall = "unhealthy"
+        overall = "healthy" if db_status == "healthy" else "unhealthy"
 
         return {
-            "supabase": supabase_status,
+            "database": db_status,
             "redis": redis_status,
-            "overall": overall
+            "overall": overall,
         }
-    
-    def execute_raw_sql(self, query: str, params: dict = None):
-        """Execute raw SQL query via Supabase"""
-        supabase_client = self.supabase
-        if supabase_client is None:
-            raise RuntimeError("Supabase client not available")
-        try:
-            if params:
-                return supabase_client.rpc("execute_sql", {"query": query, "params": params}).execute()
-            else:
-                return supabase_client.rpc("execute_sql", {"query": query}).execute()
-        except Exception as e:
-            raise Exception(f"SQL execution failed: {str(e)}")
-    
+
     def cache_set(self, key: str, value: str, ttl: int = 300):
         """Set cache value with TTL"""
         if self.redis:
@@ -186,6 +158,7 @@ class DatabaseManager:
         if self.redis:
             return self.redis.delete(key)
         return None
+
 
 # Global database manager instance
 db_manager = DatabaseManager()

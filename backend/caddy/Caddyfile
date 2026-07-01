@@ -1,0 +1,10 @@
+178.156.205.42.sslip.io {
+	encode gzip
+	reverse_proxy api:8000
+}
+
+# Once a real domain is pointed at this box, swap the block above for:
+# godo.example.com {
+# 	encode gzip
+# 	reverse_proxy api:8000
+# }

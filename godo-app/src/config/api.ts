@@ -1,6 +1,6 @@
 const API_BASE_URL = __DEV__
   ? 'http://localhost:8000'
-  : 'https://your-production-api.com';
+  : 'https://178.156.205.42.sslip.io';
 
 export const API_CONFIG = {
   BASE_URL: API_BASE_URL,

@@ -2,10 +2,8 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# Database and Supabase
-supabase==2.0.2
+# Database
 asyncpg==0.29.0
-sqlalchemy==2.0.23
 
 # Pydantic for data validation
 pydantic==2.5.0
@@ -20,7 +18,7 @@ passlib[bcrypt]==1.7.4
 celery==5.3.4
 redis==5.0.1
 
-# HTTP Client (pinned for supabase compatibility)
+# HTTP Client
 httpx==0.24.1
 
 # Environment Management
@@ -55,3 +53,12 @@ aiofiles==23.2.1
 
 # NYC Transit API
 gtfs-realtime-bindings==1.0.0
+
+# Web scraping pipeline (Playwright + DeepSeek LLM extraction)
+playwright==1.40.0
+openai==1.6.1
+
+# Google Calendar integration (optional "Connect Google Calendar" feature)
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.149.0

@@ -19,6 +19,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from scripts.scrapers.nyc_parks import NYCParksScraper
 from scripts.scrapers.nyc_open_data import NYCOpenDataScraper
 from scripts.scrapers.ticketmaster import TicketmasterScraper
+from scripts.scrapers.meetup import MeetupScraper
+from scripts.scrapers.bandsintown import BandsintownScraper
+from scripts.scrapers.eventbrite import EventbriteScraper
+from scripts.scrapers.opentable import OpenTableScraper
 from scripts.scrapers.base import ScraperResult
 
 logger = logging.getLogger(__name__)
@@ -28,6 +32,10 @@ SCRAPERS = {
     "nyc_parks": NYCParksScraper,
     "nyc_open_data": NYCOpenDataScraper,
     "ticketmaster": TicketmasterScraper,
+    "meetup": MeetupScraper,
+    "bandsintown": BandsintownScraper,
+    "eventbrite": EventbriteScraper,
+    "opentable": OpenTableScraper,
 }
 
 

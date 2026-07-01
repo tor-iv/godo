@@ -1,0 +1,34 @@
+# Deploy the godo backend to Hetzner on push to main.
+# Configure these repository secrets in Settings -> Secrets and variables -> Actions:
+#   HETZNER_IP           - public IPv4 of the server (178.156.205.42)
+#   SSH_PRIVATE_KEY      - private key whose public half is in the server's authorized_keys
+#   SSH_HOST_FINGERPRINT - SHA256 host key fingerprint (ssh-keyscan + ssh-keygen -lf)
+
+name: Deploy godo backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.HETZNER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
+          script: |
+            cd /opt/godo
+            git pull origin main
+            cd backend
+            docker compose up -d --build
+            # Caddy's config is bind-mounted, so `up -d` won't pick up Caddyfile
+            # edits. Restarting reloads the config; TLS certs are cached in the
+            # caddy_data volume, so this won't re-trigger ACME issuance.
+            docker compose restart caddy
+            docker image prune -f
