@@ -96,8 +96,23 @@ class AuthMiddleware:
         try:
             payload = self.verify_token(credentials.credentials)
             user_id = payload.get("user_id")
-            
+
             if user_id is None:
+                raise APIException(
+                    message="Invalid token payload",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    error_code="INVALID_TOKEN_PAYLOAD"
+                )
+
+            # Reject special-purpose tokens (e.g. the Google OAuth `state`
+            # token minted in app/routers/integrations.py) here -- they're
+            # signed with the same mechanism as regular access tokens, so
+            # without this check a leaked state token (it travels in a URL
+            # query string through Google's redirect, which can end up in
+            # server/proxy logs or browser history) would work as a fully
+            # valid Bearer token against every authenticated endpoint for
+            # its whole lifetime, not just the one callback it was meant for.
+            if payload.get("purpose") is not None:
                 raise APIException(
                     message="Invalid token payload",
                     status_code=status.HTTP_401_UNAUTHORIZED,
