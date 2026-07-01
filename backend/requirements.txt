@@ -13,6 +13,12 @@ pydantic-settings==2.1.0
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.6
 passlib[bcrypt]==1.7.4
+# passlib 1.7.4 detects the bcrypt backend via bcrypt.__about__.__version__,
+# which bcrypt>=4.1.0 removed -- that breaks passlib's version handshake and
+# manifests as "password cannot be longer than 72 bytes" on every hash/verify
+# call, even for short passwords. Pin to the last 4.0.x release, which still
+# has __about__ and is what passlib 1.7.4 was actually tested against.
+bcrypt==4.0.1
 
 # Background Jobs
 celery==5.3.4

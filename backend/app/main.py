@@ -100,7 +100,7 @@ async def api_exception_handler(request: Request, exc: APIException):
             message=exc.message,
             error_code=exc.error_code,
             details=exc.details
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 @app.exception_handler(RequestValidationError)
@@ -112,7 +112,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             message="Validation error",
             error_code="VALIDATION_ERROR",
             details=exc.errors()
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 @app.exception_handler(500)
@@ -125,7 +125,7 @@ async def internal_server_error_handler(request: Request, exc: Exception):
             message="Internal server error",
             error_code="INTERNAL_ERROR",
             details=str(exc) if settings.debug else None
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 # Health check endpoint

@@ -104,15 +104,17 @@ class AuthMiddleware:
                     error_code="INVALID_TOKEN_PAYLOAD"
                 )
 
-            # Reject special-purpose tokens (e.g. the Google OAuth `state`
-            # token minted in app/routers/integrations.py) here -- they're
-            # signed with the same mechanism as regular access tokens, so
-            # without this check a leaked state token (it travels in a URL
-            # query string through Google's redirect, which can end up in
-            # server/proxy logs or browser history) would work as a fully
-            # valid Bearer token against every authenticated endpoint for
-            # its whole lifetime, not just the one callback it was meant for.
-            if payload.get("purpose") is not None:
+            # Reject any special-purpose token here -- every token type this
+            # service mints other than a plain access token (the Google OAuth
+            # `state` token, tagged "purpose"; the 30-day refresh token,
+            # tagged "token_type": "refresh") is signed with the same HS256
+            # secret/algorithm as a normal access token, so without this gate
+            # ANY of them would work as a fully valid Bearer credential against
+            # every authenticated endpoint for their whole lifetime -- not
+            # just the one narrow use (an OAuth callback; POST /auth/refresh)
+            # each was actually meant for. Applying the same gate to both
+            # keeps them at parity rather than only closing the newer hole.
+            if payload.get("purpose") is not None or payload.get("token_type") == "refresh":
                 raise APIException(
                     message="Invalid token payload",
                     status_code=status.HTTP_401_UNAUTHORIZED,
